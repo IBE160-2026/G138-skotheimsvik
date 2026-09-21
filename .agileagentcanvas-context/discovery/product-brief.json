@@ -1,0 +1,268 @@
+{
+  "metadata": {
+    "schemaVersion": "1.0.0",
+    "artifactType": "product-brief",
+    "workflowName": "agileagentcanvas",
+    "projectName": "GameHub",
+    "timestamps": {
+      "created": "2026-09-21T16:11:17.733Z",
+      "lastModified": "2026-09-21T16:30:00.000Z"
+    },
+    "status": "draft"
+  },
+  "content": {
+    "productName": "GameHub",
+    "tagline": "Stop deciding. Start playing.",
+    "version": "0.2",
+    "status": "draft",
+    "vision": {
+      "statement": "GameHub is a web platform that ends decision paralysis for gamers by unifying game discovery, a personal library and wishlist, ratings, and personalized recommendations into one modern, gaming-native experience that covers every game — not just the ones a user already owns.",
+      "mission": "Help gamers spend less time deciding and more time playing, by making discovering and choosing games fun instead of a chore.",
+      "problemStatement": "Gamers face two linked problems. First, decision paralysis: with thousands of games available and personal libraries often numbering in the hundreds, players spend more time deciding what to play than actually playing. Second, discovery friction: players who want something new often don't know what to search for, and existing stores and databases present games as catalogues to be browsed rather than as choices to be guided toward. Ownership data, wishlists, ratings and backlog tracking are scattered across launchers (Steam, Epic, Xbox, PlayStation) and third-party sites, so there is no single place that knows what a player owns, likes, and hasn't touched in a while.",
+      "problemDetails": [
+        {
+          "problem": "Decision paralysis in large personal libraries — players open their launcher, scroll, and close it without playing.",
+          "impact": "Lost play sessions, backlog guilt, reduced enjoyment of games already purchased.",
+          "affectedUsers": "Players with 50+ owned games across one or more platforms.",
+          "currentSolutions": "Launcher library views, spreadsheets, backlog trackers like Backloggd — none of them recommend what to play right now."
+        },
+        {
+          "problem": "Discovery friction — players want a new game but cannot articulate a search query for a feeling ('something relaxing I can finish in a weekend').",
+          "impact": "Players default to the store front page or hype-driven titles; smaller fitting games are never found.",
+          "affectedUsers": "All players, especially those outside the mainstream AAA audience.",
+          "currentSolutions": "Store algorithms tied to one vendor, Reddit threads, YouTube lists — none are personalized and cross-platform."
+        },
+        {
+          "problem": "Fragmented tracking — ownership, wishlist, ratings and status are spread across launchers and websites.",
+          "impact": "No single source of truth; recommendations from any one vendor ignore most of what the player owns.",
+          "affectedUsers": "Multi-platform players (PC + console, or several PC launchers).",
+          "currentSolutions": "Manual tracking sites (Backloggd, HowLongToBeat), multiple launchers."
+        }
+      ],
+      "proposedSolution": "A single web application built around action-oriented entry points on the homepage — 'I want a new game', 'What should I play?', 'I'm bored', 'My games', 'My wishlist', 'Discover' — backed by a full-catalogue games database (IGDB), a platform-agnostic personal library with statuses and 1–10 ratings, and a rule-based recommendation engine that learns from the user's ratings, statuses and stated preferences. The MVP is deliberately scoped to account, search, game details, library, wishlist, status, rating, two guided recommendation flows and a basic dashboard, with the data model designed so that Steam/Epic/Xbox/PlayStation imports and social features can be layered on later.",
+      "solutionApproach": [
+        {
+          "aspect": "Intent-first homepage",
+          "description": "The homepage presents choices framed as the user's intent ('I want a new game', 'What should I play?', 'I'm bored') instead of a catalogue grid.",
+          "rationale": "Directly attacks decision paralysis; differentiates from store fronts and CRUD-style trackers."
+        },
+        {
+          "aspect": "Whole-catalogue coverage",
+          "description": "Search and discovery span every game in an external games database (IGDB recommended, RAWG as fallback), not only owned games.",
+          "rationale": "Discovery requires the full universe; users must be able to find any game, including non-Steam titles such as Minecraft."
+        },
+        {
+          "aspect": "Platform-agnostic library",
+          "description": "Library entries reference a canonical game ID with nullable playtime/last-played fields populated only by future platform imports — never entered manually.",
+          "rationale": "User decision: playtime must come from Steam/Epic/etc. integrations, so the MVP model must be import-ready without manual data entry."
+        },
+        {
+          "aspect": "Rule-based recommendations first",
+          "description": "Recommendations use transparent rules over the user's ratings, favourite genres, owned/completed/dropped games and wizard answers. An AI API is a later upgrade, not an MVP requirement.",
+          "rationale": "Delivers value with no external AI cost, is explainable, and validates the data model before investing in ML."
+        },
+        {
+          "aspect": "Gaming-native UI",
+          "description": "Cover-art-driven, dark, modern interface with strong visual hierarchy so the product feels like a real gaming platform.",
+          "rationale": "Explicit goal: must not feel like a school CRUD project."
+        }
+      ],
+      "uniqueValueProposition": "GameHub is the only place that both knows your entire cross-platform library and covers every game ever released — and turns that into a one-click answer to 'what should I play right now?'.",
+      "differentiators": [
+        {
+          "differentiator": "Intent-driven entry points instead of catalogue browsing.",
+          "competitiveAdvantage": "Stores and trackers show lists; GameHub makes the decision for you."
+        },
+        {
+          "differentiator": "Vendor-neutral — recommendations consider games from any platform.",
+          "competitiveAdvantage": "Steam only knows Steam; console stores only know their console."
+        },
+        {
+          "differentiator": "Library-aware and catalogue-aware in one engine ('I'm bored' checks your shelf first, then the world).",
+          "competitiveAdvantage": "Backlog trackers don't discover; discovery sites don't know your backlog."
+        }
+      ]
+    },
+    "targetUsers": [
+      {
+        "persona": "The Backlog Owner",
+        "description": "A player with a large library accumulated through sales and bundles who regularly fails to pick something and ends up replaying the same comfort game or not playing at all.",
+        "demographics": { "age": "18–40", "role": "Hobbyist gamer, PC and/or console", "experience": "Years of gaming, 50–500 owned titles" },
+        "goals": [
+          { "goal": "Get a confident answer to 'what should I play tonight?' in under a minute.", "priority": "high" },
+          { "goal": "Actually finish more of the games already owned.", "priority": "medium" }
+        ],
+        "needs": [
+          { "need": "A single view of everything owned across platforms with status tracking.", "importance": "critical" },
+          { "need": "Recommendations that respect mood, available time and past ratings.", "importance": "high" }
+        ],
+        "painPoints": [
+          { "painPoint": "Scrolls launcher library for 20 minutes and closes it.", "severity": "high", "frequency": "Several times a week" },
+          { "painPoint": "Forgets which games were started and abandoned.", "severity": "medium", "frequency": "Ongoing" }
+        ],
+        "behaviors": ["Buys games on sale faster than plays them", "Uses multiple launchers", "Rates games mentally but never records it"],
+        "motivations": ["Enjoy owned games", "Reduce backlog guilt"],
+        "frustrations": ["Launchers offer no guidance", "Trackers require tedious manual upkeep"],
+        "technicalProficiency": "intermediate"
+      },
+      {
+        "persona": "The Explorer",
+        "description": "A player who wants something new but can only describe it by feel — genre, mood, session length, budget, co-op or solo — and is tired of store algorithms pushing the same hyped titles.",
+        "demographics": { "age": "16–35", "role": "Curious gamer, often plays indie titles", "experience": "Moderate; enjoys variety" },
+        "goals": [
+          { "goal": "Find a genuinely new game that fits a described mood and constraints.", "priority": "high" },
+          { "goal": "Keep a wishlist of interesting finds for later.", "priority": "medium" }
+        ],
+        "needs": [
+          { "need": "A guided questionnaire that turns preferences into concrete suggestions.", "importance": "critical" },
+          { "need": "Rich game pages with screenshots, trailer, platforms and player count to evaluate quickly.", "importance": "high" }
+        ],
+        "painPoints": [
+          { "painPoint": "Doesn't know what keywords to search for.", "severity": "high", "frequency": "Every time they look for a new game" },
+          { "painPoint": "Store recommendations are vendor-locked and hype-biased.", "severity": "medium", "frequency": "Ongoing" }
+        ],
+        "behaviors": ["Reads reviews and watches trailers before buying", "Wishlists heavily", "Tries many games briefly"],
+        "motivations": ["Novelty", "Finding hidden gems before friends do"],
+        "frustrations": ["Filters are too shallow", "Same 20 games recommended everywhere"],
+        "technicalProficiency": "intermediate"
+      }
+    ],
+    "marketContext": {
+      "overview": "Game backlog tracking and discovery is served by launcher stores, community databases and dedicated tracker sites. None combine cross-platform library awareness with guided, mood-based recommendation.",
+      "targetMarket": "PC and console gamers with multi-title libraries who actively seek new games; initially a demo audience, potentially public later.",
+      "trends": [
+        { "trend": "Ever-growing libraries via subscriptions, bundles and sales.", "impact": "Decision paralysis worsens; demand for 'what to play' tools grows." },
+        { "trend": "Cross-platform play and multi-launcher PC ecosystems.", "impact": "Vendor-locked recommendations become less useful." },
+        { "trend": "Rise of AI-assisted personalization.", "impact": "Creates a future upgrade path for the recommendation engine." }
+      ],
+      "competitiveLandscape": "Steam offers a store-locked recommender and library; Backloggd offers social backlog tracking with no recommendations; HowLongToBeat offers completion-time data and basic tracking. GameHub positions between them as a decision engine rather than a database.",
+      "competitors": [
+        { "name": "Steam", "description": "Dominant PC store and launcher with library and discovery queue.", "strengths": ["Owns purchase and playtime data", "Huge user base"], "weaknesses": ["Steam-only", "Recommendations optimized for sales, not play"] },
+        { "name": "Backloggd", "description": "Community backlog and rating tracker.", "strengths": ["Clean status tracking", "Social lists"], "weaknesses": ["No 'what should I play' guidance", "Fully manual"] },
+        { "name": "HowLongToBeat", "description": "Completion-time database with tracking.", "strengths": ["Unique length data"], "weaknesses": ["Dated UI", "No personalized discovery"] }
+      ]
+    },
+    "successMetrics": [
+      { "metric": "Time to decision", "description": "Time from opening GameHub to selecting a game via 'What should I play?' or 'I'm bored'.", "target": "< 60 seconds median", "timeframe": "MVP demo", "rationale": "Directly measures the core promise of ending decision paralysis.", "measurementMethod": "Client-side timing from homepage load to recommendation accept.", "category": "user" },
+      { "metric": "Recommendation acceptance rate", "description": "Share of recommendations the user acts on (adds to library/wishlist, marks Playing).", "target": "≥ 30%", "timeframe": "MVP demo", "rationale": "Validates that rule-based recommendations are relevant.", "measurementMethod": "Ratio of accept actions to recommendations shown.", "category": "user" },
+      { "metric": "Catalogue coverage", "description": "Share of a 50-title test list (incl. Minecraft, console exclusives, indies) found via search.", "target": "≥ 95%", "timeframe": "Architecture spike", "rationale": "Confirms 'works with ALL games' requirement.", "measurementMethod": "Manual spike against the chosen API.", "category": "technical" },
+      { "metric": "Library engagement", "description": "Average number of games with a status or rating per active user.", "target": "≥ 10", "timeframe": "MVP demo", "rationale": "Recommendations need data; low engagement signals friction.", "measurementMethod": "Database aggregate.", "category": "user" },
+      { "metric": "Perceived product quality", "description": "Testers rate the UI as feeling like a real gaming platform rather than a CRUD demo.", "target": "≥ 4/5 average", "timeframe": "MVP demo", "rationale": "Explicit product goal.", "measurementMethod": "Short survey after demo session.", "category": "user" }
+    ],
+    "scope": {
+      "overview": "MVP focuses on the single-player decision loop: find any game, track it, rate it, and get told what to play. Social, platform imports, pricing and AI are explicitly deferred but the data model must not block them.",
+      "inScope": [
+        { "item": "User account (register, login, logout) with secure password storage.", "priority": "must-have", "rationale": "Personal library requires identity." },
+        { "item": "Search across the full external games catalogue.", "priority": "must-have", "rationale": "Core 'works with all games' requirement." },
+        { "item": "Game details page: title, cover, description, genres, developer, publisher, release date, platforms, player modes, screenshots, trailer, aggregate rating, plus the user's own rating, status, library and wishlist state.", "priority": "must-have", "rationale": "Evaluation surface for every recommendation." },
+        { "item": "Personal library with statuses: Want to play, Playing, Completed, Dropped, On hold.", "priority": "must-have", "rationale": "Feeds 'What should I play?' and statistics." },
+        { "item": "Wishlist.", "priority": "must-have", "rationale": "Captures discovery output for later." },
+        { "item": "Personal 1–10 integer rating (IMDb-style) with optional personal notes/review.", "priority": "must-have", "rationale": "Primary signal for recommendations." },
+        { "item": "Rule-based recommendation engine using ratings, statuses, genres and wizard answers.", "priority": "must-have", "rationale": "Core value; no AI dependency." },
+        { "item": "'I want a new game' guided questionnaire (genre, single/multiplayer, time available, platform, budget, mood, liked games) returning unplayed recommendations.", "priority": "must-have", "rationale": "Primary discovery flow." },
+        { "item": "'What should I play?' library-based picker using ratings, status and date added.", "priority": "must-have", "rationale": "Primary decision flow." },
+        { "item": "Modern gaming-native UI with intent-driven homepage.", "priority": "must-have", "rationale": "Explicit product quality goal." },
+        { "item": "'I'm bored' one-click recommendation: library first, then catalogue.", "priority": "should-have", "rationale": "Cheap composition of the two engines; high delight." },
+        { "item": "Basic dashboard: game counts by status, wishlist size, average rating, favourite genres, completion percentage.", "priority": "should-have", "rationale": "Reinforces tracking habit; data already available." },
+        { "item": "Discovery pages: trending, popular, new releases, highly rated, recommended for you, random game, similar games.", "priority": "should-have", "rationale": "Mostly direct API queries; low cost." },
+        { "item": "Filters: genre, platform, release year, multiplayer/singleplayer, rating, free/paid.", "priority": "should-have", "rationale": "Depends on fields the API reliably provides." },
+        { "item": "User-defined custom statuses.", "priority": "could-have", "rationale": "Nice-to-have; adds model complexity." },
+        { "item": "Game of the Day.", "priority": "could-have", "rationale": "Trivial once catalogue access exists." }
+      ],
+      "outOfScope": [
+        { "item": "Social features (friends, compare libraries, friend recommendations, friend ratings).", "reason": "Requires user base and moderation; not needed to prove the decision loop." },
+        { "item": "Steam, Epic, Xbox, PlayStation library/playtime/achievement import.", "reason": "OAuth and API complexity; deferred. Data model must remain import-ready." },
+        { "item": "Manual entry of playtime or last-played.", "reason": "User decision: these fields must come only from platform integrations." },
+        { "item": "Price tracking, alerts, discounts, store links.", "reason": "IGDB has no reliable pricing; separate data source needed." },
+        { "item": "AI/LLM-powered recommendations.", "reason": "Rule-based engine first; AI is an upgrade path." },
+        { "item": "Achievements, challenges and gaming goals.", "reason": "Gamification layer on top of a stable core." },
+        { "item": "Community reviews, ratings, lists and custom collections.", "reason": "Requires community scale and moderation." },
+        { "item": "Hidden gems, difficulty and game-length filters.", "reason": "Depend on data the chosen API may not expose (e.g. HowLongToBeat)." },
+        { "item": "Public hosting, scaling, password reset and GDPR-grade account management.", "reason": "Product is a demo for now." },
+        { "item": "Multiplayer matchmaking, release calendar, notifications, DLC tracking, game comparison.", "reason": "Post-MVP features." }
+      ],
+      "futureConsiderations": [
+        { "item": "Steam library import with playtime and last-played.", "timeframe": "Phase 2", "dependencies": "Steam Web API, IGDB external_games mapping" },
+        { "item": "Epic, Xbox, PlayStation imports.", "timeframe": "Phase 2–3", "dependencies": "Respective platform APIs/OAuth" },
+        { "item": "AI-powered recommendations and natural-language 'describe your mood' input.", "timeframe": "Phase 3", "dependencies": "Stable rating/status dataset, AI API budget" },
+        { "item": "Social layer: friends, shared libraries, recommendations to friends.", "timeframe": "Phase 3", "dependencies": "Public hosting, user base" },
+        { "item": "Price tracking and store links.", "timeframe": "Phase 3", "dependencies": "Pricing data source (e.g. IsThereAnyDeal)" },
+        { "item": "Achievements, challenges, gaming goals, Game of the Day.", "timeframe": "Phase 2+", "dependencies": "Core library stable" },
+        { "item": "Public hosting with full account management.", "timeframe": "When leaving demo status", "dependencies": "Hosting budget, security review" }
+      ],
+      "mvpDefinition": {
+        "description": "A working web app where a user can create an account, search any game, view its details, track it in a library with status and 1–10 rating, wishlist it, and receive rule-based answers to 'I want a new game' and 'What should I play?', presented in a modern gaming-native UI with a basic statistics dashboard.",
+        "features": ["User account", "Search all games", "Game details page", "Personal library with 5 statuses", "Wishlist", "1–10 rating with notes", "Rule-based recommendation engine", "'What should I play?' flow", "'I want a new game' flow", "'I'm bored' quick pick", "Basic dashboard/statistics", "Modern UI"],
+        "successCriteria": ["Any of 50 test titles (incl. Minecraft) can be found and viewed", "A user with 10+ rated games receives relevant, explainable recommendations", "Decision flows complete in under 60 seconds", "Testers describe the UI as a real gaming platform"]
+      }
+    },
+    "keyFeatures": [
+      { "id": "F1", "name": "Account", "description": "Register, login, logout; secure password hashing; per-user data.", "userBenefit": "Personal library and recommendations.", "priority": "must-have", "complexity": "low" },
+      { "id": "F2", "name": "Game search", "description": "Full-text search over the external catalogue with cover-art results.", "userBenefit": "Find any game, owned or not.", "priority": "must-have", "complexity": "medium", "dependencies": ["External games API"] },
+      { "id": "F3", "name": "Game details page", "description": "Rich game info merged with the user's own status, rating, library and wishlist state.", "userBenefit": "Evaluate and act on a game in one place.", "priority": "must-have", "complexity": "medium", "dependencies": ["F2"] },
+      { "id": "F4", "name": "Personal library & statuses", "description": "Add/remove games; set Want to play, Playing, Completed, Dropped, On hold; platform-agnostic model with import-ready playtime fields.", "userBenefit": "Single source of truth for the backlog.", "priority": "must-have", "complexity": "medium", "dependencies": ["F1", "F3"] },
+      { "id": "F5", "name": "Wishlist", "description": "Save games to play or buy later; toggle from details page.", "userBenefit": "Never lose a discovery.", "priority": "must-have", "complexity": "low", "dependencies": ["F1", "F3"] },
+      { "id": "F6", "name": "Rating & notes", "description": "1–10 integer rating and free-text personal notes per game.", "userBenefit": "Record opinions; power recommendations.", "priority": "must-have", "complexity": "low", "dependencies": ["F4"] },
+      { "id": "F7", "name": "Rule-based recommendation engine", "description": "Scores candidate games using genre affinity from ratings, exclusions (owned/dropped), and preference answers; returns ranked, explainable results.", "userBenefit": "Relevant suggestions without AI cost.", "priority": "must-have", "complexity": "high", "dependencies": ["F4", "F6"] },
+      { "id": "F8", "name": "'I want a new game'", "description": "Questionnaire (genre, mode, time, platform, budget, mood, liked games) feeding F7, excluding library games.", "userBenefit": "Discover something genuinely new that fits.", "priority": "must-have", "complexity": "medium", "dependencies": ["F7"] },
+      { "id": "F9", "name": "'What should I play?'", "description": "Picks from the user's library using rating, status (prefers Want to play / On hold), and date added.", "userBenefit": "Instant answer for tonight.", "priority": "must-have", "complexity": "medium", "dependencies": ["F7"] },
+      { "id": "F10", "name": "'I'm bored'", "description": "One-click: try F9 first; if no fit, fall back to F8 defaults.", "userBenefit": "Zero-effort decision.", "priority": "should-have", "complexity": "low", "dependencies": ["F8", "F9"] },
+      { "id": "F11", "name": "Dashboard & statistics", "description": "Counts by status, wishlist size, average rating, favourite genres, completion percentage.", "userBenefit": "See gaming habits at a glance.", "priority": "should-have", "complexity": "low", "dependencies": ["F4", "F6"] },
+      { "id": "F12", "name": "Discovery pages & filters", "description": "Trending, popular, new releases, highly rated, random, similar-to, recommended-for-you; filters by genre, platform, year, mode, rating, free/paid.", "userBenefit": "Fun browsing when not in a hurry.", "priority": "should-have", "complexity": "medium", "dependencies": ["F2"] },
+      { "id": "F13", "name": "Gaming-native UI", "description": "Dark, cover-art-driven, responsive interface with intent-driven homepage.", "userBenefit": "Feels like a real product.", "priority": "must-have", "complexity": "medium" },
+      { "id": "F14", "name": "Custom statuses", "description": "User-defined status labels alongside the five defaults.", "userBenefit": "Personal workflow.", "priority": "could-have", "complexity": "low", "dependencies": ["F4"] }
+    ],
+    "constraints": [
+      { "constraint": "All game data comes from an external API (IGDB recommended, RAWG fallback); GameHub does not maintain its own catalogue.", "type": "technical", "impact": "Feature set bounded by API fields and rate limits.", "mitigation": "Cache responses server-side; verify coverage in a 50-title spike." },
+      { "constraint": "Playtime and last-played are never entered manually; fields exist but are populated only by future platform imports.", "type": "business", "impact": "MVP 'What should I play?' cannot use recency of play.", "mitigation": "Use rating, status and date-added as proxies." },
+      { "constraint": "Rating scale is fixed at integers 1–10 (IMDb-style).", "type": "business", "impact": "Simple; consistent across UI and engine." },
+      { "constraint": "Demo product — no public hosting or scaling requirements for now.", "type": "business", "impact": "Skip password reset, GDPR flows, load testing.", "mitigation": "Keep auth simple but secure so hosting isn't blocked later." },
+      { "constraint": "Web application (HTML/CSS/JS or modern JS framework) with backend and database; stack undecided.", "type": "technical", "impact": "Decided in architecture phase.", "mitigation": "Choose mainstream stack with minimal dependencies." },
+      { "constraint": "Built with AI assistance using BMAD; the process itself is a deliverable.", "type": "organizational", "impact": "Artifacts must be traceable brief → requirements → epics → stories → tests." }
+    ],
+    "assumptions": [
+      { "assumption": "IGDB covers essentially every commercially released game, including non-Steam titles like Minecraft and console exclusives.", "category": "technical", "risk": "Search gaps undermine 'works with ALL games'.", "validationMethod": "50-title coverage spike in architecture." },
+      { "assumption": "Rule-based recommendations are good enough to feel personal once a user has ~10 rated games.", "category": "user", "risk": "Recommendations feel generic; core value unproven.", "validationMethod": "Tester acceptance rate ≥ 30%." },
+      { "assumption": "Users are willing to rate and set statuses manually in the MVP.", "category": "user", "risk": "Cold-start; engine has no data.", "validationMethod": "Onboarding asks for a few liked games; measure library engagement." },
+      { "assumption": "Platform-agnostic library model with canonical game IDs can later be mapped to Steam/Epic/Xbox/PS IDs.", "category": "technical", "risk": "Rework of library model at import time.", "validationMethod": "Confirm IGDB external_games mapping during spike." }
+    ],
+    "risks": [
+      { "risk": "Scope creep from ~60 brainstormed features.", "category": "timeline", "probability": "high", "impact": "high", "mitigation": "Strict MoSCoW in this brief; anything not must/should-have goes to futureConsiderations.", "contingency": "Cut should-haves before touching must-haves." },
+      { "risk": "External games API rate limits, downtime or missing fields.", "category": "technical", "probability": "medium", "impact": "high", "mitigation": "Server-side caching; abstraction layer so RAWG can replace IGDB.", "contingency": "Switch provider behind the abstraction." },
+      { "risk": "Recommendation cold-start for new users.", "category": "user", "probability": "high", "impact": "medium", "mitigation": "Onboarding asks for favourite genres and a few liked games; fall back to popular titles.", "contingency": "Show discovery pages until data exists." },
+      { "risk": "UI ends up looking like a CRUD demo.", "category": "product", "probability": "medium", "impact": "high", "mitigation": "UX design phase before build; cover-art-first layouts; intent-driven homepage.", "contingency": "Dedicated polish iteration." },
+      { "risk": "'What should I play?' feels weak without playtime data.", "category": "product", "probability": "medium", "impact": "medium", "mitigation": "Lean on rating, status and date added; communicate that imports will improve it.", "contingency": "Prioritize Steam import in Phase 2." }
+    ],
+    "dependencies": [
+      { "dependency": "IGDB API (Twitch developer credentials) — game metadata, media, external store IDs.", "type": "external API", "status": "to be validated", "risk": "Coverage, rate limits, auth" },
+      { "dependency": "RAWG API — fallback catalogue.", "type": "external API", "status": "fallback", "risk": "Weaker external-ID mapping" }
+    ],
+    "timeline": {
+      "overview": "Phased via BMAD: brief → requirements → architecture → epics/stories → implementation → tests. No fixed dates; demo-driven.",
+      "phases": [
+        { "phase": "Phase 1 — MVP", "objectives": ["Account, search, details, library, wishlist, rating", "Rule-based engine with both decision flows", "Basic dashboard and gaming-native UI"] },
+        { "phase": "Phase 2 — Integrations", "objectives": ["Steam import (library, playtime)", "Discovery expansion, achievements/challenges"] },
+        { "phase": "Phase 3 — Social & AI", "objectives": ["Friends and shared libraries", "AI recommendations", "Price tracking"] }
+      ]
+    },
+    "stakeholders": [
+      { "role": "Product owner / developer", "responsibilities": ["Prioritization", "Implementation with AI assistance", "Demo"], "involvement": "decision-maker" },
+      { "role": "Demo testers (gamers)", "responsibilities": ["Usability and recommendation feedback"], "involvement": "contributor" }
+    ],
+    "additionalContext": {
+      "background": "Derived from the GameHub brain dump and follow-up decisions: API choice delegated to analyst (IGDB), no manual playtime, 1–10 rating, demo-only for now. The project doubles as a demonstration of a structured AI-assisted BMAD development process.",
+      "notes": [
+        "Price display is uncertain because IGDB lacks reliable pricing; 'free/paid' filter may need a secondary source or be dropped.",
+        "Custom statuses deferred to could-have to keep the engine's status logic simple."
+      ],
+      "openQuestions": [
+        { "question": "Does IGDB pass the 50-title coverage spike (incl. Minecraft, console exclusives)?", "status": "open", "owner": "Architect" },
+        { "question": "What onboarding data (genres, liked games) do we collect to solve cold-start?", "status": "open", "owner": "UX / PM" },
+        { "question": "Show price at all in MVP, given no reliable pricing source?", "status": "open", "owner": "Product owner" }
+      ],
+      "references": [
+        { "title": "GameHub brain dump", "location": "Conversation with Business Analyst", "description": "Original feature ideas and problem framing." }
+      ]
+    }
+  }
+}
