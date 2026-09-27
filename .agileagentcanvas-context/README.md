@@ -1,4 +1,4 @@
-# Project — Agile Agent Canvas Artifacts
+# GameHub — Agile Agent Canvas Artifacts
 
 > **This file is auto-generated.** It helps LLMs and developers navigate the artifact structure.
 
