@@ -18,7 +18,7 @@ This document turns the LearningHub product brief into numbered, testable requir
 
 **Out of scope:** everything in brief §7 "Deferred to later phases" and "Explicitly out of scope" — accounts, server storage, the remaining seven trainers, leaderboards, spaced repetition, third-party APIs, AI features inside the app.
 
-**Primary user:** the exam-prep student (14–22), per brief §4.
+**Primary user:** the everyday self-improver, per brief §4 — someone sharpening skills they use in ordinary life, in a few spare minutes at a time, with no teacher and no exam.
 
 ### 1.1 Requirement ID conventions
 
@@ -286,7 +286,7 @@ A `schemaVersion` field is stored alongside both so future versions can migrate 
 
 ## 7. User Stories
 
-Format: *As a student, I want … so that …* Acceptance criteria are written Given/When/Then so they map directly onto test cases.
+Format: *As a learner, I want … so that …* Acceptance criteria are written Given/When/Then so they map directly onto test cases.
 
 ### E-1 — Project foundation and test harness
 

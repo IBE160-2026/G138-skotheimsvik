@@ -10,11 +10,11 @@
 
 ## 0. Executive Summary
 
-LearningHub is a browser-based training site where you practise real skills in short, timed rounds and watch your numbers go up. Pick a trainer — mental math, memory recall, or geography — run a 60-second round, answer as many prompts as you can, and get instant feedback on accuracy, speed and streak.
+LearningHub is a browser-based training site where you practise everyday skills in short, timed rounds and watch your numbers go up. Pick a trainer — mental math, memory recall, or geography — run a 60-second round, answer as many prompts as you can, and get instant feedback on accuracy, speed and streak.
 
 Everything runs on one reusable **Drill Engine**: the same loop (prompt → answer → instant feedback → score/streak → next) powers every trainer, so adding a new skill means writing a question generator and a small renderer, nothing more.
 
-The problem it solves: people who want to get better at a concrete skill are stuck choosing between full courses that are too slow and single-purpose apps that do not talk to each other. LearningHub gives many skills one consistent practice loop and one progress history.
+The problem it solves: people who want to get better at a concrete, useful skill are stuck choosing between full courses that are too slow and single-purpose apps that do not talk to each other. LearningHub gives many skills one consistent practice loop and one progress history — a few minutes a day, with the improvement showing up in ordinary life rather than only inside the app.
 
 Version 1 is a static site — HTML, CSS, JavaScript, content in JSON files, progress in `localStorage`. No third-party APIs, no paid services, no login. A reviewer can clone the repository, open the page, and use the whole application.
 
@@ -22,17 +22,20 @@ Version 1 is a static site — HTML, CSS, JavaScript, content in JSON files, pro
 
 ## 1. Problem Statement
 
-People want to get measurably better at practical skills — mental math, memory, geography, music reading, ear training, spelling, chess tactics — but existing tools fall into two camps:
+People want to get measurably better at skills they actually use — mental math, memory, geography, music reading, ear training, spelling, chess tactics — but existing tools fall into two camps:
 
-- **Full courses** (Khan Academy, Duolingo) teach thoroughly but are far too slow when you only want to drill one weak spot for five minutes.
+- **Full courses** (Khan Academy, Duolingo) teach thoroughly but are far too slow when you only want to sharpen one weak spot for five minutes.
 - **Single-purpose apps** (Monkeytype for typing, Seterra for maps, Lichess puzzles for chess) are fast and addictive, but fragmented: separate sites, separate accounts, separate progress, and no shared sense of "am I actually improving?"
 
 There is no Monkeytype-style site that offers **fast, timed, score-driven drills** across many skills with one consistent progress system.
 
+Underneath both gaps is a third problem: most drill tools optimise for being fun to use rather than for teaching something you can use afterwards. Getting better at the app is not the same as getting better at the thing.
+
 Concrete situations:
 
-- A student has a maths test on Friday and wants ten minutes of fraction drills tonight — not a 40-minute video lesson.
-- A student keeps mixing up European capitals and wants repeated exposure to exactly the ones they get wrong.
+- Someone splitting a restaurant bill or checking a discount in a shop reaches for their phone, because the arithmetic no longer comes automatically — and they would like it to.
+- Someone is told a name, a door code or a four-item shopping list, and it is gone a minute later.
+- A country comes up in the news and someone realises they could not place it on a map, or name its capital.
 - Someone practises on three different drill sites and has no idea whether they are improving, because no site keeps a history they can compare.
 
 ---
@@ -43,7 +46,7 @@ A single website where every skill is trained through the same addictive loop:
 
 > **prompt → answer → instant feedback → score / streak → next**
 
-Users pick a trainer, run a 60-second round, see accuracy, speed and streak, and watch their progress improve over days and weeks. Over time the site shows them where they are weak and points them at it.
+Users pick a trainer, run a 60-second round, see accuracy, speed and streak, and watch their progress improve over days and weeks. Over time the site shows them where they are weak and points them at it. The measure of success is not the score on the screen — it is noticing, a month later, that the mental arithmetic in a shop happens without effort.
 
 ---
 
@@ -53,7 +56,7 @@ LearningHub borrows the *format* of speed-drill sites but changes the *content* 
 
 | Existing tool | What it does well | Where it falls short | What LearningHub does instead |
 |---|---|---|---|
-| **Monkeytype** | Superb timed-drill UX, instant stats, minimal keyboard-first interface | Trains typing on **random word sequences that nobody would ever write in a real sentence**. You get faster at the test itself, but the content teaches you nothing you can use afterwards | Keeps the 60-second timed format and the stats screen, but every prompt is **real, usable content**: an actual arithmetic problem, an actual capital city, an actual sequence to memorise. Improving your score means you have genuinely learned something |
+| **Monkeytype** | Superb timed-drill UX, instant stats, minimal keyboard-first interface | Trains typing on **random word sequences that nobody would ever write in a real sentence**. You get faster at the test itself, but the content teaches you nothing you can use afterwards | Keeps the 60-second timed format and the stats screen, but every prompt is **real, usable content**: an actual arithmetic problem, an actual capital city, an actual sequence to memorise. Improving your score means you have genuinely learned something that carries into daily life |
 | **Seterra** | Large, high-quality geography question bank | Geography only; progress is per-quiz rather than a personal history; no cross-skill view | Geography is one trainer among many, sharing the same scoring, history and weak-area tracking as every other trainer |
 | **Lichess puzzles** | Excellent difficulty adaptation and streak mechanics | Chess only, and it assumes you already play chess | The adaptive and streak ideas are generalised into the Drill Engine so *any* skill gets them |
 | **Anki** | Proven spaced repetition, fully user-controlled | Slow card-by-card pace, no timed competitive loop, heavy setup before you learn anything | Zero setup: open the site, pick a trainer, start answering. Spaced repetition is a later phase layered onto an already enjoyable loop |
@@ -67,10 +70,14 @@ LearningHub borrows the *format* of speed-drill sites but changes the *content* 
 
 ## 4. Who This Serves
 
-**Primary user for v1 — the exam-prep student (14–22).**
-A secondary-school or first-year university student with a specific weak area (arithmetic speed, European geography, memorising sequences) and limited time. They want short repeatable sessions that fit between other obligations, instant feedback on what they got wrong, and visible proof that they are improving. They work on a laptop, prefer keyboard input, and will abandon anything that demands a sign-up before showing value.
+**Primary user for v1 — the everyday self-improver.**
+Someone who wants the skills they use in ordinary life to get sharper: working out a price or a split bill in their head without reaching for a phone, remembering a code, a shopping list or a name they were just told, and knowing where places are when they come up in conversation or in the news. They are not studying for anything in particular and have no teacher setting them tasks — they simply want to be a bit better next month than they are today.
 
-Why this user: the three MVP trainers (Mental Math, Memory Recall, Geography) are exactly the skills this group drills before tests, so v1 serves one group completely instead of five groups partially.
+They have a few spare minutes at a time, not evenings. They will not sit through a course, will not create an account before seeing whether the thing is any good, and will stop using anything that feels like homework. What keeps them coming back is seeing a number go up and knowing the practice was worth something outside the app.
+
+Age and occupation vary — a pupil, a student, someone working full time, someone retired. What unites them is the motivation: **practical everyday usefulness, trained in small daily doses**, not qualification or exam results.
+
+Why this user: the three MVP trainers map directly onto everyday situations rather than onto a syllabus. Mental Math is the arithmetic you do while shopping or splitting a bill. Memory Recall is remembering lists, codes and names. Geography is general knowledge that comes up constantly. v1 therefore serves one coherent group completely rather than five groups partially.
 
 **Secondary users — served later, not designed for in v1:**
 
@@ -79,7 +86,7 @@ Why this user: the three MVP trainers (Mental Math, Memory Recall, Geography) ar
 | Musicians and music learners | Note reading, interval and chord recognition | 2 |
 | Hobbyist chess players | Tactical pattern recognition without playing full games | 2 |
 | ESL learners | Vocabulary and spelling speed | 2 |
-| Self-improvers | Memory and mental-math training with visible progress | 1 (overlaps with primary) |
+| Pupils and students revising | The same trainers, used for test preparation rather than daily upkeep | 1 (benefits from v1, not designed around) |
 
 ---
 
@@ -238,7 +245,7 @@ Phase 1 is the only committed scope for this course. The first Phase 2 trainer, 
 | Date | Decision |
 |---|---|
 | 2026-09-27 | Initial concept: **GameHub**, a game-discovery and backlog-decision platform |
-| 2026-10-05 | Switched to **LearningHub**. GameHub depended on an external games API (IGDB or RAWG) for all of its content, which conflicts with the "no third-party APIs, no keys" principle and would have made the application impossible for a reviewer to run without credentials. LearningHub delivers comparable logical complexity — question generators, timing, scoring, progress analysis — with content the project fully owns |
+| 2026-10-05 | Switched to **LearningHub**. Two problems killed GameHub. First, it could not function without external services: all game data would have come from a third-party games API, and several planned features needed further paid or key-protected services on top. That conflicts with the "no strings attached" principle and would have left a reviewer unable to run the application without our own credentials. Second, and more fundamentally, the core feature did not work. GameHub was meant to recommend what to play based on how much you had played something and when you last played it — but that data lives inside each platform. Pulling playtime out of Steam, Epic, Xbox and PlayStation would have meant a separate integration for every one of them, and for a game like Minecraft, which runs through several different launchers and has no single authoritative playtime source, it would have been effectively impossible. Without reliable playtime the recommendations would have been guesswork. LearningHub keeps comparable logical complexity — question generators, timing, scoring, progress analysis — using content the project fully owns and data it generates itself |
 | 2026-10-06 | Supervisor feedback received on the brief |
 | 2026-10-10 | Brief revised to v2: added an Executive Summary and a *What Makes This Different* section, narrowed to a single primary user, replaced engagement-based success metrics with verifiable functional criteria, pulled progress charts and weak-area tracking into v1, removed the discarded GameHub brief, and restored `README.md` and `.gitignore` |
 
