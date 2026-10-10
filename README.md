@@ -10,13 +10,27 @@ Repoet inneholder gruppens applikasjon og dokumentasjon av utvikling, testing og
 
 ## Prosjekt: LearningHub
 
-**LearningHub** er en nettside der du trener hverdagsferdigheter i korte, tidsbegrensede runder — hoderegning, hukommelse og geografi i første versjon. Alle trenerne bruker den samme løkken:
+**LearningHub** er en nettside der du trener hverdagsferdigheter i korte, poengdrevne runder — hoderegning, hukommelse og geografi i første versjon. Alle trenerne bruker den samme kjerneløkken:
 
 > prompt → svar → umiddelbar tilbakemelding → poeng/streak → neste
 
+Men hver trener bestemmer selv hvordan runden **slutter**:
+
+| Trener | Slutter når |
+|---|---|
+| Hoderegning | Tiden går ut (30/60/120 sekunder) |
+| Geografi | Du er tom for liv (3 liv) |
+| Hukommelse | Første feil — du har ett liv |
+
+Du får **ett forsøk per trener per dag**. Når dagens forsøk er brukt, er den treneren ferdig til i morgen. Vil du spille mer, ligger alle tidligere dagers oppgaver i **arkivet**. Dagens oppgave er den samme for alle — oppgavene genereres deterministisk ut fra datoen.
+
 Etter hver runde ser du antall riktige, nøyaktighet, hastighet og streak, og du kan følge utviklingen din over tid i progresjonsgrafer og se hvilke områder du er svakest på.
 
+De tre trenerne i v1 er et **utgangspunkt**, ikke hele settet. Drill Engine er bygget slik at nye trenere og nye runde-typer kan legges til uten å skrive om motoren.
+
 Målet er ikke høy score i appen, men at ferdighetene sitter i hverdagen: hoderegning i butikken, huske navn og koder, og vite hvor steder ligger. Noen få minutter om dagen, for hvem som helst — ikke bare for elever og studenter.
+
+> **Merk om dagsgrensen:** den lagres i nettleseren, ikke på en server. Den kan omgås ved å tømme lagring eller bruke privat vindu. Det er et bevisst valg i v1 — grensen skal bygge vane, ikke håndheve noe. Reell håndheving krever innlogging og server, som ligger i fase 2.
 
 Full beskrivelse av konsept, omfang og suksesskriterier ligger i [product-brief.md](product-brief.md).
 
@@ -34,13 +48,13 @@ LearningHub gir like mye egen logikk å utvikle og teste — spørsmålsgenerato
 
 | Fase | Status |
 |---|---|
-| Product brief | Ferdig (v2, revidert etter tilbakemelding 2026-10-06) |
-| PRD | Ferdig (v1) — [docs/PRD.md](docs/PRD.md) |
+| Product brief | Ferdig (v3) — [product-brief.md](product-brief.md) |
+| PRD | Ferdig (v2) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Ikke startet |
 | Epics og stories | Definert i PRD, klare for implementasjon |
 | Implementasjon | Ikke startet |
 
-PRD-en inneholder 80 funksjonelle krav, 15 ikke-funksjonelle krav, 9 epics og 53 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot suksesskriteriene i briefen.
+PRD-en inneholder 108 funksjonelle krav, 18 ikke-funksjonelle krav, 10 epics og 63 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 14 suksesskriteriene i briefen.
 
 ## Kjøre prosjektet lokalt
 
