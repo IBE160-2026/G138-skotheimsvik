@@ -1,4 +1,6 @@
-# Tilbakemelding på product brief
+# Tilbakemelding på product brief — GameHub (forkastet prosjekt)
+
+> **Merknad fra gruppen (2026-10-10):** Denne tilbakemeldingen gjelder **GameHub**, som er forkastet som prosjekt. Dokumentet er flyttet hit fra `.agileagentcanvas-context/discovery/` og beholdes kun som prosessdokumentasjon. Gruppen har valgt **LearningHub**; se [`product-brief.md`](../../product-brief.md) §14 for begrunnelsen og [`2026-10-06-tilbakemelding-learninghub.md`](2026-10-06-tilbakemelding-learninghub.md) for tilbakemeldingen som faktisk følges opp. Innholdet under er uendret.
 
 | | |
 |---|---|

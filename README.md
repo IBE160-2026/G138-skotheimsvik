@@ -29,10 +29,12 @@ LearningHub gir like mye egen logikk å utvikle og teste — spørsmålsgenerato
 | Fase | Status |
 |---|---|
 | Product brief | Ferdig (v2, revidert etter tilbakemelding 2026-10-06) |
-| PRD | Ikke startet |
+| PRD | Ferdig (v1) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Ikke startet |
-| Epics og stories | Ikke startet |
+| Epics og stories | Definert i PRD, klare for implementasjon |
 | Implementasjon | Ikke startet |
+
+PRD-en inneholder 80 funksjonelle krav, 15 ikke-funksjonelle krav, 9 epics og 53 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot suksesskriteriene i briefen.
 
 ## Kjøre prosjektet lokalt
 
@@ -58,8 +60,9 @@ Denne seksjonen oppdateres med nøyaktige instruksjoner når første versjon av 
 | Sti | Innhold |
 |---|---|
 | `product-brief.md` | Produktbrief for LearningHub |
+| `docs/PRD.md` | Kravspesifikasjon: funksjonelle og ikke-funksjonelle krav, epics og stories |
 | `docs/feedback/` | Tilbakemeldinger fra faglærer |
-| `docs/` | Øvrige planleggingsdokumenter: PRD, arkitektur, epics og stories (kommer) |
+| `docs/` | Øvrige planleggingsdokumenter: arkitektur (kommer) |
 | `README.md` | Denne filen |
 
 ## KI i utviklingsprosessen

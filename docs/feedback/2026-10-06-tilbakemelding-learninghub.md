@@ -1,5 +1,7 @@
 # Tilbakemelding på product brief
 
+> **Merknad fra gruppen (2026-10-10):** Dette dokumentet er flyttet fra repo-roten til `docs/feedback/` etter punkt 7 i tilbakemeldingen (samle planleggingsdokumenter i én tydelig mappe). Innholdet er uendret. GameHub-tilbakemeldingen det vises til nedenfor ligger nå i [`docs/feedback/2026-10-06-tilbakemelding-gamehub-forkastet.md`](2026-10-06-tilbakemelding-gamehub-forkastet.md). GameHub-briefen er forkastet, og LearningHub er valgt som prosjekt.
+
 | | |
 |---|---|
 | **Gruppe** | G138 – G138-skotheimsvik |
