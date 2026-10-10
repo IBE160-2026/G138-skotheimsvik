@@ -16,15 +16,19 @@ Repoet inneholder gruppens applikasjon og dokumentasjon av utvikling, testing og
 
 Men hver trener bestemmer selv hvordan runden **slutter**:
 
-| Trener | Slutter når |
-|---|---|
-| Hoderegning | Tiden går ut (30/60/120 sekunder) |
-| Geografi | Du er tom for liv (3 liv) |
-| Hukommelse | Første feil — du har ett liv |
+| Trener | Slutter når | Poengsum |
+|---|---|---|
+| Hoderegning | Tiden går ut | Antall riktige svar |
+| Geografi | Du er tom for liv (3 liv) | Antall riktige svar |
+| Hukommelse | Første feil — du har ett liv | Hvilket nivå du nådde |
 
-Du får **ett forsøk per trener per dag**. Når dagens forsøk er brukt, er den treneren ferdig til i morgen. Vil du spille mer, ligger alle tidligere dagers oppgaver i **arkivet**. Dagens oppgave er den samme for alle — oppgavene genereres deterministisk ut fra datoen.
+Hukommelse har ingen slutt. Et mønster av ruter lyser opp i et rutenett, og du skal gjenskape det. Hvert nivå legger til én rute til, og det fortsetter så lenge du klarer det. Du har ett liv, så runden ender alltid med en feil — spørsmålet er bare hvor langt du kom.
 
-Etter hver runde ser du antall riktige, nøyaktighet, hastighet og streak, og du kan følge utviklingen din over tid i progresjonsgrafer og se hvilke områder du er svakest på.
+**Du velger ikke vanskelighetsgrad.** Datoen bestemmer. Noen dager er lette, noen er harde, og alle får nøyaktig den samme oppgaven. Det er det som gjør en poengsum verdt å ha. Parametere som følger av vanskelighetsgraden settes også av datoen — på en hard dag får du for eksempel mer tid i hoderegning, slik at en hard dag faktisk blir vanskeligere og ikke bare tregere.
+
+Du får **ett forsøk per trener per dag**. Når dagens forsøk er brukt, er den treneren ferdig til i morgen. Vil du spille mer, ligger alle tidligere dagers oppgaver i **arkivet**, og de teller likt med dagens resultat. Oppgavene genereres deterministisk ut fra datoen.
+
+Etter hver runde ser du antall riktige, nøyaktighet, hastighet og streak — og hvordan du gjorde det sammenlignet med **forrige forsøk** og **din beste noensinne**. Det er den egentlige motivasjonen: din virkelige motstander er deg selv i går. Du kan også følge utviklingen din over tid i progresjonsgrafer og se hvilke områder du er svakest på.
 
 De tre trenerne i v1 er et **utgangspunkt**, ikke hele settet. Drill Engine er bygget slik at nye trenere og nye runde-typer kan legges til uten å skrive om motoren.
 
@@ -48,13 +52,13 @@ LearningHub gir like mye egen logikk å utvikle og teste — spørsmålsgenerato
 
 | Fase | Status |
 |---|---|
-| Product brief | Ferdig (v3) — [product-brief.md](product-brief.md) |
-| PRD | Ferdig (v2) — [docs/PRD.md](docs/PRD.md) |
+| Product brief | Ferdig (v4) — [product-brief.md](product-brief.md) |
+| PRD | Ferdig (v3) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Ikke startet |
 | Epics og stories | Definert i PRD, klare for implementasjon |
 | Implementasjon | Ikke startet |
 
-PRD-en inneholder 108 funksjonelle krav, 18 ikke-funksjonelle krav, 10 epics og 63 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 14 suksesskriteriene i briefen.
+PRD-en inneholder 125 funksjonelle krav, 19 ikke-funksjonelle krav, 10 epics og 75 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 17 suksesskriteriene i briefen.
 
 ## Kjøre prosjektet lokalt
 
