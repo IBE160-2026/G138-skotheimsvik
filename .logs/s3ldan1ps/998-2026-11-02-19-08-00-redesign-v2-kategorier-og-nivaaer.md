@@ -65,5 +65,33 @@ Også rettet: en `stat-headline`-selektor som aldri traff, og toppnavigasjon som
 **Commit.** `fa9214f`, pushet og verifisert live.
 
 ### Åpne punkter
-- Manuell testmatrise (US-11.1) er fortsatt ikke kjørt for alle seks trenere på alle varianter.
-- Tilgjengelighetsrevisjon (Lighthouse, NFR-19) er fortsatt ikke kjørt.
+- Pattern Memory på 3×3 gir bare 2 nivåer før mønsteret når takgrensen på 55 % fyll. Det er teknisk riktig, men tynt som spill — bør enten droppes som brettstørrelse eller starte på færre ruter. Produktbeslutning, ikke avklart.
+
+## 2026-11-02 kl. 20:40 — S3lDan1PS
+
+### Oppgave
+Kjøre de to gjenstående verifiseringspunktene — manuell testmatrise og tilgjengelighetsrevisjon — og fjerne de dupliserte Arkiv/Progresjon-knappene fra hjemskjermen.
+
+### Plan
+- Automatisere testmatrisen i stedet for å klikke gjennom 24 kombinasjoner én gang.
+- Skrive en tilgjengelighetsrevisjon i nettleseren, siden Lighthouse ikke er tilgjengelig her.
+- Verifisere hvert funn før det «rettes».
+
+### Resultat
+
+**Navigasjon.** De dupliserte Arkiv- og Progresjon-knappene midt på hjemskjermen er fjernet; headeren har dem allerede.
+
+**Testmatrise (US-11.1) er nå automatisert** i `tests/matrix.test.js`: alle 24 kombinasjoner av trener og variant spilles til en naturlig slutt og kontrolleres for gyldig sluttgrunn og gradert resultat. Å skrive den avdekket at hver rundemodus trenger sin egen strategi — completion-runder slutter bare ved å tømme brettet, lives-runder trenger bevisste feil, og tidsrunder trenger klokka dyttet forbi varigheten. Alle 24 passerer.
+
+**Tilgjengelighet (NFR-19)**, revidert over 14 kombinasjoner av skjerm og tema. Reelle funn:
+- Rundeskjermene hadde ingen `h1` i det hele tatt.
+- Kortoverskrifter hoppet fra h1 til h3, og arkivets trenernavn fra h1 til h4.
+- Sekundærtekst i lyst tema lå under AA (4,21 og 3,51 mot kravet 4,5).
+
+**Tre funn var målefeil, ikke defekter**, og ble verifisert i stedet for blindt rettet: gradientknapper rapporterer gjennomsiktig `background-color` (reell kontrast 6,2:1), `color-mix` returnerer `color(srgb ...)` med 0–1-kanaler som leses som nær svart hvis de tolkes som 0–255, og emoji maler sine egne farger. Etter rettingene står det igjen null reelle funn; `--text-muted` i lyst tema måler 7,1:1 mot bakgrunnen, regnet for hånd.
+
+**Commit.** `df4635b`, pushet og deployet.
+
+### Åpne punkter
+- Pattern Memory på 3×3 gir bare 2 nivåer før mønsteret når takgrensen på 55 % fyll. Teknisk riktig, men tynt som spill — bør enten droppes som brettstørrelse eller starte på færre ruter. Produktbeslutning, ikke avklart.
+- Tilgjengelighetsrevisjonen er skrevet selv, ikke kjørt med Lighthouse. Den dækker kontrast, tilgjengelige navn, overskriftshierarki og landemerker, men ikke alt Lighthouse måler.
