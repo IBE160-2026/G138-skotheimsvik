@@ -4,39 +4,63 @@ Gruppeprosjekt i **IBE160 Programmering med KI** ved Høgskolen i Molde, høsten
 
 Repoet inneholder gruppens applikasjon og dokumentasjon av utvikling, testing og kvalitetssikring med KI.
 
+**Live:** <https://g138-skotheimsvik.vercel.app/>
+
 ## Medlemmer
 
 - Daniel Skotheimsvik
 
 ## Prosjekt: LearningHub
 
-**LearningHub** er en nettside der du trener hverdagsferdigheter i korte, poengdrevne runder — hoderegning, hukommelse og geografi i første versjon. Alle trenerne bruker den samme kjerneløkken:
+**LearningHub** er en nettside der du trener hverdagsferdigheter i korte, poengdrevne runder. Alle trenerne bruker den samme kjerneløkken:
 
 > prompt → svar → umiddelbar tilbakemelding → poeng/streak → neste
 
-Men hver trener bestemmer selv hvordan runden **slutter**:
+Innholdet er delt i tre nivåer: **kategori → trener → tema**.
 
-| Trener | Slutter når | Poengsum |
+| Kategori | Trenere |
+|---|---|
+| **Math** | Mental Math Sprint |
+| **Memory** | Pattern Memory, Figure Pairs |
+| **Geography** | Flag Guesser, Outline Guesser, Capital Guesser |
+
+### Du velger nivået selv
+
+Hver trener tilbyr fire vanskelighetsgrader — Beginner, Intermediate, Advanced og Expert — og **hver grad er sin egen dagsoppgave** med eget forsøk og egen rekord. Du kan spille Beginner om morgenen og Expert om kvelden; det er to forskjellige oppgaver.
+
+Innenfor én grad er oppgaven **den samme for alle i hele verden den dagen**. Det er det som gjør en poengsum verdt å ha. Oppgavene genereres deterministisk fra treneren, nivået og datoen.
+
+Hukommelse er unntaket: et tilfeldig mønster kan ikke meningsfullt forfattes som «intermediate», så der velger du **brettstørrelse** i stedet. Hver størrelse er sin egen dagsoppgave med sin egen rekord.
+
+### Rundene slutter på tre måter
+
+| Modus | Slutter når | Brukes av |
 |---|---|---|
-| Hoderegning | Tiden går ut | Antall riktige svar |
-| Geografi | Du er tom for liv (3 liv) | Antall riktige svar |
-| Hukommelse | Første feil — du har ett liv | Hvilket nivå du nådde |
+| **Timed** | Tiden går ut | Mental Math Sprint |
+| **Lives** | Du er tom for liv | Geografi-trenerne (3 liv), Pattern Memory (1 liv) |
+| **Completion** | Brettet er tomt | Figure Pairs |
 
-Hukommelse har ingen slutt. Et mønster av ruter lyser opp i et rutenett, og du skal gjenskape det. Hvert nivå legger til én rute til, og det fortsetter så lenge du klarer det. Du har ett liv, så runden ender alltid med en feil — spørsmålet er bare hvor langt du kom.
+Figure Pairs scorer **feil**, ikke riktige — der er lavest best.
 
-**Du velger ikke vanskelighetsgrad.** Datoen bestemmer. Noen dager er lette, noen er harde, og alle får nøyaktig den samme oppgaven. Det er det som gjør en poengsum verdt å ha. Parametere som følger av vanskelighetsgraden settes også av datoen — på en hard dag får du for eksempel mer tid i hoderegning, slik at en hard dag faktisk blir vanskeligere og ikke bare tregere.
+### Å starte en runde forbruker forsøket
 
-Du får **ett forsøk per trener per dag**. Når dagens forsøk er brukt, er den treneren ferdig til i morgen. Vil du spille mer, ligger alle tidligere dagers oppgaver i **arkivet**, og de teller likt med dagens resultat. Oppgavene genereres deterministisk ut fra datoen.
+Forsøket brukes opp i det du starter, ikke når du er ferdig. Går du ut underveis, blir runden registrert med det du hadde klart så langt. Bytter du nivå midt i en runde, avsluttes den du forlot på samme måte. Det finnes ingen gratis omstart og ingen måte å kikke på dagens oppgave og trekke seg.
 
-Etter hver runde ser du antall riktige, nøyaktighet, hastighet og streak — og hvordan du gjorde det sammenlignet med **forrige forsøk** og **din beste noensinne**. Det er den egentlige motivasjonen: din virkelige motstander er deg selv i går. Du kan også følge utviklingen din over tid i progresjonsgrafer og se hvilke områder du er svakest på.
+### Practice mode
 
-De tre trenerne i v1 er et **utgangspunkt**, ikke hele settet. Drill Engine er bygget slik at nye trenere og nye runde-typer kan legges til uten å skrive om motoren.
+Ved siden av dagsoppgavene ligger en **practice mode**: ubegrenset, uten poeng og fullt konfigurerbar. Det er her filtrene bor — slå av alt unntatt algebra, velg bare Afrika, velg 6×6-brett. Practice-runder vises med full statistikk, men **lagres aldri** og påvirker aldri en rekord. En konfigurerbar runde er ikke sammenlignbar med noen andres.
 
-Målet er ikke høy score i appen, men at ferdighetene sitter i hverdagen: hoderegning i butikken, huske navn og koder, og vite hvor steder ligger. Noen få minutter om dagen, for hvem som helst — ikke bare for elever og studenter.
+### Arkiv
 
-> **Merk om dagsgrensen:** den lagres i nettleseren, ikke på en server. Den kan omgås ved å tømme lagring eller bruke privat vindu. Det er et bevisst valg i v1 — grensen skal bygge vane, ikke håndheve noe. Reell håndheving krever innlogging og server, som ligger i fase 2.
+Alle tidligere dagers oppgaver ligger i **arkivet** og teller likt med dagens. Det betyr at en sensor alltid har noe å spille, selv om dagens forsøk er brukt opp. Arkivet går tilbake til 1. oktober 2026.
 
-Full beskrivelse av konsept, omfang og suksesskriterier ligger i [product-brief.md](product-brief.md).
+### Etter runden
+
+Du ser antall riktige, nøyaktighet, hastighet og streak — og hvordan du gjorde det mot **forrige forsøk** og **din beste noensinne** på akkurat det nivået. Din virkelige motstander er deg selv i går.
+
+> **Merk om dagsgrensen:** den lagres i nettleseren, ikke på en server. Den kan omgås ved å tømme lagring eller bruke privat vindu, og en sideoppdatering midt i en runde unnslipper også forbruksregelen. Det er et bevisst valg i v1 — grensen skal bygge vane, ikke håndheve noe. Reell håndheving krever innlogging og server, som ligger i fase 2.
+
+Full beskrivelse av konsept, omfang og suksesskriterier ligger i [product-brief.md](product-brief.md), og kravene i [docs/PRD.md](docs/PRD.md).
 
 ### Hvorfor vi byttet idé
 
@@ -46,7 +70,7 @@ Prosjektet startet som **GameHub**, en tjeneste for å oppdage spill og velge hv
 
 **Kjernefunksjonen lot seg ikke bygge.** GameHub skulle anbefale hva du burde spille ut fra hvor mye du hadde spilt noe og når du sist spilte det. De dataene ligger inne hos hver enkelt plattform. Å hente spilletid ut av Steam, Epic, Xbox og PlayStation ville krevd en egen integrasjon mot hver av dem — og for et spill som Minecraft, som kjører gjennom flere ulike launchere uten én autoritativ kilde for spilletid, var det i praksis umulig. Uten pålitelig spilletid ville anbefalingene blitt gjetning.
 
-LearningHub gir like mye egen logikk å utvikle og teste — spørsmålsgeneratorer, tidtaking, poengberegning og progresjonsanalyse — med innhold vi eier selv og data applikasjonen produserer selv. Den forkastede GameHub-briefen er fjernet fra repoet. Begrunnelsen er dokumentert i §14 i produktbriefen.
+LearningHub gir like mye egen logikk å utvikle og teste — spørsmålsgeneratorer, tidtaking, poengberegning og progresjonsanalyse — med innhold vi eier selv og data applikasjonen produserer selv.
 
 ## Kjøre prosjektet
 
@@ -60,7 +84,7 @@ npm run serve
 
 Åpne så `http://localhost:8080`.
 
-> Applikasjonen må serveres over HTTP fordi nettleseren blokkerer ES-moduler og `fetch` av innholdsfila over `file://`. Serveren i `tools/serve.js` bruker kun Node sitt standardbibliotek.
+> Applikasjonen må serveres over HTTP fordi nettleseren blokkerer ES-moduler og `fetch` av innholdsfilene over `file://`. Serveren i `tools/serve.js` bruker kun Node sitt standardbibliotek.
 
 ### Kjøre testene
 
@@ -68,11 +92,9 @@ npm run serve
 npm test
 ```
 
-Testene kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere.
+46 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `Memory adds exactly one tile per level (US-5.4, FR-100)`.
 
 ## Publisering
-
-**Live:** <https://g138-skotheimsvik.vercel.app/>
 
 Appen publiseres med **Vercel**, som er den eneste publiseringsløsningen emnet støtter. Hver endring som kommer inn i `main` publiseres automatisk, og hver pull request får sin egen forhåndsvisning.
 
@@ -82,11 +104,10 @@ Oppsettet ligger i [vercel.json](vercel.json):
 |---|---|---|
 | Framework Preset | `Other` (`framework: null`) | Dette er en ren statisk side, ikke Vite eller Next.js |
 | Install Command | tom | Prosjektet har null avhengigheter — ingenting å installere |
-| Build Command | tom | Ingen byggesteg; det er et krav i NFR-12 |
+| Build Command | tom | Ingen byggesteg; det er et krav i NFR-13 |
 | Output Directory | `.` | `index.html` ligger i rota |
-| Root Directory | `.` | Appen ligger ikke i en undermappe |
 
-`vercel.json` setter også sikkerhetsheadere: `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` og `Strict-Transport-Security`. CSP-en tillater kun skript fra samme opphav, og siden laster ingenting fra eksterne domener.
+`vercel.json` setter også sikkerhetsheadere: `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` og `Strict-Transport-Security`.
 
 **Ingen miljøvariabler og ingen hemmeligheter.** Appen har ingen backend, ingen API-nøkler og ingen database. Feltet *Environment Variables* i Vercel skal stå tomt.
 
@@ -97,34 +118,42 @@ index.html              Inngangsside
 src/core/               Drill Engine — ren logikk, ingen DOM
   rng.js                Deterministisk tilfeldighet (mulberry32 + FNV-1a)
   clock.js              Injiserbar klokke og lokale datoer
-  difficulty.js         Vanskelighetsgrad tildelt av datoen
+  variants.js           Nivåer og brettstørrelser — aksen en trener deler oppgavene sine langs
   answer.js             Svarsjekking og normalisering
-  scoring.js            Poeng, nøyaktighet og streaks
-  round.js              Rundeløkke, timed- og lives-modus
-  progress.js           Forsøk, personlige rekorder og sammenligning
+  scoring.js            Poeng, nøyaktighet, streaks og score-retning
+  round.js              Rundeløkke med timed-, lives- og completion-modus
+  progress.js           Forsøk, rekorder per nivå og sammenligning
   storage.js            localStorage med feilhåndtering
-  weak-areas.js         Analyse av svake områder
+  result-codec.js       Kompakt lagringsformat for resultater
+  weak-areas.js         Analyse av svake temaer
   archive.js            Arkiv over tidligere dager
-  registry.js           Registreringskontrakt for trenere
-src/trainers/           En mappe per trener
-src/ui/                 DOM, visninger og rundevisning
+  registry.js           Registreringskontrakt for kategorier og trenere
+src/trainers/           En mappe per kategori
+  index.js              Eneste sted som kjenner hele katalogen
+  math/                 Mental Math Sprint
+  memory/               Pattern Memory og Figure Pairs
+  geography/            Delt innhold, geo-matematikk og de tre trenerne
+src/ui/                 DOM, visninger, rundevisning og stilark
 tests/                  Testsuite
+tools/build-outlines.js Forfatterverktøy: TopoJSON → SVG-omriss
 tools/serve.js          Lokal statisk server
-vercel.json             Publiseringsoppsett for Vercel
+vercel.json             Publiseringsoppsett
 ```
 
-Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å teste ligger i `core` og kan kjøres uten DOM (NFR-14).
+Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å teste ligger i `core` og kan kjøres uten DOM (NFR-15). `src/core/` importerer aldri en trener — bare motsatt vei. Alle seks trenerne ble lagt til uten å endre en eneste fil i `src/core/`.
 
 ## Status
 
 | Fase | Status |
 |---|---|
-| Product brief | Ferdig (v4) — [product-brief.md](product-brief.md) |
-| PRD | Ferdig (v3.2) — [docs/PRD.md](docs/PRD.md) |
+| Product brief | Ferdig (v5) — [product-brief.md](product-brief.md) |
+| PRD | Ferdig (v4.1) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Avklart i koden — se §9-beslutningene nedenfor |
 | Epics og stories | Definert i PRD |
-| Implementasjon | v1 implementert — motor, tre trenere, arkiv, progresjon og UI |
+| Implementasjon | v1 implementert — motor, seks trenere, arkiv, practice mode, progresjon og UI |
 | Publisering | Publisert — <https://g138-skotheimsvik.vercel.app/> |
+
+PRD-en inneholder 163 funksjonelle krav, 22 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 21 suksesskriteriene i briefen.
 
 ### Arkitekturvalg (PRD §9)
 
@@ -133,19 +162,20 @@ Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å t
 | 1 | Vanilla JS eller rammeverk? | Vanilla JS med ES-moduler — ingen avhengigheter |
 | 2 | Testrunner? | Node sin innebygde `node --test`, kjører i Node uten DOM |
 | 3 | Modulformat og bundler? | Native ES-moduler, ingen bundler, ingen byggesteg |
-| 4 | Seeded PRNG? | mulberry32, seedet med FNV-1a-hash av `trenerId:dato` |
-| 5 | Fordeling av vanskelighetsgrader | 20 % beginner, 40 % intermediate, 25 % advanced, 15 % expert |
+| 4 | Seeded PRNG? | mulberry32, seedet med FNV-1a-hash av `trenerId:nivå:dato` |
+| 5 | Nivåer | Spilleren velger selv; hvert nivå er en egen dagsoppgave |
 | 6 | Tidligste arkivdato | 2026-10-01 |
 | 7 | Deteksjon av datoskifte | Intervall hvert 30. sekund pluss `visibilitychange` |
-| 8 | Når vokser rutenettet i Hukommelse? | Når mønsteret ville fylt mer enn 40 % av rutene |
+| 8 | Brettstørrelse i Hukommelse | Valgt av spilleren og fast gjennom runden; mønsteret kan dekke maks 55 % av brettet |
 | 9 | Grafer | Håndskrevet SVG, ingen tredjepartsbibliotek |
-| 10 | Registreringskontrakt for trenere | Generator, renderer, rundemodus og poengtype — se `src/core/registry.js` |
-| 11 | Lisens for geografiinnhold og flagg | Innholdet er faktaopplysninger vi har skrevet selv. Flaggene er Unicode-tegn, ikke bildefiler — ingenting å lisensiere |
-| 12 | Endelig produktnavn | **LearningHub** — bekreftet 2026-11-02 |
+| 10 | Registreringskontrakt for trenere | Kategori, rundemodus, variantakse, score-retning, temaer, generator og renderer — se `src/core/registry.js` |
+| 11 | Lisens for geografiinnhold og flagg | Land og hovedsteder er faktaopplysninger vi har skrevet selv. Flagg utledes fra ISO-koden som Unicode-tegn. Omriss kommer fra Natural Earth, som er public domain |
+| 12 | Endelig produktnavn | **LearningHub** |
 
+### Om kartdataene
 
-PRD-en inneholder 125 funksjonelle krav, 20 ikke-funksjonelle krav, 10 epics og 75 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 17 suksesskriteriene i briefen.
+Landomrissene i Outline Guesser er det eneste innholdet prosjektet ikke kunne forfatte selv. De er avledet fra **Natural Earth**, som er public domain, konvertert til rene SVG-baner av `tools/build-outlines.js` og committet til repoet. Verktøyet kjøres for hånd; applikasjonen leser aldri TopoJSON og gjør aldri et nettverkskall. 166 av 195 land har omriss — de 29 uten er mikrostater og småøystater som ikke finnes i datasettet, og de er med i flagg- og hovedstadstrenerne i stedet.
 
 ## KI i utviklingsprosessen
 
-Prosjektet planlegges med BMAD-metodikken (product brief → PRD → arkitektur → epics og stories) og implementeres med KI-assistanse. Planleggingsdokumentene i `docs/` viser sporbarheten fra idé til kode.
+Prosjektet planlegges med BMAD-metodikken (product brief → PRD → arkitektur → epics og stories) og implementeres med KI-assistanse. Planleggingsdokumentene i `docs/` viser sporbarheten fra idé til kode, og arbeidsøktene er dokumentert i `.logs/`.

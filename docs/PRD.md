@@ -165,6 +165,7 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | FR-10b | Switching to a different variant while a round is in progress ends the current round under FR-10 and starts the new one; it is never a free restart | M | S13 |
 | FR-10c | Leaving a **practice** round costs nothing, writes no result and requires no confirmation | M | S17 |
 | FR-10d | The briefing screen states that starting will spend the attempt, so the commitment is known before it is made | M | — |
+| FR-10e | Navigating away through the header while a round is running triggers the same confirmation and the same forfeit as the Leave button, so no route out of a round is free | M | S13 |
 
 ### 4.2 Drill Engine — loop and round modes
 
@@ -214,6 +215,7 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | FR-42 | The archive reaches back to a defined earliest puzzle date and no further | M | — |
 | FR-43 | Archive results count towards history, personal bests and weak-topic analysis on equal terms | M | S14 |
 | FR-44 | The interface states plainly that the daily limit is stored in the browser and is not enforced | S | — |
+| FR-44a | The same disclosure covers the two ways the limit can be escaped without clearing storage: a page reload mid-round, and a second browser or private window. v1 does not attempt to prevent either | S | — |
 
 ### 4.5 Practice mode
 
@@ -384,7 +386,8 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | FR-145 | Shows a country's outline as an SVG silhouette, without labels, borders or surrounding context, and asks for the country | M | S20 |
 | FR-146 | Outlines come from simplified public-domain Natural Earth data bundled in the repository | M | S9 |
 | FR-147 | Outlines are normalised to a consistent display size, so relative area is not a giveaway | S | — |
-| FR-148 | After a wrong free-text guess the player is told the **great-circle distance** from their guess to the target | M | S20 |
+| FR-148 | A country is shown up to **three times** before it is graded: a wrong free-text guess costs no life and instead reports the **great-circle distance** from the guess to the target. Only the third wrong guess, or a correct one, ends the prompt | M | S20 |
+| FR-148a | Intermediate guesses are never recorded as answers — one country still produces exactly one graded result | M | S20 |
 | FR-149 | After a wrong guess the player is told the **compass direction** from their guess towards the target, to one of eight points | M | S20 |
 | FR-150 | After a wrong guess the player is given a **proximity percentage**, 100 % meaning correct and falling with distance | M | S20 |
 | FR-151 | Distance is reported in kilometres, computed from country centroids with the haversine formula | M | S20 |
@@ -896,5 +899,6 @@ Chosen in the absence of a stated preference, and flagged so they can be overrul
 | v3.2 | 2026-11-02 | Product name and the set-based Memory rule confirmed |
 | v4 | 2026-11-02 | Rewritten against brief v5. **Difficulty selection restored** in a stronger form — four bands per trainer, each an independent daily puzzle with its own record (FR-26 to FR-37). Introduced the **category / trainer / topic hierarchy**, renaming the old weak-area "category" to **topic**. Added **practice mode** as the sole home of filters (FR-45 to FR-58). Added **completion** as a third round mode and **score direction** so a lower score can be better. Catalogue grows from three trainers to six, adding **Figure Pairs**, **Flag Guesser**, **Outline Guesser** and **Capital Guesser**, with Worldle-style distance, direction and proximity hints (FR-148 to FR-152) and bundled Natural Earth outline data. Storage keys move to `v2`. FRs 125 → 163, NFRs 20 → 22, epics 10 → 11, stories 75 → 93, success criteria 17 → 21 |
 | v4.1 | 2026-11-02 | **Starting a daily round now commits the attempt** (FR-10, FR-10a to FR-10d). Quitting records the round as `abandoned` and spends it; switching variant mid-round does the same to the round being left, so it is never a free restart. Practice is exempt. This reverses the previous no-penalty rule, which would otherwise have made the switching rule trivially avoidable. Pattern Memory's fixed board confirmed as intended design rather than an assumption |
+| v4.2 | 2026-11-02 | Reconciled with the built application. **FR-148 rewritten**: the Outline Guesser shows each country up to three times, because a distance hint is worthless if a wrong answer moves straight on to the next shape. Added **FR-10e**, so header navigation cannot be used to walk out of a round for free, and **FR-44a**, documenting that a mid-round reload escapes the commitment rule — the same class of limitation as the soft daily limit |
 
-**Status:** this PRD describes the redesigned v1. The implementation is being rebuilt against it; until that is complete, the deployed application reflects PRD v3.2.
+**Status:** implemented and deployed. The application at <https://g138-skotheimsvik.vercel.app/> reflects this document.

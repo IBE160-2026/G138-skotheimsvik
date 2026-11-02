@@ -69,6 +69,35 @@ function savePracticeFilters() {
 
 // --- routing ----------------------------------------------------------------
 
+/**
+ * Navigating away mid-round must not be a free escape.
+ *
+ * The Leave button already asks and records the result (FR-10a), so the header
+ * links have to go through the same gate — otherwise "Today" would be a way to
+ * peek at a puzzle and keep the attempt.
+ */
+function guardNavigation(action) {
+  if (!activeRound || activeRound.state !== 'running') {
+    action();
+    return;
+  }
+
+  if (activeRound.isPractice) {
+    activeRound.abandon();
+    action();
+    return;
+  }
+
+  const confirmed = globalThis.confirm(
+    'Leaving now ends this round and uses up this attempt. Your score so far will be recorded. Leave anyway?',
+  );
+  if (!confirmed) return;
+
+  const round = activeRound;
+  round.abandon();
+  finishRound(round);
+}
+
 function show(node) {
   if (roundView) {
     roundView.stop();
@@ -234,6 +263,7 @@ function startRound({ trainer, variantKey, puzzleDate, practice = false, filters
 
 function finishRound(round) {
   const result = round.result();
+  activeRound = null;
   if (!result) {
     goHome();
     return;
@@ -302,9 +332,11 @@ function setupChrome() {
   for (const button of document.querySelectorAll('[data-route]')) {
     button.addEventListener('click', () => {
       const route = button.dataset.route;
-      if (route === 'home') goHome();
-      else if (route === 'archive') goArchive();
-      else if (route === 'progress') goProgress();
+      guardNavigation(() => {
+        if (route === 'home') goHome();
+        else if (route === 'archive') goArchive();
+        else if (route === 'progress') goProgress();
+      });
     });
   }
 

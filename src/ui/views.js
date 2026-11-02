@@ -27,8 +27,19 @@ const END_REASON_LABEL = {
   abandoned: 'You left the round early',
 };
 
+/** A thin progress rail showing how much of something is done. */
+function meter(done, total) {
+  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+  return el('div', { class: `meter${percent === 100 ? ' meter-done' : ''}` }, [
+    el('span', { class: 'meter-fill', style: `width: ${percent}%;` }),
+  ]);
+}
+
 /** Home: the three categories and what is left in each today (FR-1). */
 export function categoriesView({ today, categories, registry, progress, onCategory, onArchive, onProgress }) {
+  let allTotal = 0;
+  let allSpent = 0;
+
   const cards = categories.map((category) => {
     const trainers = registry.trainersIn(category.id);
     const total = trainers.reduce((sum, trainer) => sum + variantsFor(trainer).length, 0);
@@ -36,6 +47,8 @@ export function categoriesView({ today, categories, registry, progress, onCatego
       (sum, trainer) => sum + progress.spentVariants(trainer.id, today).length,
       0,
     );
+    allTotal += total;
+    allSpent += spent;
 
     return el('article', { class: 'card category-card' }, [
       el('div', { class: 'category-icon', 'aria-hidden': 'true', text: category.icon }),
@@ -43,8 +56,9 @@ export function categoriesView({ today, categories, registry, progress, onCatego
       el('p', { class: 'muted', text: category.tagline }),
       el('p', {
         class: 'remaining',
-        text: `${total - spent} of ${total} puzzles left today`,
+        text: spent === total ? 'All done today' : `${total - spent} of ${total} left today`,
       }),
+      meter(spent, total),
       el('button', {
         type: 'button',
         class: 'primary',
@@ -55,9 +69,20 @@ export function categoriesView({ today, categories, registry, progress, onCatego
   });
 
   return el('section', {}, [
-    el('h1', { text: "Today's puzzles" }),
-    el('p', { class: 'muted' }, [
-      `${formatDate(today)} — pick your own level. Everyone playing the same level today gets the same puzzle.`,
+    el('div', { class: 'hero' }, [
+      el('div', { class: 'hero-text' }, [
+        el('h1', { text: "Today's puzzles" }),
+        el('p', { class: 'muted' }, [
+          `${formatDate(today)} — pick your own level. Everyone playing that level today gets the same puzzle.`,
+        ]),
+      ]),
+      el('div', { class: 'hero-meter' }, [
+        el('p', {
+          class: 'hero-count',
+          text: `${allTotal - allSpent} of ${allTotal} puzzles left`,
+        }),
+        meter(allSpent, allTotal),
+      ]),
     ]),
     el('div', { class: 'grid' }, cards),
     el('div', { class: 'row-actions' }, [
@@ -85,8 +110,12 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
           el('p', { class: 'mode-label', text: ROUND_MODE_LABEL[trainer.roundMode] }),
           el('p', {
             class: 'remaining',
-            text: `${variants.length - spent.length} of ${variants.length} left today`,
+            text:
+              spent.length === variants.length
+                ? 'All done today'
+                : `${variants.length - spent.length} of ${variants.length} left today`,
           }),
+          meter(spent.length, variants.length),
           el('button', {
             type: 'button',
             class: 'primary',
@@ -108,6 +137,9 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onBa
     const played = spent.has(key);
     const best = progress.personalBest(trainer.id, key);
     return el('article', { class: `card variant-card${played ? ' variant-done' : ''}` }, [
+      trainer.variantKind === 'band'
+        ? el('span', { class: `band-stripe band-${key}`, 'aria-hidden': 'true' })
+        : null,
       el('h3', { text: variantLabel(trainer.variantKind, key) }),
       el('p', { class: 'muted', text: describeRound(trainer, key) }),
       el('p', {

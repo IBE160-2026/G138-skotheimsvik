@@ -29,6 +29,8 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   let promptBody = null;
   let feedbackBar = null;
   let statusBar = null;
+  /** Visual countdown for timed rounds; null for the other two modes. */
+  let timerRail = null;
   /** Wrong guesses so far on the current outline prompt (FR-148). */
   let hints = [];
   let guessesUsed = 0;
@@ -69,6 +71,14 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       stat('Accuracy', `${stats.accuracy}%`),
       stat('Streak', String(stats.currentStreak)),
     );
+
+    if (!timerRail) return;
+    const remaining = round.remainingMs();
+    const total = round.modeParam * 1000;
+    const fraction = Math.max(0, Math.min(1, remaining / total));
+    const bar = timerRail.firstElementChild;
+    bar.style.width = `${fraction * 100}%`;
+    bar.classList.toggle('low', fraction <= 0.2);
   }
 
   /** Submit, show feedback, then move on. */
@@ -423,7 +433,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       const isMatched = matched.has(index);
       return el('button', {
         type: 'button',
-        class: `card${isMatched ? ' card-matched' : ''}`,
+        class: `pair-card${isMatched ? ' pair-card-matched' : ''}`,
         disabled: isMatched,
         'aria-label': isMatched ? `Card ${index + 1}, matched` : `Card ${index + 1}, face down`,
         text: isMatched ? prompt.faces[index] : '',
@@ -433,13 +443,13 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     function reveal(index) {
       cards[index].textContent = prompt.faces[index];
-      cards[index].classList.add('card-face-up');
+      cards[index].classList.add('pair-card-face-up');
       cards[index].setAttribute('aria-label', `Card ${index + 1}, ${prompt.faces[index]}`);
     }
 
     function hide(index) {
       cards[index].textContent = '';
-      cards[index].classList.remove('card-face-up');
+      cards[index].classList.remove('pair-card-face-up');
       cards[index].setAttribute('aria-label', `Card ${index + 1}, face down`);
     }
 
@@ -551,6 +561,12 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       statusBar = el('div', { class: 'round-status' });
       feedbackBar = el('div', { class: 'round-feedback', role: 'status' });
       promptBody = el('div', { class: 'round-body' });
+      timerRail =
+        activeRound.roundMode === 'timed'
+          ? el('div', { class: 'timer-rail', 'aria-hidden': 'true' }, [
+              el('span', { class: 'timer-bar', style: 'width: 100%;' }),
+            ])
+          : null;
 
       render(
         container,
@@ -562,6 +578,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
             el('button', { type: 'button', class: 'ghost', text: 'Leave round', onClick: leave }),
           ]),
         ]),
+        timerRail,
         promptBody,
         feedbackBar,
       );

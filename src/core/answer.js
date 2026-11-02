@@ -119,5 +119,9 @@ export function formatExpected(prompt) {
   if (prompt.kind === 'grid') {
     return `${(prompt.answer ?? []).length} tiles`;
   }
+  // A pairs turn has no single right answer; the two cards simply did not match.
+  if (prompt.kind === 'pairs') {
+    return 'not a pair';
+  }
   return String(prompt.displayAnswer ?? prompt.answer);
 }
