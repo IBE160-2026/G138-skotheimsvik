@@ -25,6 +25,26 @@ const MAX_TIER_BY_BAND = Object.freeze({
 
 const CHOICE_COUNT = 4;
 
+/** Offset from 'A' to the Unicode regional indicator block. */
+const REGIONAL_INDICATOR_A = 0x1f1e6;
+
+/**
+ * The flag glyph for a country, built from its ISO 3166-1 alpha-2 code.
+ *
+ * Deriving it beats storing 195 emoji by hand, and still needs no image files
+ * and no network request (FR-143). Older content files carrying a literal flag
+ * are still honoured.
+ */
+export function flagFor(entry) {
+  const code = typeof entry?.code === 'string' ? entry.code.trim().toUpperCase() : '';
+  if (/^[A-Z]{2}$/.test(code)) {
+    return String.fromCodePoint(
+      ...[...code].map((letter) => REGIONAL_INDICATOR_A + letter.charCodeAt(0) - 65),
+    );
+  }
+  return typeof entry?.flag === 'string' ? entry.flag : '';
+}
+
 /**
  * Validate the content file, skipping malformed entries rather than crashing
  * the trainer (FR-115).
@@ -39,8 +59,7 @@ export function validateCountries(raw, logger = console) {
   }
 
   const valid = [];
-  for (const [index, entry] of list.entries()) {
-    const problems = [];
+  for (const [index, entry] of list.entries()) {    const problems = [];
     if (typeof entry?.name !== 'string' || entry.name.trim() === '') problems.push('name');
     if (typeof entry?.capital !== 'string' || entry.capital.trim() === '') problems.push('capital');
     if (typeof entry?.continent !== 'string' || entry.continent.trim() === '') problems.push('continent');
@@ -56,7 +75,7 @@ export function validateCountries(raw, logger = console) {
       capital: entry.capital,
       continent: entry.continent,
       tier: entry.tier,
-      flag: typeof entry.flag === 'string' ? entry.flag : '',
+      flag: flagFor(entry),
       alternatives: Array.isArray(entry.alternatives) ? entry.alternatives : [],
     });
   }
