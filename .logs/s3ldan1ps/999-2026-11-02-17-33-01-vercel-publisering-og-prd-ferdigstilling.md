@@ -32,7 +32,7 @@ Flaggløsningen avklarer lisensspørsmålet helt: det finnes ingen tredjepartsre
 
 **Publisering.** La til `vercel.json`: `framework: null`, tom `installCommand` og `buildCommand`, `outputDirectory: "."`. Prosjektet har null avhengigheter og intet byggesteg (NFR-12), så både install- og byggesteget hoppes over. Satte også sikkerhetsheadere: CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` og HSTS. CSP-en tillater `'unsafe-inline'` for `style-src` fordi `src/ui/round-view.js` setter `grid-template-columns` som style-attributt på rutenettet; `script-src` er streng `'self'`. Verifiserte at siden ikke laster noe fra eksterne domener — eneste `fetch` er `countries.json` relativt til modulen.
 
-**GitHub CLI.** Installert med `winget install --id GitHub.cli` (versjon 2.103.3). Innlogging er ikke gjort — den krever nettleser og brukerens egen GitHub-konto.
+**GitHub CLI.** Installert med `winget install --id GitHub.cli` (versjon 2.103.3) og autentisert med `gh auth login --web` som `S3lDan1PS`. Første forsøk gikk ut på tid fordi engangskoden utløp før nettleserstegget ble fullført; andre forsøk gikk gjennom. `gh` er satt opp som credential helper for git over HTTPS. Token-scopes: `gist`, `read:org`, `repo`, `workflow`. Verifisert at `gh repo view` når `IBE160-2026/G138-skotheimsvik`, og at repoet er **offentlig** — det er et krav for at hele gruppen skal kunne publisere på Vercels gratisplan.
 
 **PRD.** Oppdatert til v3.1: §9 gjort om fra «åpne spørsmål» til dokumenterte arkitekturbeslutninger, elleve av tolv løst og implementert. §9.1 omskrevet fra «antakelser til bekreftelse» til «antakelser, nå implementert», med kostnaden ved å reversere hver enkelt. La til NFR-20 for automatisk publisering til en offentlig URL.
 
@@ -50,4 +50,3 @@ Ingen kodeendringer var nødvendige — begge beslutningene bekrefter det som al
 
 ### Åpne punkter
 - Vercel-prosjektet er ikke opprettet. Det krever innlogging med egen GitHub-konto, og kun én i gruppen skal gjøre det. Når det er gjort må adressen fylles inn i README-seksjonen «Publisering», som nå står med plassholder.
-- `gh auth login` er ikke kjørt. GitHub CLI er installert, men ikke autentisert.
