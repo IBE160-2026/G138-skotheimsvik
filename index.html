@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LearningHub — daily skill drills. One shared puzzle a day, one attempt per trainer.">
+  <title>LearningHub</title>
+  <link rel="stylesheet" href="src/ui/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="app-header">
+    <nav class="app-nav" aria-label="Main">
+      <button type="button" class="brand" data-route="home">
+        <span aria-hidden="true">🎯</span> LearningHub
+      </button>
+      <div class="nav-actions">
+        <button type="button" data-route="home">Today</button>
+        <button type="button" data-route="archive">Archive</button>
+        <button type="button" data-route="progress">Progress</button>
+        <button type="button" id="theme-toggle" aria-label="Switch colour theme">
+          <span id="theme-icon" aria-hidden="true">🌙</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Non-blocking notice for storage problems (FR-84, FR-86). -->
+  <div id="notice" class="notice" role="status" hidden></div>
+
+  <main id="main" tabindex="-1"></main>
+
+  <!-- Live region for score, level and life announcements (FR-124). -->
+  <div id="live-region" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <footer class="app-footer">
+    <p>
+      One puzzle a day, the same for everyone. The daily limit is kept in your browser
+      and is not enforced — clearing your storage will reset it.
+    </p>
+    <p><button type="button" id="clear-progress" class="link-button">Clear all progress</button></p>
+  </footer>
+
+  <script type="module" src="src/ui/app.js"></script>
+</body>
+</html>

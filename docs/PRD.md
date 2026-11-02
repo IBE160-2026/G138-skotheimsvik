@@ -365,6 +365,7 @@ A `schemaVersion` field is stored alongside both so future versions can migrate 
 | NFR-17 | The test suite runs with a single documented command | README check | S11 |
 | NFR-18 | Lighthouse accessibility score ≥ 90 on the home, round and results screens | Lighthouse audit | S10 |
 | NFR-19 | The README documents purpose, how to run locally, how to run tests, the daily-attempt rule, the absence of difficulty selection, the archive, and the repository structure | Review | S11 |
+| NFR-20 | The application is published automatically from `main` to a public URL, deploys without an install or build step, and requires no environment variables or secrets | Deployment succeeds from a clean commit; the published site is opened and played | S11 |
 
 ---
 
@@ -807,36 +808,36 @@ Every success criterion in the brief is covered by at least one requirement and 
 
 ---
 
-## 9. Open Questions for Architecture
+## 9. Architecture Decisions
 
-Carried from brief §13, to be resolved in the architecture document:
+These questions were carried from brief §13. All but one are now **resolved and implemented**; each decision is recorded in the module that embodies it, so the code and this table cannot drift apart silently.
 
-| # | Question | Blocks |
+| # | Question | Decision | Where |
+|---|---|---|---|
+| 1 | Vanilla JavaScript or a lightweight framework? | **Vanilla JavaScript**, native ES modules, zero runtime dependencies | `src/` |
+| 2 | Which test runner, and where does it run? | **Node's built-in `node --test`**, running in Node with no DOM — nothing to install, and it forces the NFR-14 split | `package.json`, `tests/` |
+| 3 | Module format and bundler? | Native ES modules, **no bundler and no build step**, as NFR-12 requires | `index.html` |
+| 4 | Seeded PRNG and seed derivation? | **mulberry32**, seeded with an **FNV-1a** hash of `trainerId:date`; difficulty uses a date-only seed so one band is shared by every trainer | `src/core/rng.js` |
+| 5 | Difficulty distribution across dates? | **20 % beginner, 40 % intermediate, 25 % advanced, 15 % expert** — weighted to the middle so most days are playable, with expert rare enough to feel like an event | `src/core/difficulty.js` |
+| 6 | Earliest puzzle date and archive depth? | **2026-10-01**, with the archive view paging 60 days at a time | `src/core/archive.js` |
+| 7 | Detecting a local-date change on an open page? | A **30-second interval** plus a **`visibilitychange`** check, so a tab left open overnight releases the new day's attempts | `src/ui/app.js` |
+| 8 | Memory grid growth rule? | Starts at **4×4** and grows to the smallest square grid keeping the pattern at or below a **40 % fill ratio**, so a large pattern stays legible instead of becoming a near-solid block | `src/trainers/memory/index.js` |
+| 9 | SVG or Canvas for charts? | **Hand-written SVG**, no charting library; difficulty is conveyed per data point | `src/ui/chart.js` |
+| 10 | Trainer registration contract? | A trainer supplies a generator, a renderer kind, a round mode and a headline-score type | `src/core/registry.js` |
+| 11 | Geography content and flag licensing? | Content is **hand-authored factual data** in this repository. Flags are **Unicode regional-indicator glyphs** rendered by the system font — **no image files and no third-party assets**, so there is nothing to license | `src/trainers/geography/countries.json` |
+| 12 | Final product name? | **Open.** The code, README and these documents all use *LearningHub*; renaming remains cheap because the name appears only in presentation strings | — |
+
+### 9.1 Assumptions, now implemented
+
+These were chosen in the absence of a stated preference. They are **implemented as described** and remain cheap to overrule.
+
+| Assumption | Why it matters | Cost of reversing |
 |---|---|---|
-| 1 | Vanilla JavaScript or a lightweight framework? | E-1, E-9 |
-| 2 | Which test runner, and does it run in Node, a browser, or both? | E-1, NFR-14 |
-| 3 | Module format and whether a bundler is needed, given NFR-12 forbids a build step | E-1 |
-| 4 | Which seeded pseudo-random algorithm, and how the seed is derived from trainer + date | E-3, NFR-4 |
-| 5 | The exact difficulty distribution across dates — how often each band should occur | E-3, FR-28 |
-| 6 | The earliest puzzle date, and how far back the archive reaches | E-3, FR-42 |
-| 7 | How a local-date change is detected while the page stays open | E-3, FR-38 |
-| 8 | Memory grid growth rule — starting dimensions and the threshold at which the grid enlarges | E-5, FR-102 |
-| 9 | SVG or Canvas for charts, and how difficulty is conveyed on them | E-7, FR-72 |
-| 10 | Exact shape of the trainer registration interface, including round mode and headline score | E-1, FR-11 |
-| 11 | Source and licence for the geography content and flag assets | E-6 |
-| 12 | Final product name | E-10 |
-
-### 9.1 Assumptions pending confirmation
-
-These were chosen in the absence of a stated preference and are flagged so they can be overruled cheaply.
-
-| Assumption | Why it matters | If wrong |
-|---|---|---|
-| Mental Math duration scales 45/60/75/90 s across the four bands | Harder days get more time, so a hard day is harder rather than merely slower | Values change; derivation mechanism unaffected |
-| Memory levels are judged as a *set* — tile order does not matter | Decides whether the task is visual-memory or Simon-style sequence recall | FR-99 inverts; answer checking and the renderer both change |
-| Memory starts at the day's tile count and grows by exactly one per level | Makes the score a clean "level reached" number | Growth rule changes; FR-100 and the score definition change |
-| A single personal best per trainer, not split by difficulty band | Honest, because the player cannot choose an easier band | Best becomes a map keyed by band; comparison logic grows |
-| Geography keeps 3 lives on every band, with difficulty expressed through the country pool | Keeps lives meaningful and comparable | Lives become band-derived like the Mental Math clock |
+| Mental Math duration scales 45/60/75/90 s across the four bands | Harder days get more time, so a hard day is harder rather than merely slower | Low — values only; the derivation mechanism is unaffected |
+| Memory levels are judged as a *set* — tile order does not matter | Decides whether the task is visual-memory or Simon-style sequence recall | **High** — FR-99 inverts, and both answer checking and the renderer change |
+| Memory starts at the day's tile count and grows by exactly one per level | Makes the score a clean "level reached" number | Medium — FR-100 and the score definition change |
+| A single personal best per trainer, not split by difficulty band | Honest, because the player cannot choose an easier band | Medium — best becomes a map keyed by band; comparison logic grows |
+| Geography keeps 3 lives on every band, difficulty expressed through the country pool | Keeps lives meaningful and comparable | Low — lives would become band-derived like the Mental Math clock |
 
 ---
 
@@ -847,5 +848,6 @@ These were chosen in the absence of a stated preference and are flagged so they 
 | v1 | 2026-10-10 | Initial PRD derived from product brief Draft v2 |
 | v2 | 2026-10-10 | Rewritten against brief Draft v3. Added `timed` and `lives` round modes, deterministic seeded generation, one attempt per trainer per date, and the archive |
 | v3 | 2026-10-10 | Rewritten against brief Draft v4. **Difficulty selection removed**: difficulty is assigned by the date (FR-26 to FR-31), trainer parameters are derived from it, and the pre-round screen became a briefing with no controls. **Memory redefined** as an endless visual tile grid judged by set rather than order, requiring lazy prompt supply (FR-24) and unbounded deterministic level generation (NFR-5). **Personal best simplified** to one number per trainer. Added **comparison against previous attempt and all-time best** (FR-65 to FR-67). Added success criteria S13, S16 and S17. FRs 108 → 125, NFRs 18 → 19, stories 63 → 75 |
+| v3.1 | 2026-11-02 | Reconciled with the implementation. §9 turned from open questions into **recorded architecture decisions**, eleven of twelve now resolved and implemented; only the final product name stays open. §9.1 assumptions restated as implemented, with the cost of reversing each. Added **NFR-20** for automatic publication to a public URL |
 
-**Next step in the BMAD flow:** the architecture document, resolving §9 and defining the module structure that satisfies NFR-14 and NFR-15.
+**Status:** the requirements in this document are implemented and covered by the test suite. The remaining open item is the product name.

@@ -48,46 +48,103 @@ Prosjektet startet som **GameHub**, en tjeneste for å oppdage spill og velge hv
 
 LearningHub gir like mye egen logikk å utvikle og teste — spørsmålsgeneratorer, tidtaking, poengberegning og progresjonsanalyse — med innhold vi eier selv og data applikasjonen produserer selv. Den forkastede GameHub-briefen er fjernet fra repoet. Begrunnelsen er dokumentert i §14 i produktbriefen.
 
+## Kjøre prosjektet
+
+Du trenger [Node.js](https://nodejs.org/) 18 eller nyere. Ingen andre avhengigheter, ingen API-nøkler, og ingen byggesteg.
+
+```bash
+git clone https://github.com/IBE160-2026/G138-skotheimsvik.git
+cd G138-skotheimsvik
+npm run serve
+```
+
+Åpne så `http://localhost:8080`.
+
+> Applikasjonen må serveres over HTTP fordi nettleseren blokkerer ES-moduler og `fetch` av innholdsfila over `file://`. Serveren i `tools/serve.js` bruker kun Node sitt standardbibliotek.
+
+### Kjøre testene
+
+```bash
+npm test
+```
+
+Testene kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere.
+
+## Publisering
+
+**Live:** _adressen fylles inn her når Vercel-prosjektet er opprettet (`<navn>.vercel.app`)._
+
+Appen publiseres med **Vercel**, som er den eneste publiseringsløsningen emnet støtter. Hver endring som kommer inn i `main` publiseres automatisk, og hver pull request får sin egen forhåndsvisning.
+
+Oppsettet ligger i [vercel.json](vercel.json):
+
+| Innstilling | Verdi | Hvorfor |
+|---|---|---|
+| Framework Preset | `Other` (`framework: null`) | Dette er en ren statisk side, ikke Vite eller Next.js |
+| Install Command | tom | Prosjektet har null avhengigheter — ingenting å installere |
+| Build Command | tom | Ingen byggesteg; det er et krav i NFR-12 |
+| Output Directory | `.` | `index.html` ligger i rota |
+| Root Directory | `.` | Appen ligger ikke i en undermappe |
+
+`vercel.json` setter også sikkerhetsheadere: `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` og `Strict-Transport-Security`. CSP-en tillater kun skript fra samme opphav, og siden laster ingenting fra eksterne domener.
+
+**Ingen miljøvariabler og ingen hemmeligheter.** Appen har ingen backend, ingen API-nøkler og ingen database. Feltet *Environment Variables* i Vercel skal stå tomt.
+
+## Repostruktur
+
+```
+index.html              Inngangsside
+src/core/               Drill Engine — ren logikk, ingen DOM
+  rng.js                Deterministisk tilfeldighet (mulberry32 + FNV-1a)
+  clock.js              Injiserbar klokke og lokale datoer
+  difficulty.js         Vanskelighetsgrad tildelt av datoen
+  answer.js             Svarsjekking og normalisering
+  scoring.js            Poeng, nøyaktighet og streaks
+  round.js              Rundeløkke, timed- og lives-modus
+  progress.js           Forsøk, personlige rekorder og sammenligning
+  storage.js            localStorage med feilhåndtering
+  weak-areas.js         Analyse av svake områder
+  archive.js            Arkiv over tidligere dager
+  registry.js           Registreringskontrakt for trenere
+src/trainers/           En mappe per trener
+src/ui/                 DOM, visninger og rundevisning
+tests/                  Testsuite
+tools/serve.js          Lokal statisk server
+vercel.json             Publiseringsoppsett for Vercel
+```
+
+Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å teste ligger i `core` og kan kjøres uten DOM (NFR-14).
+
 ## Status
 
 | Fase | Status |
 |---|---|
 | Product brief | Ferdig (v4) — [product-brief.md](product-brief.md) |
-| PRD | Ferdig (v3) — [docs/PRD.md](docs/PRD.md) |
-| Arkitektur | Ikke startet |
-| Epics og stories | Definert i PRD, klare for implementasjon |
-| Implementasjon | Ikke startet |
+| PRD | Ferdig (v3.1) — [docs/PRD.md](docs/PRD.md) |
+| Arkitektur | Avklart i koden — se §9-beslutningene nedenfor |
+| Epics og stories | Definert i PRD |
+| Implementasjon | v1 implementert — motor, tre trenere, arkiv, progresjon og UI |
+| Publisering | Vercel-oppsett klart — se [Publisering](#publisering) |
 
-PRD-en inneholder 125 funksjonelle krav, 19 ikke-funksjonelle krav, 10 epics og 75 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 17 suksesskriteriene i briefen.
+### Arkitekturvalg (PRD §9)
 
-## Kjøre prosjektet lokalt
+| # | Spørsmål | Valg |
+|---|---|---|
+| 1 | Vanilla JS eller rammeverk? | Vanilla JS med ES-moduler — ingen avhengigheter |
+| 2 | Testrunner? | Node sin innebygde `node --test`, kjører i Node uten DOM |
+| 3 | Modulformat og bundler? | Native ES-moduler, ingen bundler, ingen byggesteg |
+| 4 | Seeded PRNG? | mulberry32, seedet med FNV-1a-hash av `trenerId:dato` |
+| 5 | Fordeling av vanskelighetsgrader | 20 % beginner, 40 % intermediate, 25 % advanced, 15 % expert |
+| 6 | Tidligste arkivdato | 2026-10-01 |
+| 7 | Deteksjon av datoskifte | Intervall hvert 30. sekund pluss `visibilitychange` |
+| 8 | Når vokser rutenettet i Hukommelse? | Når mønsteret ville fylt mer enn 40 % av rutene |
+| 9 | Grafer | Håndskrevet SVG, ingen tredjepartsbibliotek |
+| 10 | Registreringskontrakt for trenere | Generator, renderer, rundemodus og poengtype — se `src/core/registry.js` |
+| 11 | Lisens for geografiinnhold og flagg | Innholdet er faktaopplysninger vi har skrevet selv. Flaggene er Unicode-tegn, ikke bildefiler — ingenting å lisensiere |
+| 12 | Endelig produktnavn | **Fortsatt åpent.** Navnet *LearningHub* brukes inntil videre |
 
-Applikasjonen er ikke implementert ennå. Når koden er på plass vil den være en statisk nettside uten API-nøkler, uten betalte tjenester og uten byggesteg:
 
-```bash
-git clone https://github.com/IBE160-2026/G138-skotheimsvik.git
-cd G138-skotheimsvik
-```
-
-Deretter åpner du `index.html` i nettleseren, eller starter en lokal server:
-
-```bash
-python -m http.server 8000
-```
-
-og går til <http://localhost:8000>.
-
-Denne seksjonen oppdateres med nøyaktige instruksjoner når første versjon av applikasjonen er på plass.
-
-## Struktur i repoet
-
-| Sti | Innhold |
-|---|---|
-| `product-brief.md` | Produktbrief for LearningHub |
-| `docs/PRD.md` | Kravspesifikasjon: funksjonelle og ikke-funksjonelle krav, epics og stories |
-| `docs/feedback/` | Tilbakemeldinger fra faglærer |
-| `docs/` | Øvrige planleggingsdokumenter: arkitektur (kommer) |
-| `README.md` | Denne filen |
+PRD-en inneholder 125 funksjonelle krav, 20 ikke-funksjonelle krav, 10 epics og 75 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 17 suksesskriteriene i briefen.
 
 ## KI i utviklingsprosessen
 
