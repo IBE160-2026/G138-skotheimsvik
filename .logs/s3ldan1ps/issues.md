@@ -9,10 +9,13 @@
 - [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — tilgjengelighetsrevisjonen er egenskrevet, ikke Lighthouse; dækker ikke alt Lighthouse måler
 - [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — personlista i Famous People er vestlig-tung; bør utvides for bredere bruk (løst 2026-11-02: utvidet til 134 personer med internasjonal dekning)
 - [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — portrettene er 3,9 MB og lastes per oppgave; usette bilder er ikke tilgjengelige offline (NFR-8a)
-- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — portrettene er ikke ansiktsbeskåret; noen kan bli uheldig beskåret av object-position: center top
+- [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — portrettene er ikke ansiktsbeskåret; noen kan bli uheldig beskåret av object-position: center top (løst 2026-11-02: justert til 50% 22%)
 - [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — Famous People er ikke med i tilgjengelighetsrevisjonen (kjørt før treneren fantes)
 
 - [x] 2026-11-02 [vercel-publisering-og-prd-ferdigstilling](999-2026-11-02-17-33-01-vercel-publisering-og-prd-ferdigstilling.md) — Vercel-prosjektet må opprettes, og adressen fylles inn i README-seksjonen «Publisering» (løst 2026-11-02: live på <https://g138-skotheimsvik.vercel.app/>)
 - [x] 2026-11-02 [vercel-publisering-og-prd-ferdigstilling](999-2026-11-02-17-33-01-vercel-publisering-og-prd-ferdigstilling.md) — `gh auth login` er ikke kjørt; GitHub CLI er installert, men ikke autentisert (løst 2026-11-02: innlogget som `S3lDan1PS`)
 - [x] 2026-11-02 [vercel-publisering-og-prd-ferdigstilling](999-2026-11-02-17-33-01-vercel-publisering-og-prd-ferdigstilling.md) — produktnavnet er ikke bestemt (PRD §9, spørsmål 12); *LearningHub* brukes inntil videre (løst 2026-11-02: navnet er bekreftet som **LearningHub**)
 - [x] 2026-11-02 [vercel-publisering-og-prd-ferdigstilling](999-2026-11-02-17-33-01-vercel-publisering-og-prd-ferdigstilling.md) — Hukommelse vurderer ruter som et sett, ikke en sekvens; implementert, men ikke bekreftet av brukeren (løst 2026-11-02: bekreftet som tiltenkt design)
+- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — `people.json` er 382 kB og lastes i sin helhet når People-kategorien åpnes
+- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — 734 av 1134 personer er uten portrett (bevisst tak på 400), så runder blander prompter med og uten bilde
+- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — de 1000 genererte hintene er maskinelt kontrollert, men ikke lest av et menneske

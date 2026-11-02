@@ -149,3 +149,40 @@ Verktøyet ber nå API-et generere miniatyren, noe som også håndterer TIFF→J
 - Bildene er 3,9 MB og lastes per oppgave. Et portrett du ikke har sett før er ikke tilgjengelig offline; runden faller tilbake til bare hint. Dokumentert som NFR-8a.
 - Tilgjengelighetsrevisjonen er egenskrevet, ikke Lighthouse, og Famous People er ikke med i den.
 - Portrettene er ikke beskåret rundt ansiktet. De vises med `object-position: center top`, som stort sett treffer, men noen bilder kan bli uheldig beskåret.
+
+## 2026-11-02 kl. 21:22 — S3lDan1PS
+
+### Oppgave
+Vise kategorien underveis i Famous People, og utvide lista til rundt 1000 personer.
+
+### Plan
+- Bygge `tools/build-people.js` etter samme mønster som kartdata- og bildeverktøyene: kjøres for hånd, resultatet committes.
+- Flytte de 134 håndskrevne hintene til `people.curated.json`, slik at de aldri blir overskrevet av noe generert.
+- Hente portretter til den utvidede lista og ta stilling til størrelsen.
+
+### Resultat
+
+**Lista er utvidet fra 134 til 1134 personer** — 231 musikk, 225 film, 225 sport, 224 vitenskap, 229 historie. Wikidata rangerer folk etter hvor mange Wikipedia-utgaver som har en artikkel om dem; det er et rimelig mål på hvor kjent noen er, og det favoriserer ikke ett lands presse. Ingressen fra Wikipedia blir hintet etter at alle former av navnet er sladdet bort. De 134 håndskrevne ligger nå i `people.curated.json` og har alltid forrang.
+
+**Kategorien avgjøres av artikkelteksten, ikke av yrkeskoden.** Wikidata har Shakespeare som skuespiller, Nietzsche som komponist og Trump med filmroller — alt riktig, ingenting av det der en spiller ville lett. Første kjøring la dem under film og musikk.
+
+**Fire feil, alle funnet ved å lese det faktiske svaret:**
+1. Wikidata svarer `200` med avkortet kropp og en Java-stacktrace påhengt når spørringen ikke rekker ferdig innen minuttet. Parsingen må feile før terskelen kan heves.
+2. Wikipedias `exlimit` er maks 20 titler per kall, ikke 50. Ber man om flere, kommer det tilbake noe som ikke er gyldig JSON.
+3. Å kutte utdraget til to setninger på serversiden fjernet setningen som gjorde hintet brukbart: første kjøring beholdt 57 av 199 film-kandidater, mot 200 av 200 etterpå.
+4. Etikettjenesten svarer av og til med selve ID-en, så `Q22686` lå i lista som et navn.
+
+**Hintevask**: nøstede parenteser krever flere passeringer — uttaleguidene er fulle av dem — og navnerester som sladdingen ikke kan kjenne til blir klippet bort: «of Syracuse was an Ancient Greek mathematician», «, 1st Viscount St Alban was an English philosopher».
+
+**Portretter er satt til maks 400.** Bilder til alle 1134 ville lagt rundt 29 MB i repoet for et spill som viser femten personer om dagen. Taket følger kjendis-rangeringen, så de du faktisk møter har bilde. NFR-23 er hevet fra 5 MB til 15 MB; faktisk størrelse er 10,4 MB.
+
+**Kategorimerke** vises nå ved siden av hintet, og portrettbeskjæringen er justert fra `center top` til `50% 22%`.
+
+**Ny test** sjekker alle 1134 hint for de feilene som er mekaniske og ikke redaksjonelle: en overlevende del av navnet, en løs parentes, en setning som starter midt i et ord, doble sladdestreker. Den fant én i det håndskrevne settet som allerede var publisert — hintet for Usain Bolt beskrev en «lightning-bolt pose».
+
+**Commit.** `4484abf`, pushet og deployet. Verifisert i produksjon: 1134 personer og 400 portretter leveres fra vårt eget opphav. 87 tester passerer.
+
+### Åpne punkter
+- `people.json` er nå 382 kB og lastes i sin helhet når People-kategorien åpnes.
+- 734 av 1134 personer er uten portrett. Det er bevisst, men det betyr at de fleste runder blander prompter med og uten bilde.
+- De genererte hintene er ikke lest av et menneske. De er maskinelt kontrollert, men språklig kvalitet er ikke vurdert manuelt.
