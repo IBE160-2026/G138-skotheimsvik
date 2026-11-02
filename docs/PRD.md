@@ -1,10 +1,10 @@
 # Product Requirements Document — LearningHub v1
 
-**Status:** Draft v3
+**Status:** Draft v4
 **Author:** Daniel Skotheimsvik, with AI support (BMAD Product Manager role)
 **Course:** IBE160 Programmering med KI, Høgskolen i Molde, autumn 2026
-**Source document:** [product-brief.md](../product-brief.md) (Draft v4)
-**Date:** 2026-10-10
+**Source document:** [product-brief.md](../product-brief.md) (Draft v5)
+**Date:** 2026-11-02
 
 > Written in English to match the product brief. The README is in Norwegian for the course.
 
@@ -12,13 +12,13 @@
 
 ## 1. Purpose and Scope
 
-This document turns the LearningHub product brief into numbered, testable requirements that architecture, stories and tests can be traced back to.
+This document turns the LearningHub product brief into numbered, testable requirements that architecture, stories and tests trace back to.
 
-**In scope:** everything listed as v1 (MVP) in brief §7 — the Drill Engine with two round modes, date-assigned difficulty, the daily-attempt rule and archive, deterministic puzzle generation, three trainers, comparison against previous and best, progress history with charts, weak-area tracking, `localStorage` persistence, theming and accessibility.
+**In scope:** everything listed as v1 in brief §7 — the Drill Engine with three round modes, the category/trainer/topic hierarchy, player-chosen difficulty bands, board sizes for Memory, deterministic daily puzzles, one attempt per trainer per variant per day, the archive, practice mode with filters, six trainers across three categories, results comparison, progress charts, weak-topic tracking, `localStorage` persistence, theming and accessibility.
 
-**Out of scope:** everything in brief §7 "Deferred to later phases" and "Explicitly out of scope" — accounts, server storage, enforced daily limits, player-selected difficulty, free-practice mode, further trainers and round modes, leaderboards, day-streak tracking, spaced repetition, third-party APIs, AI features inside the app.
+**Out of scope:** everything in brief §7 "Deferred" and "Explicitly out of scope" — accounts, server storage, enforced daily limits, filters inside daily puzzles, difficulty bands for Memory, recorded practice statistics, leaderboards, day-streak tracking, spaced repetition, third-party APIs, AI features inside the app.
 
-**Primary user:** the everyday self-improver, per brief §4 — someone sharpening skills they use in ordinary life, in a few spare minutes at a time, with no teacher and no exam.
+**Primary user:** the everyday self-improver, per brief §4.
 
 ### 1.1 Requirement ID conventions
 
@@ -30,7 +30,7 @@ This document turns the LearningHub product brief into numbered, testable requir
 | `US-n.n` | User story |
 | `S-n` | Success criterion from brief §9 |
 
-Priority uses MoSCoW: **M** = must, **S** = should, **C** = could. Every **M** requirement must be implemented for v1 to be considered done.
+Priority uses MoSCoW: **M** = must, **S** = should, **C** = could. Every **M** requirement must be implemented for v1 to be done.
 
 ---
 
@@ -38,28 +38,27 @@ Priority uses MoSCoW: **M** = must, **S** = should, **C** = could. Every **M** r
 
 | Term | Definition |
 |---|---|
-| **Trainer** | A skill module: a question generator or content file, a renderer, and a declared round mode. v1 ships three; the set is designed to grow |
-| **Drill Engine** | Shared runtime owning the loop, answer checking, scoring, streaks, round end conditions, results, persistence, daily difficulty, the daily-attempt rule and the archive |
-| **Round mode** | How a round ends. v1 supports `timed` and `lives` |
-| **Timed round** | Ends when the clock reaches zero. Used by Mental Math |
-| **Lives round** | Ends when the player runs out of lives. Used by Geography (3) and Memory (1) |
-| **Round** | One play of a puzzle: a trainer, a puzzle date, and the trainer's round mode |
-| **Puzzle** | The deterministic difficulty, parameters and prompt sequence for a given trainer and date |
+| **Category** | A skill area holding one or more trainers. v1 ships Math, Memory and Geography |
+| **Trainer** | One game inside a category. v1 ships six |
+| **Topic** | A tagged sub-type of prompt within a trainer, used both for weak-area analysis and as a practice-mode filter. Replaces the term *category* used in earlier versions of this document |
+| **Drill Engine** | Shared runtime owning the loop, answer checking, scoring, streaks, round end conditions, results, persistence, daily attempts and the archive |
+| **Round mode** | How a round ends: `timed`, `lives` or `completion` |
+| **Completion round** | Ends when the board is finished. Used by Figure Pairs |
+| **Band** | A difficulty level — `beginner`, `intermediate`, `advanced` or `expert`. **Chosen by the player** |
+| **Board size** | Memory's replacement for bands, e.g. `4x4`. Chosen by the player |
+| **Variant** | The generic term for whichever axis a trainer uses to split its daily puzzles — a band for most trainers, a board size for Memory. A trainer declares which kind it uses |
+| **Variant key** | The stable string identifying a variant, e.g. `expert` or `5x5` |
+| **Puzzle** | The deterministic prompt sequence for a given trainer, variant and date |
 | **Puzzle date** | The calendar date a puzzle belongs to, in the user's local time zone |
-| **Daily difficulty** | The difficulty band assigned to a puzzle date by the engine. Not selectable by the player |
-| **Difficulty band** | `beginner`, `intermediate`, `advanced` or `expert` — controls question complexity and derived parameters |
-| **Attempt** | A player's single scored play of a given trainer on a given puzzle date. One per trainer per date |
-| **Today's puzzle** | The puzzle whose date is the current local date |
-| **Archive** | The set of puzzles from dates before today, playable if not already attempted |
-| **Seed** | The deterministic input to puzzle generation, derived from trainer and puzzle date |
-| **Prompt** | A single question shown to the user |
-| **Level** | In Memory, one pattern of a given tile count. Level *n* has *n* more tiles than level 1 |
-| **Score** | The trainer's headline number: correct answers for Mental Math and Geography, highest level reached for Memory |
-| **Streak** | Count of consecutive correct answers within a round; resets to 0 on a wrong answer |
-| **Category** | A sub-type of prompt within a trainer, e.g. `fractions` in Mental Math. Used for weak-area tracking |
-| **Personal best** | Highest score ever recorded for a trainer, across all dates and difficulties |
-| **Previous attempt** | The most recently played round for a trainer, by puzzle date |
-| **Accuracy** | `correctCount / totalAnswered`, expressed as a percentage; 0 % when nothing was answered |
+| **Attempt** | A player's single scored play of a given trainer, variant and date. One per combination |
+| **Archive** | Puzzles from dates before today, playable if not already attempted |
+| **Practice mode** | Unlimited, filterable, unscored play. Never written to history, never affects a personal best |
+| **Filter** | A practice-mode setting narrowing what a generator may produce — topics, regions, board size, round length |
+| **Seed** | The deterministic input to puzzle generation, derived from trainer, variant and puzzle date |
+| **Score direction** | Whether a higher or lower score is better. Higher for most trainers, **lower for Figure Pairs**, which scores mistakes |
+| **Streak** | Consecutive correct answers within a round; resets to 0 on a wrong answer |
+| **Personal best** | The best score ever recorded for a specific trainer **and variant**, honouring the trainer's score direction |
+| **Accuracy** | `correctCount / totalAnswered` as a percentage; 0 % when nothing was answered |
 
 ---
 
@@ -72,273 +71,339 @@ All data is client-side. No personal data is collected.
 ```
 RoundResult
   id              string      unique, generated
-  trainerId       string      "mental-math" | "memory" | "geography"
-  puzzleDate      string      ISO date, e.g. "2026-10-12", local time zone
-  difficulty      string      "beginner" | "intermediate" | "advanced" | "expert"
-                              assigned by the date, recorded for display and filtering
-  roundMode       string      "timed" | "lives"
-  modeParam       number      durationSec when timed; total lives when lives
-  score           number      headline number; see glossary
+  categoryId      string      "math" | "memory" | "geography"
+  trainerId       string      e.g. "mental-math", "figure-pairs", "outline-guesser"
+  variantKind     string      "band" | "boardSize"
+  variantKey      string      "beginner".."expert", or "3x3".."6x6"
+  puzzleDate      string      ISO date, local time zone
+  roundMode       string      "timed" | "lives" | "completion"
+  modeParam       number      durationSec, total lives, or total pairs
+  score           number      headline number; interpreted per scoreDirection
   playedAt        number      epoch ms, when the round was actually played
-  endedBy         string      "time-expired" | "lives-exhausted" | "prompts-exhausted"
-  elapsedMs       number      actual round duration
+  endedBy         string      "time-expired" | "lives-exhausted" | "board-complete"
+                              | "prompts-exhausted"
+  elapsedMs       number
   totalAnswered   number      >= 0
   correctCount    number      0..totalAnswered
   accuracy        number      0..100, derived
-  avgAnswerTimeMs number      >= 0, 0 when totalAnswered is 0
+  avgAnswerTimeMs number
   bestStreak      number      >= 0
-  livesRemaining  number|null null for timed rounds
-  maxLevel        number|null Memory only: highest level reached
-  categoryStats   CategoryStat[]
+  livesRemaining  number|null null unless roundMode is "lives"
+  maxLevel        number|null Pattern Memory only
+  mistakes        number|null Figure Pairs only: unmatched turns
+  topicStats      TopicStat[]
 
-CategoryStat
-  categoryId      string
-  label           string      human-readable, e.g. "Fractions"
+TopicStat
+  topicId         string
+  label           string
   asked           number      >= 1
   correct         number      0..asked
 
+VariantProgress
+  attempts        Record<puzzleDate, RoundResult>
+  personalBest    number|null
+
 TrainerProgress
   trainerId       string
-  attempts        Record<puzzleDate, RoundResult>   one entry per played date
-  personalBest    number                            highest score ever
+  variants        Record<variantKey, VariantProgress>
 
 Settings
   theme           string      "dark" | "light" | "system"
+
+PracticePreferences
+  Record<trainerId, { filters: object }>   last-used practice filters, convenience only
 ```
 
-Two consequences of removing difficulty selection:
+Three consequences of the v5 redesign:
 
-- `personalBest` is a single number per trainer, not a map keyed by difficulty and mode parameter. The player cannot choose easier conditions to farm a better score, so one best per trainer is honest.
-- `Settings` no longer stores a last-used difficulty or duration, because there is nothing left to remember.
-
-`attempts` is keyed by puzzle date, which enforces the one-attempt-per-day rule structurally: a date either has a result or it does not.
+- `personalBest` lives on the **variant**, not the trainer. Beating your Beginner record does not touch your Expert record, which is the only honest reading when the player chooses the band.
+- `variantKind` lets Memory use board sizes while every other trainer uses bands, without the engine special-casing Memory.
+- Practice rounds produce a `RoundResult` for the results screen but it is **never persisted**, so no storage entity represents them.
 
 ### 3.2 Trainer configuration
 
-Each trainer declares its round mode. Mode parameters are **derived from the day's difficulty**, never chosen by the player.
+| Category | Trainer | Round mode | Variant kind | Variants | Score | Direction |
+|---|---|---|---|---|---|---|
+| Math | Mental Math Sprint | `timed` | band | beginner…expert | Correct answers | higher |
+| Memory | Pattern Memory | `lives` (1) | boardSize | 3x3, 4x4, 5x5, 6x6 | Level reached | higher |
+| Memory | Figure Pairs | `completion` | boardSize | 4x3, 4x4, 6x4, 6x6 | Mistakes | **lower** |
+| Geography | Flag Guesser | `lives` (3) | band | beginner…expert | Correct answers | higher |
+| Geography | Outline Guesser | `lives` (3) | band | beginner…expert | Correct answers | higher |
+| Geography | Capital Guesser | `lives` (3) | band | beginner…expert | Correct answers | higher |
 
-| Trainer | Round mode | Mode parameter | Derived how |
-|---|---|---|---|
-| Mental Math Sprint | `timed` | Round duration in seconds | Scales with the day's difficulty — harder arithmetic gets more time |
-| Memory | `lives` | 1 life | Fixed |
-| Geography Speed | `lives` | 3 lives | Fixed |
-
-**Mental Math duration by band** (initial values, see §9.1):
-
-| Band | Duration |
-|---|---|
-| Beginner | 45 s |
-| Intermediate | 60 s |
-| Advanced | 75 s |
-| Expert | 90 s |
+**Mental Math duration by band:** Beginner 45 s, Intermediate 60 s, Advanced 75 s, Expert 90 s.
 
 ### 3.3 Storage
 
 | Key | Contents |
 |---|---|
-| `learninghub.v1.progress` | `Record<trainerId, TrainerProgress>` |
-| `learninghub.v1.settings` | `Settings` |
+| `learninghub.v2.progress` | `Record<trainerId, TrainerProgress>` |
+| `learninghub.v2.settings` | `Settings` |
+| `learninghub.v2.practice` | `PracticePreferences` |
 
-A `schemaVersion` field is stored alongside both so future versions can migrate or discard incompatible data rather than crash.
+The key version moves from `v1` to `v2` because the shape has changed incompatibly. A `schemaVersion` field is stored alongside each so future versions can migrate or discard rather than crash.
 
 ---
 
 ## 4. Functional Requirements
 
-### 4.1 Application shell and navigation
+### 4.1 Hierarchy, navigation and registration
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-1 | The home screen lists all available trainers as cards showing name, one-line description, round mode, and whether today's attempt is still available | M | S2, S14 |
-| FR-2 | A trainer card shows today's difficulty band and the user's personal best where one exists | M | S13 |
-| FR-3 | Selecting an available trainer opens a pre-round briefing screen stating the day's difficulty, the round mode and the mode parameter in plain language, e.g. "Expert — 90 seconds" or "3 lives, one mistake costs a life" | M | — |
-| FR-4 | The briefing screen offers no difficulty or duration choice; it offers only to start or to go back | M | — |
-| FR-5 | The user can abandon a round in progress and return to the home screen | M | — |
-| FR-6 | Abandoning a round does not consume the day's attempt and writes no result | M | S14 |
-| FR-7 | The user can navigate between home, archive, briefing, active round, results and progress views without a page reload | M | — |
+| FR-1 | The home screen lists the three categories, each showing its name, a one-line description and how many of its daily attempts remain today | M | S2 |
+| FR-2 | Selecting a category lists its trainers, each showing name, description, round mode and remaining attempts today | M | S21 |
+| FR-3 | A trainer's screen lists its variants — four bands, or its board sizes — marking each as available or already played today | M | S13 |
+| FR-4 | Selecting a variant opens a briefing screen stating the trainer, the variant, the round mode and the mode parameter in plain language | M | — |
+| FR-5 | The briefing screen for a daily puzzle offers no filters, only start or back | M | S18 |
+| FR-6 | A trainer is registered by declaring its category, round mode, variant kind, variant list, score direction, topic list, a generator and a renderer | M | S21 |
+| FR-7 | Adding a trainer or a category requires no modification to engine files or to existing trainers | M | S21 |
+| FR-8 | The user can navigate between home, category, trainer, briefing, round, results, archive, practice and progress views without a page reload | M | — |
+| FR-9 | The user can abandon a round in progress and return to the trainer screen | M | — |
+| FR-10 | Abandoning a daily round does not consume the attempt and writes no result | M | S13 |
 
-### 4.2 Drill Engine — round lifecycle and round modes
-
-| ID | Requirement | Priority | Traces to |
-|---|---|---|---|
-| FR-8 | A round starts on explicit user action and presents the first prompt immediately | M | S2 |
-| FR-9 | The engine runs the loop: show prompt → accept answer → show immediate feedback → advance to next prompt, until the round's end condition is met | M | S2 |
-| FR-10 | The engine supports two round modes in v1, `timed` and `lives`; a trainer declares which one it uses | M | — |
-| FR-11 | A trainer is registered by supplying a question generator, a renderer and a round-mode declaration; adding a trainer or supporting a new mode requires no change to existing trainers | M | — |
-| FR-12 | **Timed mode:** the round ends when the day's duration elapses | M | S5 |
-| FR-13 | **Timed mode:** no answer submitted after expiry is counted toward any statistic | M | S5 |
-| FR-14 | **Timed mode:** remaining time is visible throughout the round | M | — |
-| FR-15 | **Lives mode:** the round starts with the trainer's configured number of lives | M | S5 |
-| FR-16 | **Lives mode:** an incorrect answer costs exactly one life | M | S5 |
-| FR-17 | **Lives mode:** the round ends immediately when the last life is lost, and no further answer is accepted or counted | M | S5 |
-| FR-18 | **Lives mode:** remaining lives are visible throughout the round | M | — |
-| FR-19 | **Lives mode:** losing a life is signalled distinctly from an ordinary incorrect answer | S | — |
-| FR-20 | Feedback after each answer states whether it was correct, and when incorrect shows the correct answer | M | S2 |
-| FR-21 | Feedback is visible for a bounded interval (target ≤ 800 ms) and does not require a click to dismiss | S | — |
-| FR-22 | Live score, accuracy and current streak are visible in both modes and update after every answer | M | S1 |
-| FR-23 | The engine never repeats the same prompt twice in a row within a round | S | — |
-| FR-24 | Prompts may be generated lazily, so a round with no fixed length is possible | M | S16 |
-| FR-25 | If a trainer's prompt supply is exhausted before the end condition is met, the round ends with `endedBy` recorded as `prompts-exhausted` | S | — |
-
-### 4.3 Daily difficulty
+### 4.2 Drill Engine — loop and round modes
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-26 | Each puzzle date is assigned a difficulty band by the engine, derived deterministically from the date | M | S12, S13 |
-| FR-27 | The difficulty band is identical for every player on a given date and cannot be influenced by any player input | M | S13 |
-| FR-28 | Over any long run of dates, all four bands occur, and the distribution matches a documented target | M | S13 |
-| FR-29 | Trainer parameters that depend on difficulty are derived from the band, not chosen — including the Mental Math round duration per §3.2 | M | S12 |
-| FR-30 | The day's difficulty band is shown to the player before the round starts and on the results screen | M | — |
-| FR-31 | The difficulty band is recorded on the round result, so history can show how hard each day was | M | — |
+| FR-11 | A round starts on explicit user action and presents the first prompt immediately | M | S2 |
+| FR-12 | The engine runs the loop prompt → answer → feedback → next until the round's end condition is met | M | S2 |
+| FR-13 | The engine supports three round modes: `timed`, `lives` and `completion` | M | S5 |
+| FR-14 | **Timed:** the round ends when the configured duration elapses, and nothing submitted afterwards is counted | M | S5 |
+| FR-15 | **Timed:** remaining time is visible throughout | M | — |
+| FR-16 | **Lives:** the round starts with the configured lives, an incorrect answer costs exactly one, and the round ends immediately when the last is lost | M | S5 |
+| FR-17 | **Lives:** remaining lives are visible throughout, and losing one is signalled distinctly from an ordinary wrong answer | M | — |
+| FR-18 | **Completion:** the round ends when every pair on the board is matched, and not before | M | S19 |
+| FR-19 | **Completion:** pairs remaining and mistakes so far are visible throughout | M | — |
+| FR-20 | Feedback after each answer states whether it was correct and, when incorrect, shows the correct answer | M | S2 |
+| FR-21 | Feedback is visible for a bounded interval (target ≤ 800 ms) without requiring a click | S | — |
+| FR-22 | Live score, accuracy and current streak are visible and update after every answer | M | S1 |
+| FR-23 | Prompts may be generated lazily, so a round with no fixed length is possible | M | S15 |
+| FR-24 | The engine never presents the same prompt twice in a row within a round | S | — |
+| FR-25 | If a generator's prompt supply is exhausted before the end condition, the round ends with `endedBy` recorded as `prompts-exhausted` | S | — |
 
-### 4.4 Daily puzzles, attempts and the archive
+### 4.3 Bands, board sizes and deterministic puzzles
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-32 | Puzzle generation is deterministic: the same trainer and puzzle date always produce the identical difficulty, parameters and prompt sequence | M | S12 |
-| FR-33 | Different puzzle dates produce different prompt sequences for the same trainer | M | S12 |
-| FR-34 | The puzzle date is determined from the user's local calendar date | M | S14 |
-| FR-35 | Each trainer allows one scored attempt per puzzle date | M | S14 |
-| FR-36 | When today's attempt at a trainer has been completed, the home screen shows it as done and does not offer another attempt for that date | M | S14 |
-| FR-37 | Completing today's attempt at one trainer does not affect the availability of other trainers | M | S14 |
-| FR-38 | When the local date changes, each trainer's attempt becomes available again without requiring a reload | S | S14 |
-| FR-39 | An archive view lists previous puzzle dates, marking each as played or unplayed per trainer and showing that date's difficulty band | M | S15 |
-| FR-40 | An unplayed archive puzzle can be played, and its result is recorded against its own puzzle date | M | S15 |
-| FR-41 | An archive puzzle that has already been attempted cannot be replayed | M | S14 |
+| FR-26 | Every trainer using `variantKind: band` offers exactly four bands: beginner, intermediate, advanced, expert | M | S2 |
+| FR-27 | The player chooses the band. No date, setting or prior result restricts which bands are available | M | S13 |
+| FR-28 | Trainers using `variantKind: boardSize` offer no bands at all, and the interface never implies a difficulty for them | M | — |
+| FR-29 | Parameters that follow from the band are derived from it, including the Mental Math duration in §3.2 | M | S12 |
+| FR-30 | Puzzle generation is deterministic: the same trainer, variant and date always produce an identical prompt sequence | M | S12 |
+| FR-31 | Two different variants of the same trainer on the same date produce different prompt sequences | M | S12 |
+| FR-32 | Two different dates for the same trainer and variant produce different prompt sequences | M | S12 |
+| FR-33 | Generation depends only on the seed — never on `Math.random`, wall-clock time, stored progress or any player input | M | S12 |
+| FR-34 | The puzzle date is the user's local calendar date | M | S13 |
+
+### 4.4 Daily attempts and the archive
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-35 | Each combination of trainer, variant and puzzle date allows exactly one scored attempt | M | S13 |
+| FR-36 | Spending the attempt on one variant leaves every other variant of that trainer available | M | S13 |
+| FR-37 | Spending an attempt on one trainer leaves every other trainer unaffected | M | S13 |
+| FR-38 | When the local date changes, all attempts become available again without a page reload | S | S13 |
+| FR-39 | The archive lists previous puzzle dates, showing per trainer and variant whether each was played | M | S14 |
+| FR-40 | An unplayed archive puzzle can be played, and its result is recorded against its own puzzle date | M | S14 |
+| FR-41 | An already-attempted archive puzzle cannot be replayed | M | S13 |
 | FR-42 | The archive reaches back to a defined earliest puzzle date and no further | M | — |
-| FR-43 | Archive results count towards progress history, personal bests and weak-area analysis on equal terms with today's results | M | S15 |
+| FR-43 | Archive results count towards history, personal bests and weak-topic analysis on equal terms | M | S14 |
 | FR-44 | The interface states plainly that the daily limit is stored in the browser and is not enforced | S | — |
 
-### 4.5 Answer handling
+### 4.5 Practice mode
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-45 | Numeric prompts accept typed digits and submission via Enter | M | S4 |
-| FR-46 | Text prompts accept typed text and submission via Enter | M | S4 |
-| FR-47 | Multiple-choice prompts accept selection by mouse and by number key (1–4) | M | S10 |
-| FR-48 | Grid prompts accept tile selection by mouse and by keyboard | M | S10 |
-| FR-49 | Answer checking ignores leading and trailing whitespace | M | S4 |
-| FR-50 | Answer checking for text answers is case-insensitive | M | S4 |
-| FR-51 | Text answers accept documented alternative spellings where the content file defines them, e.g. "USA" for "United States" | S | S4 |
-| FR-52 | Empty submissions are ignored: they neither count as answered, nor break the streak, nor cost a life | M | S4 |
-| FR-53 | The input is cleared and refocused automatically after each submission | M | S10 |
+| FR-45 | Every trainer is playable in practice mode, reachable from the trainer screen | M | S17 |
+| FR-46 | Practice mode is unlimited: no attempt is consumed and no limit applies | M | S17 |
+| FR-47 | A practice round is **never written to progress history** | M | S17 |
+| FR-48 | A practice round **never updates a personal best**, however good the score | M | S17 |
+| FR-49 | A practice round still shows a full results screen, clearly labelled as practice | M | S17 |
+| FR-50 | The practice results screen shows no comparison against previous attempts or personal bests, because practice results are not comparable | M | S17 |
+| FR-51 | Practice mode offers a filter panel appropriate to the trainer | M | S18 |
+| FR-52 | **Math filters:** each topic in brief §6.1 can be switched on or off independently, plus a round-duration choice | M | S18 |
+| FR-53 | **Memory filters:** board size, plus display time for Pattern Memory | M | S18 |
+| FR-54 | **Geography filters:** continent or region selection, answer format (multiple choice or free text), and number of lives | M | S18 |
+| FR-55 | Generators honour every active filter: no prompt may be produced from a disabled topic or an excluded region | M | S18 |
+| FR-56 | If a filter combination would produce no valid prompts, the interface explains this and refuses to start rather than generating an empty round | M | S18 |
+| FR-57 | Practice filters default to the trainer's Intermediate-equivalent settings on first use, and the last-used filters are remembered thereafter | S | — |
+| FR-58 | Practice rounds are seeded from a non-deterministic source, so repeating a practice round gives different prompts | M | — |
 
-### 4.6 Scoring
-
-| ID | Requirement | Priority | Traces to |
-|---|---|---|---|
-| FR-54 | The engine counts total answered and correct answers for the round | M | S1 |
-| FR-55 | Each trainer declares which value is its headline score: correct answers for Mental Math and Geography, highest level reached for Memory | M | S16 |
-| FR-56 | Accuracy is `correctCount / totalAnswered × 100`, rounded to one decimal; it is 0 % when nothing was answered | M | S1 |
-| FR-57 | Average answer time is the mean elapsed time per submitted answer in milliseconds | M | — |
-| FR-58 | The current streak increments on a correct answer and resets to 0 on an incorrect answer | M | S1 |
-| FR-59 | Best streak for the round is the highest value the current streak reached | M | S1 |
-| FR-60 | A single personal best is recorded per trainer, across all dates and difficulty bands | M | S8 |
-| FR-61 | A personal best is updated only when the new score is strictly greater than the stored value | M | S8 |
-
-### 4.7 Results screen and comparison
+### 4.6 Answer handling
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-62 | After a round ends, a results screen shows the score, correct answers, total answered, accuracy, average answer time and best streak | M | S1 |
-| FR-63 | The results screen states why the round ended — time expired, or out of lives | M | S5 |
-| FR-64 | The results screen shows the day's difficulty band | M | — |
-| FR-65 | The results screen compares this round against the **previous attempt** at that trainer, stating whether it was better, worse or equal, and by how much | M | S17 |
-| FR-66 | The results screen compares this round against the **all-time best** and indicates clearly when a new best was set | M | S8, S17 |
-| FR-67 | When this is the first ever attempt at a trainer, the comparison states that there is nothing to compare against yet | M | S17 |
-| FR-68 | The results screen shows a weak-area summary when the trainer supports categories | M | S7 |
-| FR-69 | The results screen offers a route to the archive and to the home screen, and does not offer a replay of the same puzzle | M | S14 |
+| FR-59 | Numeric prompts accept typed digits and submission via Enter | M | S4 |
+| FR-60 | Text prompts accept typed text and submission via Enter | M | S4 |
+| FR-61 | Multiple-choice prompts accept mouse selection and number keys 1–4 | M | S10 |
+| FR-62 | Grid prompts accept tile selection by mouse and keyboard | M | S10 |
+| FR-63 | Answer checking ignores leading and trailing whitespace | M | S4 |
+| FR-64 | Text answer checking is case-insensitive and accent-insensitive | M | S4 |
+| FR-65 | Text answers accept documented alternative spellings defined in the content file, e.g. "USA" for "United States" | M | S4 |
+| FR-66 | Empty submissions are ignored: not counted, streak unaffected, no life lost | M | S4 |
+| FR-67 | The input is cleared and refocused after each submission | M | S10 |
 
-### 4.8 Progress history and charts
-
-| ID | Requirement | Priority | Traces to |
-|---|---|---|---|
-| FR-70 | Every completed round is stored against its trainer and puzzle date | M | S6 |
-| FR-71 | A progress view per trainer plots score and accuracy against puzzle date, in chronological order | M | S6, S15 |
-| FR-72 | The chart conveys each day's difficulty band, so a dip on a hard day is not mistaken for decline | M | — |
-| FR-73 | The progress view states puzzles completed, total time practised and the all-time best | S | — |
-| FR-74 | When a trainer has no history, the progress view shows an explanatory empty state rather than an empty chart | M | — |
-| FR-75 | Charts are rendered without a third-party charting library | M | NFR-9 |
-
-### 4.9 Weak-area tracking
+### 4.7 Scoring and personal bests
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-76 | Each prompt is tagged by the trainer with a category identifier | M | S7 |
-| FR-77 | The engine aggregates asked and correct counts per category for the round | M | S7 |
-| FR-78 | Weak-area analysis identifies the category with the lowest hit rate, considering only categories with at least 3 prompts asked | M | S7 |
-| FR-79 | The weak area is presented in plain language, e.g. "You miss Fractions most — 2 of 7 correct" | M | S7 |
-| FR-80 | When no category reaches the 3-prompt threshold, the analysis states that there is not enough data yet | M | S7 |
-| FR-81 | The progress view shows weak-area hit rates aggregated across that trainer's full history, not only the last round | S | S7 |
-| FR-82 | Mental Math and Geography must support categories in v1; Memory need not | M | S7 |
+| FR-68 | The engine counts total answered and correct answers | M | S1 |
+| FR-69 | Each trainer declares its headline score and its score direction per §3.2 | M | S19 |
+| FR-70 | Accuracy is `correctCount / totalAnswered × 100`, one decimal, 0 % when nothing was answered | M | S1 |
+| FR-71 | Average answer time is the mean elapsed time per submitted answer | M | — |
+| FR-72 | The streak increments on a correct answer and resets to 0 on an incorrect one | M | S1 |
+| FR-73 | Best streak is the highest value the streak reached during the round | M | S1 |
+| FR-74 | A personal best is recorded per trainer **and variant** | M | S8 |
+| FR-75 | A personal best updates only when the new score strictly beats the stored one in the direction declared by the trainer — greater for `higher`, smaller for `lower` | M | S8, S19 |
+| FR-76 | The first recorded result for a trainer and variant becomes the personal best regardless of direction | M | S8 |
 
-### 4.10 Persistence
-
-| ID | Requirement | Priority | Traces to |
-|---|---|---|---|
-| FR-83 | Round results, attempt records, personal bests and settings persist in `localStorage` and are restored on page load | M | S1, S6, S14 |
-| FR-84 | If stored data is missing, corrupt or of an unknown schema version, the app starts with empty progress and shows a non-blocking notice instead of crashing | M | NFR-7 |
-| FR-85 | The user can clear all stored progress from a settings screen, with a confirmation step; this also clears attempt records | S | — |
-| FR-86 | If `localStorage` is unavailable, the app remains fully playable for the session, no attempt limit is applied, and the user is told progress will not be saved | S | NFR-7 |
-
-### 4.11 Trainer — Mental Math Sprint (timed)
+### 4.8 Results screen and comparison
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-87 | Runs in timed mode with the duration derived from the day's difficulty band, per §3.2 | M | S5, S12 |
-| FR-88 | Generates arithmetic prompts across the categories: addition, subtraction, multiplication, division, fractions, percentages | M | S3 |
-| FR-89 | The day's difficulty band controls operand range and which categories are drawn. Beginner: addition and subtraction within 0–20. Intermediate: adds multiplication and division within tables to 10. Advanced: adds percentages and larger operands. Expert: adds fractions and multi-step prompts | M | S3 |
-| FR-90 | Division prompts never divide by zero | M | S3 |
-| FR-91 | Division prompts in the Beginner, Intermediate and Advanced bands always have an integer answer | M | S3 |
-| FR-92 | Subtraction prompts in the Beginner band never produce a negative answer | M | S3 |
-| FR-93 | Fraction prompts state the expected answer format and accept the documented equivalent forms | S | S4 |
-| FR-94 | Answers are entered as free numeric input | M | S4 |
-| FR-95 | The headline score is the number of correct answers | M | — |
+| FR-77 | The results screen shows score, correct answers, total answered, accuracy, average answer time and best streak | M | S1 |
+| FR-78 | The results screen states why the round ended | M | S5 |
+| FR-79 | The results screen shows the trainer and the variant played | M | — |
+| FR-80 | For daily and archive rounds, the results screen compares against the **previous attempt** at that trainer and variant, stating better, worse or equal and by how much | M | S16 |
+| FR-81 | For daily and archive rounds, the results screen compares against the **all-time best** for that trainer and variant, announcing a new best when one is set | M | S16 |
+| FR-82 | When no previous result exists, the comparison states there is nothing to compare against yet | M | S16 |
+| FR-83 | Comparisons respect score direction — for Figure Pairs, fewer mistakes is an improvement | M | S19 |
+| FR-84 | The results screen shows a weak-topic summary when the trainer declares topics | M | S7 |
+| FR-85 | The results screen offers routes onward and never offers a replay of the same daily puzzle | M | S13 |
 
-### 4.12 Trainer — Memory (lives, 1 life, endless)
-
-| ID | Requirement | Priority | Traces to |
-|---|---|---|---|
-| FR-96 | Presents a grid of tiles. A subset of tiles is highlighted for a bounded display time, then hidden; the player reproduces the highlighted set by selecting tiles | M | S2 |
-| FR-97 | Runs in lives mode with exactly 1 life: the first incorrect level ends the round | M | S5 |
-| FR-98 | A level is correct only when exactly the highlighted tiles are selected — no omissions and no extras | M | S4 |
-| FR-99 | Tile selection order does not affect correctness | M | S4 |
-| FR-100 | Level 1 starts at the day's starting tile count, and each subsequent level adds exactly one tile | M | S16 |
-| FR-101 | The round has no maximum level: levels continue to be generated for as long as the player keeps succeeding | M | S16 |
-| FR-102 | The grid grows when the tile count would otherwise crowd it, per a documented threshold, so the task stays legible at high levels | M | S16 |
-| FR-103 | The day's difficulty band sets the starting tile count and the display time | M | S12, S13 |
-| FR-104 | The headline score is the highest level completed | M | S16 |
-| FR-105 | The current level is visible throughout the round | M | — |
-| FR-106 | The highlighted tiles are not retrievable from the page once hidden, including via the DOM | M | — |
-| FR-107 | The grid is fully operable by keyboard: arrow keys move between tiles, a key selects and deselects, and a key submits the level | M | S10 |
-| FR-108 | Selected tiles are visually distinct from unselected ones by means other than colour alone | M | S10 |
-
-### 4.13 Trainer — Geography Speed (lives, 3 lives)
+### 4.9 Progress history and charts
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-109 | Runs in lives mode with exactly 3 lives | M | S5 |
-| FR-110 | Content is loaded from a JSON file in the repository containing countries, capitals, continents and flag references | M | NFR-9 |
-| FR-111 | Prompt categories: country → capital, capital → country, flag → country, country → continent | M | S7 |
-| FR-112 | The day's difficulty band controls the country pool. Beginner: widely known countries. Intermediate: adds mid-frequency countries. Advanced: full set. Expert: full set with free-text instead of multiple choice | M | S2, S13 |
-| FR-113 | Multiple-choice distractors are drawn from the same continent where possible, so they are plausible | S | — |
-| FR-114 | Flag assets are stored in the repository; no external image requests are made | M | NFR-9 |
-| FR-115 | The content file is validated at load; malformed entries are skipped and logged rather than crashing the trainer | M | NFR-7 |
-| FR-116 | The headline score is the number of correct answers | M | — |
+| FR-86 | Every completed daily or archive round is stored against its trainer, variant and puzzle date | M | S6 |
+| FR-87 | A progress view per trainer plots score and accuracy against puzzle date in chronological order | M | S6 |
+| FR-88 | The progress view lets the user switch between variants, since scores across bands are not comparable | M | S6 |
+| FR-89 | The progress view states puzzles completed, total time practised and the personal best per variant | S | — |
+| FR-90 | A trainer with no history shows an explanatory empty state rather than an empty chart | M | — |
+| FR-91 | Charts are rendered without a third-party charting library | M | NFR-9 |
 
-### 4.14 Presentation, theming and accessibility
+### 4.10 Weak-topic tracking
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-117 | The interface supports dark and light mode, with the choice persisted | M | — |
-| FR-118 | Theme defaults to the operating system preference on first visit | S | — |
-| FR-119 | Every screen is usable with the keyboard alone, with no mouse interaction required | M | S10 |
-| FR-120 | Focus moves to the answer input, or to the grid, when a round starts and after each answer | M | S10 |
-| FR-121 | Visible focus indicators are present on all interactive elements, including individual grid tiles | M | S10 |
-| FR-122 | The layout is usable down to 360 px width, including the Memory grid at high levels | M | — |
-| FR-123 | Correct/incorrect feedback, and the loss of a life, are conveyed by text or icon in addition to colour | M | S10 |
-| FR-124 | Live score, level and lives updates are announced to assistive technology via an ARIA live region | S | S10 |
-| FR-125 | Reduced-motion preference is respected: non-essential animation is disabled | S | S10 |
+| FR-92 | Each prompt is tagged by its trainer with a topic identifier | M | S7 |
+| FR-93 | The engine aggregates asked and correct counts per topic for the round | M | S7 |
+| FR-94 | Analysis identifies the topic with the lowest hit rate among topics with at least 3 prompts asked | M | S7 |
+| FR-95 | The weak topic is presented in plain language, e.g. "You miss Algebra most — 2 of 7 correct" | M | S7 |
+| FR-96 | When no topic reaches the threshold, the analysis says there is not enough data yet | M | S7 |
+| FR-97 | The progress view shows topic hit rates aggregated across the trainer's full history | S | S7 |
+| FR-98 | Mental Math and all three Geography trainers must support topics; the two Memory trainers need not | M | S7 |
+
+### 4.11 Persistence
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-99 | Results, attempt records, personal bests and settings persist in `localStorage` and are restored on load | M | S1, S13 |
+| FR-100 | Missing, corrupt or unknown-schema data causes the app to start with empty progress and a non-blocking notice, never a crash | M | NFR-7 |
+| FR-101 | The user can clear all stored progress from a settings screen, behind a confirmation | S | — |
+| FR-102 | If `localStorage` is unavailable the app stays fully playable for the session, applies no attempt limit, and says progress will not be saved | S | NFR-7 |
+
+### 4.12 Math — Mental Math Sprint
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-103 | Runs in timed mode with the duration derived from the band per §3.2 | M | S5 |
+| FR-104 | Supports the seven topics in brief §6.1, each tagged on its prompts | M | S7 |
+| FR-105 | Band membership follows the table in brief §6.1 — Expert is the only band including algebra and trigonometry | M | S3 |
+| FR-106 | Division prompts never divide by zero | M | S3 |
+| FR-107 | Division prompts outside the Expert band always have an integer answer | M | S3 |
+| FR-108 | Beginner subtraction never produces a negative answer | M | S3 |
+| FR-109 | Algebra prompts are linear equations with a single unknown and an integer solution | M | S3 |
+| FR-110 | Trigonometry prompts use only angles with exact values — 0°, 30°, 45°, 60°, 90° and their equivalents — and state the expected answer format | M | S3 |
+| FR-111 | Fraction and root prompts state the expected format and accept documented equivalent forms | M | S4 |
+| FR-112 | Answers are entered as free numeric or short-text input | M | S4 |
+
+### 4.13 Memory — Pattern Memory
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-113 | Presents a grid at the chosen board size; a subset of tiles is highlighted for a bounded display time, then hidden, and the player reproduces the set | M | S2 |
+| FR-114 | Runs in lives mode with exactly 1 life | M | S5 |
+| FR-115 | A level is correct only when exactly the highlighted tiles are selected — no omissions, no extras | M | S4 |
+| FR-116 | Tile selection order does not affect correctness | M | S4 |
+| FR-117 | Each level adds exactly one tile to the previous level | M | S15 |
+| FR-118 | The round has no maximum level; levels are generated for as long as the player succeeds | M | S15 |
+| FR-119 | The board does not grow during a round — the chosen size is fixed, and the round ends naturally when the pattern approaches the board's capacity | M | S15 |
+| FR-120 | The headline score is the highest level completed | M | — |
+| FR-121 | The current level is visible throughout | M | — |
+| FR-122 | Hidden tiles are not identifiable from the DOM | M | — |
+| FR-123 | The grid is fully keyboard operable: arrows move, a key selects and deselects, a key submits | M | S10 |
+| FR-124 | Selected tiles are distinguishable by more than colour alone | M | S10 |
+
+### 4.14 Memory — Figure Pairs
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-125 | Presents a board of face-down cards at the chosen size, each figure appearing exactly twice | M | S19 |
+| FR-126 | Board sizes always contain an even number of cells | M | S19 |
+| FR-127 | Turning two cards reveals them; a match leaves them face up, a mismatch turns them back after a bounded delay | M | S19 |
+| FR-128 | A mismatched turn increments the mistake count by exactly one | M | S19 |
+| FR-129 | Runs in completion mode: the round ends when every pair is matched | M | S19 |
+| FR-130 | The headline score is the mistake count, with score direction `lower` | M | S19 |
+| FR-131 | Elapsed time is recorded and breaks ties between equal mistake counts | M | S19 |
+| FR-132 | Figures are rendered from a bundled set requiring no network request, and are distinguishable without relying on colour alone | M | S9, S10 |
+| FR-133 | The board is fully keyboard operable | M | S10 |
+| FR-134 | Face-down card identities are not retrievable from the DOM | M | — |
+
+### 4.15 Geography — shared behaviour
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-135 | All three Geography trainers draw from one validated content file of countries, capitals, continents, flags and outline references | M | S9 |
+| FR-136 | The content file is validated at load; malformed entries are skipped and logged, never crashing the trainer | M | NFR-7 |
+| FR-137 | Bands control the country pool: Beginner widely known, Intermediate adds mid-frequency, Advanced and Expert the full set | M | S2 |
+| FR-138 | Beginner, Intermediate and Advanced use four-way multiple choice; Expert uses free text | M | S2 |
+| FR-139 | Multiple-choice distractors come from the same continent where the pool allows, and the correct answer never appears twice | S | — |
+| FR-140 | Each trainer runs in lives mode with exactly 3 lives | M | S5 |
+| FR-141 | Prompts are tagged by topic, at minimum by continent | M | S7 |
+
+### 4.16 Geography — Flag Guesser
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-142 | Shows a flag and asks for the country | M | S2 |
+| FR-143 | Flags are rendered without any network request | M | S9 |
+| FR-144 | At Advanced and Expert the flag is partially masked, revealing more of it after each wrong guess within the prompt | S | — |
+
+### 4.17 Geography — Outline Guesser
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-145 | Shows a country's outline as an SVG silhouette, without labels, borders or surrounding context, and asks for the country | M | S20 |
+| FR-146 | Outlines come from simplified public-domain Natural Earth data bundled in the repository | M | S9 |
+| FR-147 | Outlines are normalised to a consistent display size, so relative area is not a giveaway | S | — |
+| FR-148 | After a wrong free-text guess the player is told the **great-circle distance** from their guess to the target | M | S20 |
+| FR-149 | After a wrong guess the player is told the **compass direction** from their guess towards the target, to one of eight points | M | S20 |
+| FR-150 | After a wrong guess the player is given a **proximity percentage**, 100 % meaning correct and falling with distance | M | S20 |
+| FR-151 | Distance is reported in kilometres, computed from country centroids with the haversine formula | M | S20 |
+| FR-152 | Hints are shown only in bands using free text; multiple-choice bands show the correct answer instead | M | S20 |
+
+### 4.18 Geography — Capital Guesser
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-153 | Asks for the capital of a named country | M | S2 |
+| FR-154 | Also asks the reverse — the country for a named capital — as a separate topic | M | S2 |
+| FR-155 | Accepts documented alternative capital spellings and transliterations | M | S4 |
+
+### 4.19 Presentation, theming and accessibility
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-156 | Dark and light mode, with the choice persisted and defaulting to the OS preference | M | — |
+| FR-157 | Every screen is usable with the keyboard alone | M | S10 |
+| FR-158 | Focus moves to the answer input or grid when a round starts and after each answer | M | S10 |
+| FR-159 | Visible focus indicators on all interactive elements, including individual tiles and cards | M | S10 |
+| FR-160 | The layout is usable down to 360 px width, including a 6×6 board | M | — |
+| FR-161 | Feedback, life loss and match results are conveyed by text or icon as well as colour | M | S10 |
+| FR-162 | Score, level, lives and pairs-remaining updates are announced via an ARIA live region | S | S10 |
+| FR-163 | Reduced-motion preference is respected, including card-flip animation | S | S10 |
 
 ---
 
@@ -346,26 +411,28 @@ A `schemaVersion` field is stored alongside both so future versions can migrate 
 
 | ID | Requirement | Verification | Traces to |
 |---|---|---|---|
-| NFR-1 | Answer feedback renders within 100 ms of submission on a mid-range laptop | Manual timing | — |
-| NFR-2 | The timer is accurate to within 100 ms over a 90 s round | Automated test with a mocked clock | S5 |
-| NFR-3 | A lives round ends within one prompt of the last life being lost, with no further prompt rendered | Automated test | S5 |
-| NFR-4 | Puzzle generation is pure and reproducible: given the same seed it returns an identical difficulty, parameter set and prompt sequence, with no reliance on `Math.random`, wall-clock time during generation, or any other ambient state | Automated test comparing repeated generations | S12 |
-| NFR-5 | Memory level generation remains deterministic at arbitrary depth: level *n* is a pure function of the seed and *n* | Automated test at levels 1, 10 and 50 | S16 |
-| NFR-6 | First meaningful paint within 2 s on a local file open | Lighthouse | — |
-| NFR-7 | No unhandled exception reaches the user; failures degrade to a readable message | Fault-injection tests on storage and content loading | S9 |
-| NFR-8 | The application works fully offline after first load | DevTools, offline mode | S9 |
-| NFR-9 | No third-party runtime dependencies, no network requests to external hosts, no API keys | Dependency review plus network inspection | S9, S11 |
-| NFR-10 | Stored progress stays below 1 MB after two years of daily play across all trainers | Calculation plus test with generated data | FR-83 |
-| NFR-11 | The app runs in current Chrome, Firefox and Edge | Manual cross-browser check | S11 |
-| NFR-12 | The app can be run by opening the entry page from a clone, or via a plain static file server, with no build step | Fresh-clone test on a second machine | S11 |
-| NFR-13 | No personal data is collected, transmitted or stored | Code review | — |
-| NFR-14 | Pure logic — generators, seeding, difficulty assignment, answer checking, scoring, streaks, end conditions, attempt rules, comparison and weak-area analysis — is isolated from DOM code so it can be unit-tested | Code review; tests import logic without a DOM | S3–S8, S12–S17 |
-| NFR-15 | Date handling is injectable so tests can simulate any local date without changing the system clock | Code review; tests with a mocked clock | S13, S14, S15 |
-| NFR-16 | Automated tests cover all question generators, seeding and determinism, difficulty assignment and distribution, answer checking, scoring, streaks, both round-end conditions, endless level generation, personal bests, comparison, attempt rules and weak-area analysis | Test run; coverage report | S3–S8, S12–S17 |
-| NFR-17 | The test suite runs with a single documented command | README check | S11 |
-| NFR-18 | Lighthouse accessibility score ≥ 90 on the home, round and results screens | Lighthouse audit | S10 |
-| NFR-19 | The README documents purpose, how to run locally, how to run tests, the daily-attempt rule, the absence of difficulty selection, the archive, and the repository structure | Review | S11 |
-| NFR-20 | The application is published automatically from `main` to a public URL, deploys without an install or build step, and requires no environment variables or secrets | Deployment succeeds from a clean commit; the published site is opened and played | S11 |
+| NFR-1 | Answer feedback renders within 100 ms of submission | Manual timing | — |
+| NFR-2 | The timer is accurate to within 100 ms over a 90 s round | Test with a mocked clock | S5 |
+| NFR-3 | A lives round ends within one prompt of the last life being lost | Automated test | S5 |
+| NFR-4 | Puzzle generation is pure and reproducible from its seed alone | Automated test | S12 |
+| NFR-5 | Pattern Memory level generation is a pure function of seed and level number, at any depth | Test at levels 1, 10 and 50 | S15 |
+| NFR-6 | First meaningful paint within 2 s | Lighthouse | — |
+| NFR-7 | No unhandled exception reaches the user; failures degrade to a readable message | Fault-injection tests | S9 |
+| NFR-8 | The application works fully offline after first load | DevTools offline mode | S9 |
+| NFR-9 | No third-party runtime dependencies, no external network requests, no API keys | Dependency review and network inspection | S9, S11 |
+| NFR-10 | Bundled outline data stays under 400 kB total and is loaded only by the trainer that needs it | Build inspection and network panel | FR-146 |
+| NFR-11 | Stored progress stays below 2 MB after two years of daily play across all trainers and variants | Calculation plus generated-data test | FR-99 |
+| NFR-12 | The app runs in current Chrome, Firefox and Edge | Manual cross-browser check | S11 |
+| NFR-13 | The app runs from a clone with no build step | Fresh-clone test | S11 |
+| NFR-14 | No personal data is collected, transmitted or stored | Code review | — |
+| NFR-15 | Pure logic — generation, seeding, answer checking, scoring, end conditions, attempt rules, comparison, hint maths and weak-topic analysis — is isolated from DOM code and unit-testable | Code review; tests import logic without a DOM | S3–S8, S12–S20 |
+| NFR-16 | Date handling is injectable so tests can simulate any local date | Code review; tests with a mocked clock | S13, S14 |
+| NFR-17 | Automated tests cover all generators, seeding and determinism, filters, answer checking, scoring and score direction, all three round-end conditions, endless level generation, personal bests, comparison, attempt rules, practice isolation, hint maths and weak-topic analysis | Test run | S3–S8, S12–S20 |
+| NFR-18 | The test suite runs with a single documented command | README check | S11 |
+| NFR-19 | Lighthouse accessibility score ≥ 90 on home, round and results screens | Lighthouse audit | S10 |
+| NFR-20 | The README documents purpose, local run, tests, the hierarchy, the band and board-size rules, daily attempts, practice mode, the archive and the repository structure | Review | S11 |
+| NFR-21 | The app is published automatically from `main` to a public URL, with no install step, no build step and no environment variables | Deployment from a clean commit | S11 |
+| NFR-22 | The provenance and processing of the Natural Earth outline data are documented in the repository | Review | FR-146 |
 
 ---
 
@@ -373,412 +440,377 @@ A `schemaVersion` field is stored alongside both so future versions can migrate 
 
 | ID | Epic | Goal | Depends on |
 |---|---|---|---|
-| E-1 | Project foundation and test harness | Runnable skeleton, test runner, injectable clock, repository structure | — |
-| E-2 | Drill Engine core and round modes | Loop, answer checking, scoring, streaks, timed and lives end conditions, lazy prompt supply | E-1 |
-| E-3 | Daily difficulty, deterministic puzzles, attempts and archive | Seeded generation, date-assigned difficulty, one attempt per trainer per date, archive browsing | E-2 |
-| E-4 | Mental Math Sprint (timed) | First trainer, validating the timed mode and difficulty-derived parameters | E-2, E-3 |
-| E-5 | Memory (1 life, endless grid) | Second trainer, validating the lives mode and unbounded lazy generation | E-2, E-3 |
-| E-6 | Geography Speed (3 lives) | Third trainer, content-file driven, validating the engine contract without engine changes | E-2, E-3 |
-| E-7 | Persistence, results comparison and progress history | Storage, attempt records, previous/best comparison, history, charts | E-2, E-3 |
-| E-8 | Weak-area tracking | Category aggregation and plain-language analysis | E-2, E-7 |
-| E-9 | UI shell, theming and accessibility | Navigation, archive view, dark/light, keyboard-first including the grid, responsive | E-2, E-3 |
-| E-10 | Quality, documentation and release | Cross-browser checks, accessibility audit, README | all |
+| E-1 | Foundation, hierarchy and registration | Category/trainer/topic model, registration contract, injectable clock, test harness | — |
+| E-2 | Drill Engine core and three round modes | Loop, answer checking, scoring, score direction, timed/lives/completion | E-1 |
+| E-3 | Variants, determinism, daily attempts and archive | Bands and board sizes, seeded generation, attempt rules, archive | E-2 |
+| E-4 | Practice mode and filters | Unlimited unscored play, filter panels, generator filtering | E-2, E-3 |
+| E-5 | Math category | Mental Math Sprint with seven topics including algebra and trigonometry | E-2, E-3 |
+| E-6 | Memory category | Pattern Memory and Figure Pairs, board sizes, completion mode | E-2, E-3 |
+| E-7 | Geography category | Shared content, Flag, Outline and Capital guessers, outline data pipeline, hint maths | E-2, E-3 |
+| E-8 | Persistence, comparison and progress history | Storage, per-variant bests, previous/best comparison, charts | E-2, E-3 |
+| E-9 | Weak-topic tracking | Topic aggregation and plain-language analysis | E-2, E-8 |
+| E-10 | UI shell, theming and accessibility | Navigation, archive view, dark/light, keyboard-first, responsive | E-2, E-3 |
+| E-11 | Quality, documentation and release | Cross-browser, accessibility audit, README, deployment | all |
 
-**Build order rationale.** E-4 and E-5 are deliberately built before the engine contract is frozen, and they stress it in different ways — one timed with a fixed prompt supply, one lives-based with unbounded lazy generation. That is what exposes whether the abstraction is right, as noted in brief §12. E-6 then tests the contract by adding a third trainer without changing engine code.
+**Build order rationale.** E-5 and E-6 are built before the engine contract is frozen, and they stress it in deliberately different ways — a timed round with band-derived parameters against a completion round with a lower-is-better score. That combination is what exposes whether the abstraction holds. E-7 then adds three trainers at once and must require no engine change, which is the real proof.
 
 ---
 
 ## 7. User Stories
 
-Format: *As a learner, I want … so that …* Acceptance criteria are written Given/When/Then so they map directly onto test cases.
+Format: *As a learner, I want … so that …* Acceptance criteria are Given/When/Then so they map onto test cases.
 
-### E-1 — Project foundation and test harness
+### E-1 — Foundation, hierarchy and registration
 
-**US-1.1** — Set up repository structure and entry page
-*Acceptance:* Given a fresh clone, when I open the entry page, then a placeholder home screen renders with no console errors and no network requests to external hosts.
-*Covers:* NFR-9, NFR-12
+**US-1.1** — Repository skeleton and entry page
+*Given* a fresh clone, *when* I open the entry page, *then* a home screen renders with no console errors and no external network requests. · FR-1, NFR-9, NFR-13
 
-**US-1.2** — Set up the test runner
-*Acceptance:* Given the repository, when I run the documented test command, then the suite executes and reports results; a deliberately failing sample test causes a non-zero exit code.
-*Covers:* NFR-17
+**US-1.2** — Test runner
+*Given* the repository, *when* I run the documented test command, *then* the suite runs; a deliberately failing test produces a non-zero exit code. · NFR-18
 
-**US-1.3** — Define the trainer registration contract
-*Acceptance:* Given the engine, when a trainer module supplies a generator, a renderer, a round-mode declaration and a headline-score declaration, then it appears on the home screen without any engine file being modified.
-*Covers:* FR-11, FR-55
+**US-1.3** — Registration contract
+*Given* a trainer module declaring category, round mode, variant kind, variants, score direction, topics, generator and renderer, *when* it is registered, *then* it appears under its category with no engine file modified. · FR-6, FR-7 · *Verifies:* S21
 
-**US-1.4** — Make the clock injectable
-*Acceptance:* Given a test, when a fixed local date is supplied to the application, then all date-dependent behaviour uses it rather than the system clock.
-*Covers:* NFR-15
+**US-1.4** — Injectable clock
+*Given* a test, *when* a fixed local date is supplied, *then* all date-dependent behaviour uses it rather than the system clock. · NFR-16
+
+**US-1.5** — Category listing
+*Given* the home screen, *when* it renders, *then* the three categories appear, each with its remaining attempts for today. · FR-1, FR-2
 
 ### E-2 — Drill Engine core and round modes
 
 **US-2.1** — Start a round
-*Acceptance:* Given a trainer with an available attempt, when I start the round, then the first prompt appears immediately and the mode indicator shows either remaining time or remaining lives.
-*Covers:* FR-8, FR-14, FR-18
+*Given* an available variant, *when* I start, *then* the first prompt appears immediately with the correct mode indicator. · FR-11, FR-15, FR-17, FR-19
 
-**US-2.2** — End a timed round exactly on time
-*Acceptance:* Given a round with the day's duration, when the clock reaches zero, then input is disabled and the results screen appears; and given an answer submitted after expiry, when scoring runs, then that answer is not counted.
-*Covers:* FR-12, FR-13 · *Verifies:* S5
+**US-2.2** — End a timed round on time
+*Given* a 90 s round, *when* the clock reaches zero, *then* input is disabled, results appear, and an answer submitted after expiry is not counted. · FR-14 · *Verifies:* S5
 
 **US-2.3** — End a lives round on the last life
-*Acceptance:* Given a round with 3 lives and 2 already lost, when I answer incorrectly, then the round ends immediately, no further prompt is rendered, and the results screen states the round ended because lives ran out.
-*Covers:* FR-15, FR-16, FR-17, FR-63 · *Verifies:* S5
+*Given* 3 lives with 2 lost, *when* I answer incorrectly, *then* the round ends immediately, no further prompt renders, and results say lives ran out. · FR-16, FR-78 · *Verifies:* S5
 
-**US-2.4** — Lose a life visibly
-*Acceptance:* Given a lives round, when I answer incorrectly, then the remaining-lives indicator decreases by exactly one and the loss is signalled by text or icon as well as colour.
-*Covers:* FR-18, FR-19, FR-123
+**US-2.4** — End a completion round only when finished
+*Given* a board with one pair left, *when* I match it, *then* the round ends; and *given* pairs remain, *then* it does not end however many mistakes I make. · FR-18 · *Verifies:* S19
 
 **US-2.5** — Submit and check answers
-*Acceptance:* Given a prompt, when I submit an answer, then it is checked, feedback is shown, and the next prompt appears with the input cleared and refocused.
-*Covers:* FR-9, FR-45, FR-46, FR-53
+*Given* a prompt, *when* I submit, *then* it is checked, feedback shows, and the next prompt appears with input cleared and refocused. · FR-12, FR-59, FR-60, FR-67
 
 **US-2.6** — Tolerant answer checking
-*Acceptance:* Given a text prompt with answer "Oslo", when I submit " oslo ", then it is accepted; and when I submit an empty string, then nothing is counted, my streak is unaffected, and no life is lost.
-*Covers:* FR-49, FR-50, FR-52 · *Verifies:* S4
+*Given* answer "Oslo", *when* I submit " oslo ", *then* it is accepted; *when* I submit "", *then* nothing is counted, the streak is unaffected and no life is lost. · FR-63, FR-64, FR-66 · *Verifies:* S4
 
-**US-2.7** — Show corrective feedback
-*Acceptance:* Given an incorrect answer, when feedback appears, then it states the answer was wrong and shows the correct answer, using text or an icon as well as colour.
-*Covers:* FR-20, FR-123
+**US-2.7** — Corrective feedback
+*Given* a wrong answer, *when* feedback appears, *then* it says so and shows the correct answer, using text or icon as well as colour. · FR-20, FR-161
 
-**US-2.8** — Track score and streak live
-*Acceptance:* Given a round in progress, when I answer correctly, then score and streak both increase; and when I answer incorrectly, then the streak resets to 0 while best streak retains its highest value.
-*Covers:* FR-22, FR-54, FR-58, FR-59 · *Verifies:* S1
+**US-2.8** — Live score and streak
+*Given* a round, *when* I answer correctly, *then* score and streak rise; *when* incorrectly, *then* the streak resets while best streak keeps its peak. · FR-22, FR-68, FR-72, FR-73 · *Verifies:* S1
 
-**US-2.9** — Compute round statistics
-*Acceptance:* Given 10 answers of which 7 are correct, when the round ends, then accuracy reads 70.0 %; and given zero answers, then accuracy reads 0 % and average answer time reads 0 without a division error.
-*Covers:* FR-56, FR-57 · *Verifies:* S1
+**US-2.9** — Round statistics
+*Given* 10 answers with 7 correct, *then* accuracy reads 70.0 %; *given* zero answers, *then* accuracy reads 0 % and average time 0 with no division error. · FR-70, FR-71 · *Verifies:* S1
 
-**US-2.10** — Supply prompts lazily
-*Acceptance:* Given a trainer with no fixed prompt list, when the round runs, then each prompt is generated on demand and the round is not bounded by a pre-built list.
-*Covers:* FR-24 · *Verifies:* S16
+**US-2.10** — Lazy prompt supply
+*Given* a trainer with no fixed list, *when* the round runs, *then* prompts are generated on demand. · FR-23 · *Verifies:* S15
 
-**US-2.11** — Avoid immediate repeats
-*Acceptance:* Given a round, when prompts are presented, then no prompt is identical to the one directly before it.
-*Covers:* FR-23
+**US-2.11** — Abandon without penalty
+*Given* a daily round in progress, *when* I quit, *then* no result is written and the attempt remains available. · FR-9, FR-10 · *Verifies:* S13
 
-**US-2.12** — Abandon a round without penalty
-*Acceptance:* Given a round in progress, when I choose to quit, then I return to the home screen, no result is written, and today's attempt for that trainer is still available.
-*Covers:* FR-5, FR-6 · *Verifies:* S14
+**US-2.12** — Multiple choice by keyboard
+*Given* four options, *when* I press 2, *then* the second is submitted, identically to clicking it. · FR-61
 
-**US-2.13** — Multiple-choice input
-*Acceptance:* Given a four-option prompt, when I press the 2 key, then the second option is submitted; and clicking the option has the identical effect.
-*Covers:* FR-47
+### E-3 — Variants, determinism, daily attempts and archive
 
-**US-2.14** — Handle an exhausted prompt supply
-*Acceptance:* Given a trainer whose prompts run out before the end condition is met, when the last prompt is answered, then the round ends cleanly and records `prompts-exhausted`.
-*Covers:* FR-25
+**US-3.1** — Choose a band freely
+*Given* any band trainer, *when* I open it, *then* all four bands are offered and nothing restricts my choice. · FR-26, FR-27 · *Verifies:* S13
 
-### E-3 — Daily difficulty, deterministic puzzles, attempts and archive
+**US-3.2** — Board sizes instead of bands
+*Given* a Memory trainer, *when* I open it, *then* board sizes are offered and no difficulty is shown anywhere. · FR-28
 
-**US-3.1** — Assign difficulty from the date
-*Acceptance:* Given a puzzle date, when the difficulty is computed twice, then it is identical both times; and given no player input of any kind can reach the computation, then the band cannot be influenced.
-*Covers:* FR-26, FR-27 · *Verifies:* S13
+**US-3.3** — Derive parameters from the band
+*Given* Expert Mental Math, *then* the round is 90 s; *given* Beginner, *then* 45 s — with no way to change it. · FR-29, FR-5, FR-103 · *Verifies:* S12
 
-**US-3.2** — Vary difficulty across days
-*Acceptance:* Given 365 consecutive simulated dates, when difficulty is computed for each, then all four bands occur and the distribution matches the documented target.
-*Covers:* FR-28 · *Verifies:* S13
+**US-3.4** — Deterministic puzzles
+*Given* the same trainer, variant and date, *when* generated twice, *then* the sequences are identical. · FR-30, NFR-4 · *Verifies:* S12
 
-**US-3.3** — Derive parameters from difficulty
-*Acceptance:* Given an Expert day, when Mental Math starts, then the round duration is 90 s; and given a Beginner day, then it is 45 s — with no way for the player to change it.
-*Covers:* FR-29, FR-87, FR-4 · *Verifies:* S12
+**US-3.5** — Variants and dates differ
+*Given* the same date, *then* Beginner and Expert produce different sequences; *given* the same variant, *then* two dates produce different sequences. · FR-31, FR-32 · *Verifies:* S12
 
-**US-3.4** — Generate puzzles deterministically
-*Acceptance:* Given the same trainer and puzzle date, when the puzzle is generated twice, then the two prompt sequences are identical; and given two different dates, then the sequences differ.
-*Covers:* FR-32, FR-33, NFR-4 · *Verifies:* S12
+**US-3.6** — Generation ignores ambient state
+*Given* generation runs, *when* `Math.random` is stubbed to throw and stored progress is altered, *then* output is unchanged. · FR-33 · *Verifies:* S12
 
-**US-3.5** — Use the local calendar date
-*Acceptance:* Given a mocked local date, when the home screen loads, then today's puzzle is the one for that date.
-*Covers:* FR-34, NFR-15
+**US-3.7** — Independent attempts per variant
+*Given* I finish Beginner today, *when* I return, *then* Beginner is marked played and Intermediate, Advanced and Expert remain available. · FR-35, FR-36 · *Verifies:* S13
 
-**US-3.6** — Show the day's difficulty before playing
-*Acceptance:* Given the home screen and the briefing screen, when they render, then today's difficulty band is stated, along with the round mode and the derived parameter.
-*Covers:* FR-2, FR-3, FR-30
+**US-3.8** — Independent attempts per trainer
+*Given* I finish Flag Guesser Expert, *then* Outline Guesser Expert is still available. · FR-37 · *Verifies:* S13
 
-**US-3.7** — Consume the daily attempt
-*Acceptance:* Given I complete today's Mental Math round, when I return to the home screen, then Mental Math is shown as done for today and cannot be started again; and Memory and Geography remain available.
-*Covers:* FR-35, FR-36, FR-37 · *Verifies:* S14
+**US-3.9** — New day releases attempts
+*Given* attempts spent and the local date advances, *when* the view refreshes, *then* they are available again. · FR-38
 
-**US-3.8** — Release the attempt on a new day
-*Acceptance:* Given today's attempt is used and the local date advances, when the home screen refreshes, then the trainer is available again.
-*Covers:* FR-38 · *Verifies:* S14
+**US-3.10** — Browse the archive
+*Given* previous dates exist, *when* I open the archive, *then* each date lists its trainers and variants with played state, back to the earliest date. · FR-39, FR-42 · *Verifies:* S14
 
-**US-3.9** — Browse the archive
-*Acceptance:* Given previous puzzle dates exist, when I open the archive, then each date is listed with its difficulty band and its played or unplayed state per trainer, back to the earliest puzzle date and no further.
-*Covers:* FR-39, FR-42 · *Verifies:* S15
+**US-3.11** — Play an archive puzzle
+*Given* an unplayed archive entry, *when* I play it, *then* the result is recorded against that puzzle date; *given* a played one, *then* it cannot be replayed. · FR-40, FR-41, FR-43 · *Verifies:* S14
 
-**US-3.10** — Play an archive puzzle
-*Acceptance:* Given an unplayed archive date, when I play it, then the result is recorded against that puzzle date rather than today's; and given an already-played archive date, then it cannot be replayed.
-*Covers:* FR-40, FR-41, FR-43 · *Verifies:* S15
+**US-3.12** — Disclose the soft limit
+*Given* the interface, *when* I read it, *then* it states the limit is browser-stored and unenforced. · FR-44
 
-**US-3.11** — Disclose the soft limit
-*Acceptance:* Given the home screen or an explanatory view, when I read it, then it states plainly that the daily limit is kept in the browser and is not enforced.
-*Covers:* FR-44
+### E-4 — Practice mode and filters
 
-### E-4 — Mental Math Sprint (timed)
+**US-4.1** — Practice is unlimited
+*Given* every attempt spent today, *when* I open practice, *then* I can play as many rounds as I like. · FR-45, FR-46 · *Verifies:* S17
 
-**US-4.1** — Generate valid arithmetic prompts
-*Acceptance:* Given 1000 generated prompts per difficulty band, when they are validated, then none divide by zero, every Beginner/Intermediate/Advanced division has an integer answer, and no Beginner subtraction yields a negative result.
-*Covers:* FR-88, FR-90, FR-91, FR-92 · *Verifies:* S3
+**US-4.2** — Practice never touches history
+*Given* a practice round scoring far above my best, *when* it ends, *then* nothing is written to history and the personal best is unchanged. · FR-47, FR-48 · *Verifies:* S17
 
-**US-4.2** — Scale content with the day's band
-*Acceptance:* Given each band, when prompts are generated, then only that band's permitted categories and operand ranges occur, per FR-89.
-*Covers:* FR-89 · *Verifies:* S2
+**US-4.3** — Practice results are labelled
+*Given* a practice round ends, *then* the results screen shows full statistics, is labelled practice, and shows no previous-or-best comparison. · FR-49, FR-50 · *Verifies:* S17
 
-**US-4.3** — Tag prompts with categories
-*Acceptance:* Given a completed round, when category statistics are read, then every prompt is attributed to exactly one of the six Mental Math categories and the counts sum to total answered.
-*Covers:* FR-76, FR-82
+**US-4.4** — Math topic filters
+*Given* practice with only algebra enabled, *when* 500 prompts are generated, *then* every one is algebra. · FR-52, FR-55 · *Verifies:* S18
 
-**US-4.4** — Handle fraction prompts
-*Acceptance:* Given an Expert-band fraction prompt, when it is displayed, then the expected answer format is stated; and when I submit a documented equivalent form, then it is accepted.
-*Covers:* FR-93
+**US-4.5** — Memory board filter
+*Given* practice with a 6×6 board, *when* a round starts, *then* the board is 6×6 and the display time matches my setting. · FR-53
 
-**US-4.5** — Report correct answers as the score
-*Acceptance:* Given a finished round with 23 correct answers, when the result is recorded, then the headline score is 23.
-*Covers:* FR-95, FR-55
+**US-4.6** — Geography region filter
+*Given* practice limited to Africa with free-text answers, *when* prompts are generated, *then* every country is African and no multiple choice appears. · FR-54, FR-55 · *Verifies:* S18
 
-### E-5 — Memory (1 life, endless grid)
+**US-4.7** — Impossible filter combinations
+*Given* filters excluding every prompt, *when* I try to start, *then* the interface explains the problem and refuses rather than starting an empty round. · FR-56 · *Verifies:* S18
 
-**US-5.1** — Show and hide a tile pattern
-*Acceptance:* Given a level starts, when the pattern is shown, then the highlighted tiles are visible for the day's display time and then hidden, and the grid becomes selectable.
-*Covers:* FR-96, FR-103
+**US-4.8** — Remember filters
+*Given* I set filters and return later, *then* my last-used filters are preselected. · FR-57
 
-**US-5.2** — Check a level by set, not order
-*Acceptance:* Given highlighted tiles {A, C, F}, when I select C, then A, then F, then the level is correct; and when I select {A, C}, or {A, C, F, G}, then it is incorrect.
-*Covers:* FR-98, FR-99
+**US-4.9** — Practice is not deterministic
+*Given* two practice rounds with identical filters, *then* the prompt sequences differ. · FR-58
 
-**US-5.3** — End on the first mistake
-*Acceptance:* Given a Memory round, when I get my first level wrong, then the round ends immediately and the results screen states that lives ran out.
-*Covers:* FR-97 · *Verifies:* S5
+### E-5 — Math category
 
-**US-5.4** — Grow by one tile per level
-*Acceptance:* Given level *n* has *k* tiles, when I complete it, then level *n+1* has exactly *k+1* tiles.
-*Covers:* FR-100 · *Verifies:* S16
+**US-5.1** — Valid arithmetic
+*Given* 1000 prompts per band, *then* none divides by zero, every non-Expert division is integral, and no Beginner subtraction is negative. · FR-106, FR-107, FR-108 · *Verifies:* S3
 
-**US-5.5** — Never run out of levels
-*Acceptance:* Given 50 consecutive correct levels, when each next level is requested, then it is generated successfully and the round is still running.
-*Covers:* FR-101, NFR-5 · *Verifies:* S16
+**US-5.2** — Topics follow the band
+*Given* each band, *when* prompts are generated, *then* only that band's topics appear, and algebra and trigonometry appear only at Expert. · FR-104, FR-105 · *Verifies:* S3
 
-**US-5.6** — Grow the grid when needed
-*Acceptance:* Given the tile count reaches the documented threshold relative to grid size, when the next level is generated, then the grid dimensions increase and the pattern remains legible.
-*Covers:* FR-102
+**US-5.3** — Valid algebra
+*Given* 1000 algebra prompts, *then* each is a linear equation with one unknown whose stated solution is an integer and satisfies the equation. · FR-109 · *Verifies:* S3
 
-**US-5.7** — Start from the day's parameters
-*Acceptance:* Given an Expert day and a Beginner day, when each round starts, then the starting tile count and display time differ according to the band, and are identical for every player on that date.
-*Covers:* FR-103 · *Verifies:* S12, S13
+**US-5.4** — Valid trigonometry
+*Given* 1000 trigonometry prompts, *then* every angle has an exact value, the expected format is stated, and tan 90° never appears. · FR-110 · *Verifies:* S3
 
-**US-5.8** — Report the level reached as the score
-*Acceptance:* Given I complete level 7 and fail level 8, when the result is recorded, then the headline score is 7 and the results screen states the level reached.
-*Covers:* FR-104, FR-55 · *Verifies:* S16
+**US-5.5** — Equivalent answer forms
+*Given* a fraction or root prompt, *when* I submit a documented equivalent form, *then* it is accepted. · FR-111 · *Verifies:* S4
 
-**US-5.9** — Show the current level
-*Acceptance:* Given a round in progress, when a level starts, then the current level number is visible.
-*Covers:* FR-105
+**US-5.6** — Score by correct answers
+*Given* 23 correct answers, *then* the headline score is 23 with direction `higher`. · FR-69
 
-**US-5.10** — Prevent cheating via the DOM
-*Acceptance:* Given a hidden pattern, when the DOM is inspected, then the highlighted tiles are not identifiable from the rendered markup.
-*Covers:* FR-106
+### E-6 — Memory category
 
-**US-5.11** — Operate the grid by keyboard
-*Acceptance:* Given only a keyboard, when I move with the arrow keys, select with a key and submit with a key, then I can complete a level without a mouse, with focus always visible.
-*Covers:* FR-48, FR-107, FR-121 · *Verifies:* S10
+**US-6.1** — Pattern shown then hidden
+*Given* a level starts, *then* the pattern is visible for the display time, then hidden, then the board becomes selectable. · FR-113
 
-**US-5.12** — Distinguish selection without colour
-*Acceptance:* Given selected and unselected tiles, when they render, then they differ by more than colour alone.
-*Covers:* FR-108
+**US-6.2** — Set-based checking
+*Given* highlighted {A, C, F}, *when* I select C, A, F in any order, *then* it is correct; *when* I select {A, C} or {A, C, F, G}, *then* it is not. · FR-115, FR-116 · *Verifies:* S4
 
-### E-6 — Geography Speed (3 lives)
+**US-6.3** — One life
+*Given* Pattern Memory, *when* I first get a level wrong, *then* the round ends. · FR-114 · *Verifies:* S5
 
-**US-6.1** — Run with three lives
-*Acceptance:* Given a Geography round, when I answer incorrectly twice, then the round continues with one life left; and on the third incorrect answer it ends.
-*Covers:* FR-109 · *Verifies:* S5
+**US-6.4** — One tile per level
+*Given* level *n* has *k* tiles, *then* level *n+1* has *k+1*. · FR-117 · *Verifies:* S15
 
-**US-6.2** — Load and validate content
-*Acceptance:* Given the content JSON, when it loads, then valid entries are available to the generator; and given a deliberately malformed entry, then it is skipped and logged while the trainer still runs.
-*Covers:* FR-110, FR-115 · *Verifies:* S9
+**US-6.5** — Endless levels
+*Given* 50 consecutive correct levels on a 6×6 board, *then* each next level generates successfully. · FR-118, NFR-5 · *Verifies:* S15
 
-**US-6.3** — Generate the four prompt categories
-*Acceptance:* Given a round, when prompts are generated, then all four categories occur and each prompt is tagged with its category.
-*Covers:* FR-111, FR-76
+**US-6.6** — Fixed board size
+*Given* a 4×4 board, *when* levels advance, *then* the board stays 4×4 and the round ends naturally as the pattern approaches capacity. · FR-119
 
-**US-6.4** — Scale the country pool with the day's band
-*Acceptance:* Given a Beginner day, when prompts are generated, then only countries from the widely-known pool appear; and given an Expert day, then answers are free-text rather than multiple choice.
-*Covers:* FR-112 · *Verifies:* S13
+**US-6.7** — Keyboard grid
+*Given* only a keyboard, *when* I move with arrows, select and submit, *then* I can complete a level with focus always visible. · FR-62, FR-123, FR-159 · *Verifies:* S10
 
-**US-6.5** — Plausible distractors
-*Acceptance:* Given a multiple-choice prompt, when distractors are chosen, then they come from the same continent where the pool allows, and the correct answer never appears twice.
-*Covers:* FR-113
+**US-6.8** — Pairs board setup
+*Given* a 6×4 Figure Pairs board, *then* it has 24 cells, 12 distinct figures, each appearing exactly twice. · FR-125, FR-126 · *Verifies:* S19
 
-**US-6.6** — Serve flags locally
-*Acceptance:* Given a flag prompt, when the page loads the image, then it is served from the repository and no external request is made.
-*Covers:* FR-114 · *Verifies:* S9
+**US-6.9** — Turning and matching
+*Given* two face-down cards, *when* I turn a matching pair, *then* they stay face up; *when* they do not match, *then* they turn back and mistakes increases by one. · FR-127, FR-128 · *Verifies:* S19
 
-**US-6.7** — Accept documented alternative names
-*Acceptance:* Given a country with documented alternatives, when I submit any documented form, then it is accepted.
-*Covers:* FR-51
+**US-6.10** — Pairs scoring
+*Given* a completed board with 9 mistakes, *then* the score is 9 with direction `lower`, and elapsed time is recorded for tie-breaking. · FR-130, FR-131 · *Verifies:* S19
 
-**US-6.8** — Add a trainer without touching the engine
-*Acceptance:* Given Geography is implemented after the engine is complete, when it is registered, then no engine file required modification.
-*Covers:* FR-11
+**US-6.11** — Lower is better
+*Given* a stored best of 9 mistakes, *when* I finish with 7, *then* it becomes the new best; *when* I finish with 11, *then* it does not. · FR-75, FR-83 · *Verifies:* S8, S19
 
-### E-7 — Persistence, results comparison and progress history
+**US-6.12** — No DOM cheating
+*Given* a face-down board, *when* the DOM is inspected, *then* card identities are not retrievable. · FR-122, FR-134
 
-**US-7.1** — Persist results and attempts
-*Acceptance:* Given a completed round, when I reload the page, then the result still appears in history with identical values and the attempt is still recorded as used for that date.
-*Covers:* FR-70, FR-83 · *Verifies:* S1, S14
+### E-7 — Geography category
 
-**US-7.2** — Maintain a single personal best
-*Acceptance:* Given a stored best of 18 for a trainer, when I score 17, then the best is unchanged; and when I score 19, then the best becomes 19.
-*Covers:* FR-60, FR-61 · *Verifies:* S8
+**US-7.1** — Shared validated content
+*Given* the content file, *when* it loads, *then* valid entries are available to all three trainers; *given* a malformed entry, *then* it is skipped and logged while trainers still run. · FR-135, FR-136 · *Verifies:* S9
 
-**US-7.3** — Compare against the previous attempt
-*Acceptance:* Given my previous Mental Math score was 20, when I score 23, then the results screen states I beat it by 3; when I score 17, then it states I fell short by 3; and when I score 20, then it states I matched it.
-*Covers:* FR-65 · *Verifies:* S17
+**US-7.2** — Band controls pool and format
+*Given* Beginner, *then* only widely known countries appear with four-way multiple choice; *given* Expert, *then* the full set appears with free-text answers. · FR-137, FR-138 · *Verifies:* S2
 
-**US-7.4** — Compare against the all-time best
-*Acceptance:* Given my best is 25 and I score 23, then the results screen shows the gap to my best; and when I score 26, then it announces a new best.
-*Covers:* FR-66 · *Verifies:* S8, S17
+**US-7.3** — Plausible distractors
+*Given* a multiple-choice prompt, *then* distractors share the continent where possible and the answer never repeats. · FR-139
 
-**US-7.5** — Handle the first ever attempt
-*Acceptance:* Given no previous result for a trainer, when the results screen renders, then it states there is nothing to compare against yet and records the score as the first best.
-*Covers:* FR-67 · *Verifies:* S17
+**US-7.4** — Three lives
+*Given* any Geography trainer, *when* I answer wrongly three times, *then* the round ends. · FR-140 · *Verifies:* S5
 
-**US-7.6** — Show a results screen
-*Acceptance:* Given a finished round, when the results screen appears, then score, correct answers, total answered, accuracy, average answer time, best streak, the day's difficulty and the reason the round ended are all displayed.
-*Covers:* FR-62, FR-63, FR-64 · *Verifies:* S1
+**US-7.5** — Flags without network
+*Given* a flag prompt, *when* it renders, *then* no external request is made. · FR-142, FR-143 · *Verifies:* S9
 
-**US-7.7** — Route onward from results
-*Acceptance:* Given the results screen, when it renders, then it offers the archive and the home screen and offers no replay of the same puzzle.
-*Covers:* FR-69 · *Verifies:* S14
+**US-7.6** — Progressive flag reveal
+*Given* an Expert flag prompt, *when* I guess wrongly within the prompt, *then* more of the flag is revealed. · FR-144
 
-**US-7.8** — Plot progress over time
-*Acceptance:* Given five completed puzzles, when I open the progress view, then five data points appear ordered by puzzle date with values matching the stored results.
-*Covers:* FR-71, FR-75 · *Verifies:* S6
+**US-7.7** — Outline rendering
+*Given* an outline prompt, *then* a country silhouette renders with no labels, borders or context, normalised to a consistent size. · FR-145, FR-147 · *Verifies:* S20
 
-**US-7.9** — Show difficulty on the chart
-*Acceptance:* Given puzzles played across different bands, when the chart renders, then each point conveys the day's difficulty band.
-*Covers:* FR-72
+**US-7.8** — Bundled outline data
+*Given* the app runs offline, *when* an outline prompt appears, *then* it renders from bundled data with no network request, and the data totals under 400 kB. · FR-146, NFR-10, NFR-22 · *Verifies:* S9
 
-**US-7.10** — Place archive results correctly
-*Acceptance:* Given a puzzle from an earlier date played today, when I open the progress view, then its data point sits at its puzzle date, not at today.
-*Covers:* FR-71, FR-43 · *Verifies:* S15
+**US-7.9** — Distance hint
+*Given* a wrong guess of France when the answer is Germany, *then* the reported distance matches a hand-checked haversine value within 1 %. · FR-148, FR-151 · *Verifies:* S20
 
-**US-7.11** — Summarise practice
-*Acceptance:* Given existing history, when I open the progress view, then puzzles completed, total time practised and the all-time best are shown.
-*Covers:* FR-73
+**US-7.10** — Direction hint
+*Given* a wrong guess of Spain when the answer is Poland, *then* the direction reads north-east. · FR-149 · *Verifies:* S20
 
-**US-7.12** — Handle an empty history
-*Acceptance:* Given a trainer never played, when I open its progress view, then an explanatory empty state appears instead of a blank chart.
-*Covers:* FR-74
+**US-7.11** — Proximity hint
+*Given* a wrong guess, *then* proximity is 0–100 %, falls as distance grows, and reads 100 % only for the correct answer. · FR-150 · *Verifies:* S20
 
-**US-7.13** — Survive corrupt storage
-*Acceptance:* Given invalid JSON in the storage key, when the app loads, then it starts with empty progress, shows a non-blocking notice and remains usable.
-*Covers:* FR-84 · *Verifies:* S9
+**US-7.12** — Hints only where they fit
+*Given* a multiple-choice band, *when* I answer wrongly, *then* the correct answer is shown and no distance hint appears. · FR-152
 
-**US-7.14** — Clear progress
-*Acceptance:* Given stored progress, when I choose to clear it and confirm, then all results, attempts and personal bests are removed and every trainer is available again.
-*Covers:* FR-85
+**US-7.13** — Capitals both ways
+*Given* the Capital Guesser, *then* both country→capital and capital→country prompts appear as separate topics. · FR-153, FR-154
 
-**US-7.15** — Degrade without storage
-*Acceptance:* Given `localStorage` is unavailable, when I play a round, then the round completes normally, no attempt limit is applied, and I am told progress will not be saved.
-*Covers:* FR-86
+**US-7.14** — Alternative names
+*Given* a country or capital with documented alternatives, *when* I submit any documented form, *then* it is accepted. · FR-65, FR-155 · *Verifies:* S4
 
-**US-7.16** — Keep storage small
-*Acceptance:* Given two years of simulated daily results across all trainers, when storage size is measured, then it is below 1 MB.
-*Covers:* NFR-10
+**US-7.15** — Three trainers, no engine change
+*Given* all three Geography trainers, *when* they are added, *then* no engine file required modification. · FR-7 · *Verifies:* S21
 
-### E-8 — Weak-area tracking
+### E-8 — Persistence, comparison and progress history
 
-**US-8.1** — Aggregate per category
-*Acceptance:* Given a completed round, when category statistics are computed, then asked and correct counts per category match the answers given, and asked totals equal total answered.
-*Covers:* FR-77
+**US-8.1** — Persist results and attempts
+*Given* a completed round, *when* I reload, *then* the result is in history with identical values and the attempt is still marked used. · FR-86, FR-99 · *Verifies:* S1, S13
 
-**US-8.2** — Identify the weakest category
-*Acceptance:* Given a scripted round where fractions are answered 2 of 7 correct and every other category is above 80 %, when analysis runs, then fractions is reported as the weakest area.
-*Covers:* FR-78 · *Verifies:* S7
+**US-8.2** — Per-variant personal bests
+*Given* a Beginner best of 30 and an Expert best of 12, *when* I score 14 at Expert, *then* the Expert best becomes 14 and the Beginner best is untouched. · FR-74, FR-75 · *Verifies:* S8
 
-**US-8.3** — Ignore thin categories
-*Acceptance:* Given a category with only 2 prompts asked and both wrong, when analysis runs, then that category is excluded from the weakest-area result.
-*Covers:* FR-78
+**US-8.3** — First result sets the best
+*Given* no prior result, *when* I finish, *then* that score becomes the best regardless of direction. · FR-76 · *Verifies:* S8
 
-**US-8.4** — Explain in plain language
-*Acceptance:* Given an identified weak area, when the results screen renders, then it reads in the form "You miss Fractions most — 2 of 7 correct".
-*Covers:* FR-79, FR-68
+**US-8.4** — Compare with the previous attempt
+*Given* a previous score of 20, *when* I score 23, *then* results say I beat it by 3; at 17, short by 3; at 20, matched. · FR-80 · *Verifies:* S16
 
-**US-8.5** — Handle insufficient data
-*Acceptance:* Given a round where no category reached 3 prompts, when the results screen renders, then it states that there is not enough data yet.
-*Covers:* FR-80
+**US-8.5** — Compare with the all-time best
+*Given* a best of 25, *when* I score 23, *then* the gap is shown; at 26, a new best is announced. · FR-81 · *Verifies:* S16
 
-**US-8.6** — Aggregate across history
-*Acceptance:* Given several completed puzzles, when I open the progress view, then per-category hit rates are shown across the full history for that trainer.
-*Covers:* FR-81
+**US-8.6** — First ever attempt
+*Given* no previous result, *then* results say there is nothing to compare against yet. · FR-82 · *Verifies:* S16
 
-### E-9 — UI shell, theming and accessibility
+**US-8.7** — Full results screen
+*Given* a finished round, *then* score, correct, total, accuracy, average time, best streak, trainer, variant and end reason all appear. · FR-77, FR-78, FR-79 · *Verifies:* S1
 
-**US-9.1** — Home screen shows today's state
-*Acceptance:* Given the home screen, when it renders, then every registered trainer appears with name, description, round mode, today's difficulty band, and whether today's attempt is still available.
-*Covers:* FR-1, FR-2 · *Verifies:* S14
+**US-8.8** — No replay of a daily puzzle
+*Given* the results screen, *then* it offers onward routes and no replay of the same puzzle. · FR-85 · *Verifies:* S13
 
-**US-9.2** — Pre-round briefing
-*Acceptance:* Given a selected trainer, when the briefing screen opens, then it states the day's difficulty, the round mode and the derived parameter, and offers only start or back — no difficulty or duration control is present.
-*Covers:* FR-3, FR-4
+**US-8.9** — Progress chart
+*Given* five completed puzzles at one variant, *when* I open progress, *then* five points appear in puzzle-date order with stored values. · FR-87, FR-91 · *Verifies:* S6
 
-**US-9.3** — Client-side navigation
-*Acceptance:* Given any screen, when I navigate between home, archive, briefing, round, results and progress, then the view changes without a full page reload.
-*Covers:* FR-7
+**US-8.10** — Switch variant in progress
+*Given* history at several variants, *when* I switch variant, *then* the chart shows only that variant. · FR-88 · *Verifies:* S6
 
-**US-9.4** — Dark and light mode
-*Acceptance:* Given the theme toggle, when I switch theme, then it applies immediately and survives a reload; and on first visit the OS preference is used.
-*Covers:* FR-117, FR-118
+**US-8.11** — Archive placement
+*Given* an older puzzle played today, *then* its point sits at its puzzle date, not today. · FR-87, FR-43 · *Verifies:* S14
 
-**US-9.5** — Keyboard-only operation
-*Acceptance:* Given only a keyboard, when I navigate from home through a full round of each trainer to results and into the archive, then every action is reachable and focus is always visible.
-*Covers:* FR-119, FR-121 · *Verifies:* S10
+**US-8.12** — Practice summary
+*Given* history, *when* I open progress, *then* puzzles completed, total time and per-variant bests are shown. · FR-89
 
-**US-9.6** — Focus management
-*Acceptance:* Given a round starts, when the first prompt appears, then focus is on the answer input or the grid as appropriate; and after each submission focus returns there.
-*Covers:* FR-120
+**US-8.13** — Empty history
+*Given* a trainer never played, *then* an explanatory empty state appears. · FR-90
 
-**US-9.7** — Responsive layout
-*Acceptance:* Given a 360 px viewport, when I run a round of each trainer, then all controls, the mode indicator, the Memory grid at level 15 and the statistics are usable without horizontal scrolling.
-*Covers:* FR-122
+**US-8.14** — Corrupt storage
+*Given* invalid JSON in a storage key, *when* the app loads, *then* it starts empty with a non-blocking notice and stays usable. · FR-100 · *Verifies:* S9
 
-**US-9.8** — Announce updates to assistive technology
-*Acceptance:* Given a screen reader, when my score changes, a level advances or a life is lost, then the update is announced via a live region without interrupting input.
-*Covers:* FR-124
+**US-8.15** — Clear progress
+*Given* stored progress, *when* I clear and confirm, *then* all results, attempts and bests are removed and every attempt is available. · FR-101
 
-**US-9.9** — Respect reduced motion
-*Acceptance:* Given the OS reduced-motion preference, when the app renders, then non-essential animation is disabled.
-*Covers:* FR-125
+**US-8.16** — No storage available
+*Given* `localStorage` is unavailable, *when* I play, *then* the round completes, no limit applies, and I am told progress will not be saved. · FR-102
 
-### E-10 — Quality, documentation and release
+**US-8.17** — Storage stays small
+*Given* two years of simulated results across all trainers and variants, *then* storage is below 2 MB. · NFR-11
 
-**US-10.1** — Full manual test matrix
-*Acceptance:* Given 3 trainers and archive dates covering all four difficulty bands, when each combination is played, then every round completes without error and produces a correct results screen.
-*Covers:* NFR-11 · *Verifies:* S2
+### E-9 — Weak-topic tracking
 
-**US-10.2** — Verify offline operation
-*Acceptance:* Given the app has loaded once, when the network is disabled, then every feature continues to work and no external request is attempted.
-*Covers:* NFR-8 · *Verifies:* S9
+**US-9.1** — Aggregate by topic
+*Given* a completed round, *then* asked and correct counts per topic match the answers given and sum to total answered. · FR-92, FR-93
 
-**US-10.3** — Accessibility audit
-*Acceptance:* Given the home, round and results screens, when a Lighthouse accessibility audit runs, then each scores at least 90 and reported issues are fixed or documented.
-*Covers:* NFR-18 · *Verifies:* S10
+**US-9.2** — Identify the weakest topic
+*Given* algebra answered 2 of 7 with every other topic above 80 %, *then* algebra is reported as weakest. · FR-94 · *Verifies:* S7
 
-**US-10.4** — Cross-browser verification
-*Acceptance:* Given current Chrome, Firefox and Edge, when a full round of each trainer is played, then behaviour and layout are correct.
-*Covers:* NFR-11
+**US-9.3** — Ignore thin topics
+*Given* a topic asked only twice and both wrong, *then* it is excluded from the weakest-topic result. · FR-94 · *Verifies:* S7
 
-**US-10.5** — README and run instructions
-*Acceptance:* Given a fresh clone on another machine, when I follow the README, then I can run the app and the test suite without keys, accounts or a build step, and the README explains the daily-attempt rule, the absence of difficulty selection, and the archive.
-*Covers:* NFR-12, NFR-17, NFR-19 · *Verifies:* S11
+**US-9.4** — Plain language
+*Given* a weak topic, *then* the summary reads like "You miss Algebra most — 2 of 7 correct". · FR-95, FR-84
 
-**US-10.6** — Timer accuracy test
-*Acceptance:* Given a mocked clock, when a 90 s round runs, then the measured duration is within 100 ms of the target.
-*Covers:* NFR-2 · *Verifies:* S5
+**US-9.5** — Not enough data
+*Given* no topic reaching the threshold, *then* the screen says so. · FR-96
 
-**US-10.7** — Lives promptness test
-*Acceptance:* Given a lives round, when the last life is lost, then no further prompt is rendered before the results screen appears.
-*Covers:* NFR-3 · *Verifies:* S5
+**US-9.6** — Aggregate across history
+*Given* several completed puzzles, *when* I open progress, *then* topic hit rates span the trainer's full history. · FR-97
+
+### E-10 — UI shell, theming and accessibility
+
+**US-10.1** — Navigate the hierarchy
+*Given* the home screen, *when* I pick a category then a trainer then a variant, *then* each step renders without a page reload and I can go back at every step. · FR-2, FR-3, FR-8
+
+**US-10.2** — Briefing without controls
+*Given* a daily briefing screen, *then* it states trainer, variant, mode and parameter, and offers only start or back. · FR-4, FR-5
+
+**US-10.3** — Theme
+*Given* the toggle, *when* I switch theme, *then* it applies immediately and survives a reload; first visit follows the OS preference. · FR-156
+
+**US-10.4** — Keyboard-only run
+*Given* only a keyboard, *when* I go from home through a full round of each of the six trainers to results, *then* every action is reachable with focus always visible. · FR-157, FR-159 · *Verifies:* S10
+
+**US-10.5** — Focus management
+*Given* a round starts, *then* focus is on the input or board; after each answer it returns there. · FR-158
+
+**US-10.6** — Small screens
+*Given* a 360 px viewport, *when* I play a 6×6 board, *then* everything is usable without horizontal scrolling. · FR-160
+
+**US-10.7** — Screen-reader announcements
+*Given* a screen reader, *when* score, level, lives or pairs remaining change, *then* it is announced without interrupting input. · FR-162
+
+**US-10.8** — Reduced motion
+*Given* the OS reduced-motion preference, *then* non-essential animation including card flips is disabled. · FR-163
+
+### E-11 — Quality, documentation and release
+
+**US-11.1** — Full manual matrix
+*Given* six trainers across all their variants, *when* each is played, *then* every round completes without error with a correct results screen. · NFR-12 · *Verifies:* S2
+
+**US-11.2** — Offline operation
+*Given* the app has loaded once, *when* the network is disabled, *then* every feature works and no external request is attempted. · NFR-8 · *Verifies:* S9
+
+**US-11.3** — Accessibility audit
+*Given* home, round and results screens, *when* Lighthouse runs, *then* each scores at least 90. · NFR-19 · *Verifies:* S10
+
+**US-11.4** — Cross-browser
+*Given* current Chrome, Firefox and Edge, *when* a round of each trainer is played, *then* behaviour and layout are correct. · NFR-12
+
+**US-11.5** — README
+*Given* a fresh clone elsewhere, *when* I follow the README, *then* I can run the app and the tests with no keys or build step, and it explains the hierarchy, bands, board sizes, daily attempts, practice mode and the archive. · NFR-13, NFR-18, NFR-20 · *Verifies:* S11
+
+**US-11.6** — Deployment
+*Given* a commit to `main`, *when* it lands, *then* the public URL updates automatically with no environment variables. · NFR-21
+
+**US-11.7** — Data provenance
+*Given* the repository, *when* I look for the outline data's origin, *then* its Natural Earth source, licence and processing steps are documented. · NFR-22
+
+**US-11.8** — Timer accuracy
+*Given* a mocked clock, *when* a 90 s round runs, *then* the measured duration is within 100 ms. · NFR-2 · *Verifies:* S5
 
 ---
 
@@ -786,58 +818,58 @@ Format: *As a learner, I want … so that …* Acceptance criteria are written G
 
 | Criterion | Requirements | Stories |
 |---|---|---|
-| S1 — round statistics correct and persisted | FR-22, FR-54–59, FR-62, FR-83 | US-2.8, US-2.9, US-7.1, US-7.6 |
-| S2 — all trainers run across all difficulty bands | FR-1, FR-8, FR-9, FR-89, FR-103, FR-112 | US-4.2, US-5.1, US-6.4, US-10.1 |
-| S3 — generators produce only valid questions | FR-88, FR-90, FR-91, FR-92 | US-4.1 |
-| S4 — answer checking correct and tolerant | FR-45–52, FR-98, FR-99 | US-2.6, US-5.2, US-6.7 |
-| S5 — rounds end exactly on their end condition | FR-12, FR-13, FR-15–17, FR-97, FR-109, NFR-2, NFR-3 | US-2.2, US-2.3, US-5.3, US-6.1, US-10.6, US-10.7 |
-| S6 — progress chart correct | FR-70, FR-71 | US-7.8 |
-| S7 — weak area identified correctly | FR-76–80 | US-8.2, US-8.3 |
-| S8 — personal best only on genuine improvement | FR-60, FR-61, FR-66 | US-7.2, US-7.4 |
-| S9 — works offline, no third-party requests | NFR-7, NFR-8, NFR-9, FR-84, FR-114 | US-6.2, US-6.6, US-7.13, US-10.2 |
-| S10 — keyboard-only and accessible, including the grid | FR-48, FR-107, FR-119–125, NFR-18 | US-5.11, US-9.5, US-9.6, US-10.3 |
-| S11 — runs from README with no keys | NFR-12, NFR-17, NFR-19 | US-10.5 |
-| S12 — deterministic daily puzzles | FR-29, FR-32, FR-33, NFR-4 | US-3.3, US-3.4, US-5.7 |
-| S13 — difficulty assigned by date and varies | FR-26, FR-27, FR-28, FR-103, FR-112 | US-3.1, US-3.2, US-5.7, US-6.4 |
-| S14 — one attempt per trainer per day | FR-6, FR-35–38, FR-41, FR-69 | US-2.12, US-3.7, US-3.8, US-7.1 |
-| S15 — archive puzzles recorded against their own date | FR-39, FR-40, FR-43, FR-71 | US-3.9, US-3.10, US-7.10 |
-| S16 — Memory is endless and grows by one tile | FR-24, FR-100, FR-101, FR-102, FR-104, NFR-5 | US-2.10, US-5.4, US-5.5, US-5.8 |
-| S17 — comparison against previous and best is correct | FR-65, FR-66, FR-67 | US-7.3, US-7.4, US-7.5 |
+| S1 — statistics correct and persisted | FR-22, FR-68–73, FR-77, FR-99 | US-2.8, US-2.9, US-8.1, US-8.7 |
+| S2 — all six trainers run across all variants | FR-1, FR-11, FR-12, FR-105, FR-137, FR-138 | US-5.2, US-7.2, US-11.1 |
+| S3 — generators produce only valid questions | FR-106–110 | US-5.1, US-5.3, US-5.4 |
+| S4 — answer checking correct and tolerant | FR-63–66, FR-111, FR-115, FR-116, FR-155 | US-2.6, US-5.5, US-6.2, US-7.14 |
+| S5 — rounds end on their own condition | FR-14, FR-16, FR-18, FR-114, FR-140, NFR-2, NFR-3 | US-2.2, US-2.3, US-2.4, US-6.3, US-7.4, US-11.8 |
+| S6 — progress chart correct | FR-86, FR-87, FR-88 | US-8.9, US-8.10 |
+| S7 — weak topic identified correctly | FR-92–98 | US-9.2, US-9.3 |
+| S8 — personal best per variant, direction-aware | FR-74, FR-75, FR-76, FR-81 | US-6.11, US-8.2, US-8.3, US-8.5 |
+| S9 — offline, no third-party requests | NFR-7, NFR-8, NFR-9, FR-100, FR-143, FR-146 | US-7.1, US-7.5, US-7.8, US-8.14, US-11.2 |
+| S10 — keyboard-only and accessible | FR-61, FR-62, FR-123, FR-133, FR-157–163, NFR-19 | US-6.7, US-10.4, US-10.5, US-11.3 |
+| S11 — runs from README, no keys | NFR-13, NFR-18, NFR-20, NFR-21 | US-11.5, US-11.6 |
+| S12 — deterministic puzzles | FR-29–33, NFR-4 | US-3.3, US-3.4, US-3.5, US-3.6 |
+| S13 — one attempt per trainer, variant and day | FR-10, FR-27, FR-35–38, FR-41, FR-85 | US-2.11, US-3.1, US-3.7, US-3.8, US-8.8 |
+| S14 — archive recorded against its own date | FR-39, FR-40, FR-43, FR-87 | US-3.10, US-3.11, US-8.11 |
+| S15 — Pattern Memory is endless | FR-23, FR-117, FR-118, NFR-5 | US-2.10, US-6.4, US-6.5 |
+| S16 — comparison against previous and best | FR-80, FR-81, FR-82 | US-8.4, US-8.5, US-8.6 |
+| S17 — practice never affects records | FR-45–50 | US-4.1, US-4.2, US-4.3 |
+| S18 — filters are honoured | FR-51–56 | US-4.4, US-4.6, US-4.7 |
+| S19 — Figure Pairs completion and scoring | FR-18, FR-125–131, FR-83 | US-2.4, US-6.8, US-6.9, US-6.10, US-6.11 |
+| S20 — outline hints are correct | FR-145, FR-148–152 | US-7.7, US-7.9, US-7.10, US-7.11 |
+| S21 — trainers reachable, engine untouched | FR-2, FR-6, FR-7 | US-1.3, US-7.15 |
 
-Every success criterion in the brief is covered by at least one requirement and one story. No requirement exists without a traceable origin in the brief.
+Every success criterion is covered by at least one requirement and one story. No requirement exists without a traceable origin in the brief.
 
 ---
 
-## 9. Architecture Decisions
+## 9. Decisions and Assumptions
 
-These questions were carried from brief §13. All are now **resolved and implemented**; each decision is recorded in the module that embodies it, so the code and this table cannot drift apart silently.
+### 9.1 Settled by the product owner
 
-| # | Question | Decision | Where |
-|---|---|---|---|
-| 1 | Vanilla JavaScript or a lightweight framework? | **Vanilla JavaScript**, native ES modules, zero runtime dependencies | `src/` |
-| 2 | Which test runner, and where does it run? | **Node's built-in `node --test`**, running in Node with no DOM — nothing to install, and it forces the NFR-14 split | `package.json`, `tests/` |
-| 3 | Module format and bundler? | Native ES modules, **no bundler and no build step**, as NFR-12 requires | `index.html` |
-| 4 | Seeded PRNG and seed derivation? | **mulberry32**, seeded with an **FNV-1a** hash of `trainerId:date`; difficulty uses a date-only seed so one band is shared by every trainer | `src/core/rng.js` |
-| 5 | Difficulty distribution across dates? | **20 % beginner, 40 % intermediate, 25 % advanced, 15 % expert** — weighted to the middle so most days are playable, with expert rare enough to feel like an event | `src/core/difficulty.js` |
-| 6 | Earliest puzzle date and archive depth? | **2026-10-01**, with the archive view paging 60 days at a time | `src/core/archive.js` |
-| 7 | Detecting a local-date change on an open page? | A **30-second interval** plus a **`visibilitychange`** check, so a tab left open overnight releases the new day's attempts | `src/ui/app.js` |
-| 8 | Memory grid growth rule? | Starts at **4×4** and grows to the smallest square grid keeping the pattern at or below a **40 % fill ratio**, so a large pattern stays legible instead of becoming a near-solid block | `src/trainers/memory/index.js` |
-| 9 | SVG or Canvas for charts? | **Hand-written SVG**, no charting library; difficulty is conveyed per data point | `src/ui/chart.js` |
-| 10 | Trainer registration contract? | A trainer supplies a generator, a renderer kind, a round mode and a headline-score type | `src/core/registry.js` |
-| 11 | Geography content and flag licensing? | Content is **hand-authored factual data** in this repository. Flags are **Unicode regional-indicator glyphs** rendered by the system font — **no image files and no third-party assets**, so there is nothing to license | `src/trainers/geography/countries.json` |
-| 12 | Final product name? | **LearningHub** — confirmed 2026-11-02 | — |
+| Decision | Outcome |
+|---|---|
+| Difficulty | Player chooses; each band is an independent daily puzzle with its own record |
+| Filters | Daily puzzles have none; all filtering lives in practice mode |
+| Memory difficulty | Replaced by board size |
+| Outline data | Natural Earth public-domain data, bundled |
+| Scope | v1 redesigned now — brief and PRD first, then the code rebuilt to match |
+| Product name | LearningHub |
 
-### 9.1 Assumptions, now implemented
+### 9.2 Assumptions pending confirmation
 
-These were chosen in the absence of a stated preference. They are **implemented as described**. The set-based Memory rule was the one with a real cost of reversal, and it has since been confirmed as the intended design.
+Chosen in the absence of a stated preference, and flagged so they can be overruled cheaply.
 
-| Assumption | Why it matters | Status |
+| Assumption | Why it matters | Cost of reversing |
 |---|---|---|
-| Mental Math duration scales 45/60/75/90 s across the four bands | Harder days get more time, so a hard day is harder rather than merely slower | Implemented; values only, cheap to retune |
-| Memory levels are judged as a *set* — tile order does not matter | Decides whether the task is visual-memory or Simon-style sequence recall | **Confirmed 2026-11-02.** LearningHub is a visual-memory task, not sequence recall (FR-99) |
-| Memory starts at the day's tile count and grows by exactly one per level | Makes the score a clean "level reached" number | Implemented; FR-100 |
-| A single personal best per trainer, not split by difficulty band | Honest, because the player cannot choose an easier band | Implemented; FR-60 |
-| Geography keeps 3 lives on every band, difficulty expressed through the country pool | Keeps lives meaningful and comparable | Implemented; FR-109, FR-112 |
+| Pattern Memory board sizes 3×3 to 6×6; Figure Pairs 4×3 to 6×6 | Defines how many daily attempts Memory offers | Low — a list |
+| Pattern Memory keeps a fixed board per round rather than growing it | Board size is now the player's choice, so growing it mid-round would override that choice | Medium — changes FR-119 and the end condition |
+| Figure Pairs scores mistakes, with time only as a tie-break | Rewards memory rather than fast clicking | Medium — score direction and comparison logic |
+| Practice rounds are discarded entirely rather than stored separately | Keeps the data model simple and history honest | Medium — adds a second history store |
+| Trigonometry is exact values only — no decimal answers | Keeps answers unambiguous and checkable | Low — a generator constraint |
+| Flags stay Unicode glyphs; only outlines use bundled data | Keeps payload small; glyph flags already work | Medium — would need bundled flag images |
+| Geography keeps 3 lives at every band | Keeps rounds comparable across bands | Low |
 
 ---
 
@@ -845,10 +877,11 @@ These were chosen in the absence of a stated preference. They are **implemented 
 
 | Version | Date | Change |
 |---|---|---|
-| v1 | 2026-10-10 | Initial PRD derived from product brief Draft v2 |
-| v2 | 2026-10-10 | Rewritten against brief Draft v3. Added `timed` and `lives` round modes, deterministic seeded generation, one attempt per trainer per date, and the archive |
-| v3 | 2026-10-10 | Rewritten against brief Draft v4. **Difficulty selection removed**: difficulty is assigned by the date (FR-26 to FR-31), trainer parameters are derived from it, and the pre-round screen became a briefing with no controls. **Memory redefined** as an endless visual tile grid judged by set rather than order, requiring lazy prompt supply (FR-24) and unbounded deterministic level generation (NFR-5). **Personal best simplified** to one number per trainer. Added **comparison against previous attempt and all-time best** (FR-65 to FR-67). Added success criteria S13, S16 and S17. FRs 108 → 125, NFRs 18 → 19, stories 63 → 75 |
-| v3.1 | 2026-11-02 | Reconciled with the implementation. §9 turned from open questions into **recorded architecture decisions**, eleven of twelve now resolved and implemented; only the final product name stays open. §9.1 assumptions restated as implemented, with the cost of reversing each. Added **NFR-20** for automatic publication to a public URL |
-| v3.2 | 2026-11-02 | Final two decisions confirmed by the product owner: **LearningHub** is the product name (§9 Q12 closed), and **Memory is judged as a set of tiles rather than a sequence** (§9.1, FR-99 confirmed). No open questions remain |
+| v1 | 2026-10-10 | Initial PRD from brief v2 |
+| v2 | 2026-10-10 | Round modes, deterministic generation, daily attempts, archive |
+| v3 | 2026-10-10 | Difficulty removed and date-assigned; Memory redefined as an endless tile grid |
+| v3.1 | 2026-11-02 | §9 reconciled with the implementation; NFR added for publication |
+| v3.2 | 2026-11-02 | Product name and the set-based Memory rule confirmed |
+| v4 | 2026-11-02 | Rewritten against brief v5. **Difficulty selection restored** in a stronger form — four bands per trainer, each an independent daily puzzle with its own record (FR-26 to FR-37). Introduced the **category / trainer / topic hierarchy**, renaming the old weak-area "category" to **topic**. Added **practice mode** as the sole home of filters (FR-45 to FR-58). Added **completion** as a third round mode and **score direction** so a lower score can be better. Catalogue grows from three trainers to six, adding **Figure Pairs**, **Flag Guesser**, **Outline Guesser** and **Capital Guesser**, with Worldle-style distance, direction and proximity hints (FR-148 to FR-152) and bundled Natural Earth outline data. Storage keys move to `v2`. FRs 125 → 163, NFRs 20 → 22, epics 10 → 11, stories 75 → 93, success criteria 17 → 21 |
 
-**Status:** the requirements in this document are implemented and covered by the test suite. No open questions remain.
+**Status:** this PRD describes the redesigned v1. The implementation is being rebuilt against it; until that is complete, the deployed application reflects PRD v3.2.

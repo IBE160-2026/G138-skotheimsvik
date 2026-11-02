@@ -1,6 +1,6 @@
 # Product Brief — LearningHub
 
-**Status:** Draft v4
+**Status:** Draft v5
 **Author:** Daniel Skotheimsvik, with AI support (BMAD Analyst role)
 **Course:** IBE160 Programmering med KI, Høgskolen i Molde, autumn 2026
 **Supersedes:** the earlier GameHub concept — see §14 Project history
@@ -11,11 +11,13 @@
 
 LearningHub is a browser-based training site where you practise everyday skills in short, score-driven rounds and watch your numbers go up.
 
-Every trainer gives you **one attempt per day**, and **everyone gets the same puzzle**. There is no difficulty selector: the date decides how hard today is. Some days are gentle, some are brutal, and that is the point — your score today means something because the person next to you faced exactly the same thing. Miss a day, or want more practice? The **archive** lets you play any previous day you have not yet attempted.
+The site is organised into **categories** — Math, Memory and Geography — and each category holds several **trainers**, which are the individual games. Geography alone has three: guess the country from its flag, from its outline, or name its capital.
 
-Every trainer runs on one reusable **Drill Engine** with the same core loop — prompt → answer → instant feedback → score/streak → next — but each trainer decides how its round *ends*. Mental Math is against the clock. Geography gives you three lives. Memory gives you one life and no ceiling: the pattern keeps growing until you slip, and your only real opponent is yesterday's score.
+Every trainer offers all four difficulty bands, from **Beginner to Expert**, and each band is its own puzzle with its own daily attempt. Pick Intermediate in the morning and Expert in the evening if you like — they are separate puzzles and separate records. Within a band, **everyone in the world gets the same puzzle that day**, so a score actually means something. Miss a day? The **archive** lets you play any previous day you have not yet attempted.
 
-The three trainers in version 1 are a starting point, not the final set. The engine exists so new trainers and new round types can be added without rewriting it.
+Alongside the daily puzzles there is a **practice mode**: unlimited, unscored, and fully configurable. This is where the filters live. Want only algebra and trigonometry? Want a 6×6 memory board? Practice mode gives you every knob. Daily puzzles deliberately give you none, because a shared puzzle stops being shared the moment two players configure it differently.
+
+Every trainer runs on one reusable **Drill Engine** with the same core loop — prompt → answer → instant feedback → score/streak → next — but each trainer decides how its round *ends*: against a clock, or against a limited number of lives.
 
 The problem it solves: people who want to get better at a concrete, useful skill are stuck between full courses that are too slow and single-purpose apps that do not talk to each other. LearningHub gives many skills one consistent practice loop, one progress history, and a daily rhythm that turns practice into a habit.
 
@@ -25,21 +27,21 @@ Version 1 is a static site — HTML, CSS, JavaScript, content in JSON files, pro
 
 ## 1. Problem Statement
 
-People want to get measurably better at skills they actually use — mental math, memory, geography, music reading, ear training, spelling, chess tactics — but existing tools fall into two camps:
+People want to get measurably better at skills they actually use — mental arithmetic, memory, geography, music reading, spelling — but existing tools fall into two camps:
 
 - **Full courses** (Khan Academy, Duolingo) teach thoroughly but are far too slow when you only want to sharpen one weak spot for five minutes.
-- **Single-purpose apps** (Monkeytype for typing, Seterra for maps, Lichess puzzles for chess) are fast and addictive, but fragmented: separate sites, separate accounts, separate progress, and no shared sense of "am I actually improving?"
+- **Single-purpose apps** (Monkeytype for typing, Flagle for flags, Worldle for country outlines, Seterra for maps) are fast and addictive, but fragmented: separate sites, separate progress, and no shared sense of "am I actually improving?"
 
-There is no Monkeytype-style site that offers **fast, score-driven drills** across many skills with one consistent progress system.
+The fragmentation is worst in geography. Someone who enjoys this kind of game ends up with four browser tabs open — one for flags, one for outlines, one for capitals — each with its own streak and none of them talking to each other. There is no reason these should be separate products.
 
-Underneath both gaps sit two further problems. Most drill tools optimise for being fun to use rather than for teaching something you can use afterwards — getting better at the app is not the same as getting better at the thing. And unlimited practice at a difficulty you choose yourself sounds generous but rarely builds a habit: when you can play any number of rounds at any setting, no single round matters, your scores are not comparable to anyone else's, and most people drift away.
+Underneath that sit two further problems. Most drill tools optimise for being fun rather than for teaching something you can use afterwards — getting better at the app is not the same as getting better at the thing. And a tool that offers either *only* a fixed daily puzzle or *only* unlimited free play will lose half its audience: the daily-puzzle crowd wants a reason to come back tomorrow, while the grinder wants to drill the one topic they keep failing.
 
 Concrete situations:
 
-- Someone splitting a restaurant bill or checking a discount in a shop reaches for their phone, because the arithmetic no longer comes automatically — and they would like it to.
+- Someone splitting a restaurant bill or checking a discount reaches for their phone, because the arithmetic no longer comes automatically.
 - Someone is told a name, a door code or a four-item shopping list, and it is gone a minute later.
-- A country comes up in the news and someone realises they could not place it on a map, or name its capital.
-- Someone practises on three different drill sites and has no idea whether they are improving, because no site keeps a history they can compare.
+- A country comes up in the news and someone realises they could not place it on a map, name its capital, or recognise its flag.
+- Someone keeps losing marks on algebra specifically, and no drill site lets them practise *only* algebra.
 
 ---
 
@@ -49,117 +51,164 @@ A single website where every skill is trained through the same core loop:
 
 > **prompt → answer → instant feedback → score / streak → next**
 
-Each trainer sets its own stakes — a clock, or a number of lives. Each day sets its own difficulty, the same for everybody. You get **one attempt per trainer per day**, so the attempt counts, and the archive is there when you want more.
+Skills are grouped into categories, each category holds several trainers, and every trainer offers four difficulty bands. You choose the band; the date chooses the questions. One attempt per band per day, with an archive for the days you missed and a practice mode for when one attempt is not enough.
 
-Users build a daily habit across a handful of minutes, watch their numbers improve over weeks, and see which areas keep letting them down. The measure of success is not the score on the screen — it is noticing, a month later, that the mental arithmetic in a shop happens without effort.
+Users build a daily habit across a handful of minutes, watch their numbers improve over weeks, and see which topics keep letting them down. The measure of success is not the score on the screen — it is noticing, a month later, that the mental arithmetic in a shop happens without effort.
 
 ---
 
 ## 3. What Makes This Different
 
-LearningHub borrows the *format* of speed-drill sites but changes the *content* so that practice transfers to real tasks, and changes the *rhythm* so that practice becomes a habit.
+LearningHub borrows the *format* of speed-drill and daily-puzzle sites, but unifies what is currently scattered across a dozen separate products.
 
 | Existing tool | What it does well | Where it falls short | What LearningHub does instead |
 |---|---|---|---|
-| **Monkeytype** | Superb drill UX, instant stats, minimal keyboard-first interface | Trains typing on **random word sequences that nobody would ever write in a real sentence**. You get faster at the test itself, but the content teaches you nothing you can use afterwards. Unlimited retries at your own settings mean no single run matters | Keeps the tight loop and the stats screen, but every prompt is **real, usable content**: an actual arithmetic problem, an actual capital city, an actual pattern to memorise. One shared puzzle a day makes the run matter |
-| **Wordle** | One puzzle, one attempt, same for everyone — the format that turned a trivial game into a daily habit | A single puzzle type, no skill progression, nothing to practise when you want more | Takes the same rhythm and applies it to a growing set of skills, with an archive for people who want more and a progress history that shows improvement over time |
-| **Seterra** | Large, high-quality geography question bank | Geography only; you pick the quiz and the scope, so progress is per-quiz rather than a personal history; no cross-skill view | Geography is one trainer among many, with the day deciding the scope, sharing the same scoring, history and weak-area tracking as every other trainer |
-| **Lichess puzzles** | Excellent streak mechanics, and a daily puzzle with an archive | Chess only, and it assumes you already play chess | The daily-plus-archive structure and the streak mechanics are generalised into the Drill Engine so *any* skill gets them |
-| **Human Benchmark** | Clean, honest measurement of raw cognitive tasks including visual memory | Pure testing with no daily structure and no sense of progress beyond a single number | The same kind of task becomes a daily puzzle with a history behind it, so you can see whether you are actually getting better |
-| **Anki** | Proven spaced repetition, fully user-controlled | Slow card-by-card pace, no competitive loop, heavy setup before you learn anything | Zero setup: open the site, play today's puzzle. Spaced repetition is a later phase layered onto an already enjoyable loop |
-| **Duolingo** | Streaks and gamification that keep people coming back | One domain, heavily monetised, progress optimised for engagement rather than mastery | The same motivational mechanics, no monetisation, and the numbers shown are honest accuracy and speed figures |
+| **Flagle** | One flag a day, revealed piece by piece — simple and genuinely habit-forming | Flags only, one puzzle a day, no difficulty, no history beyond a streak | Flag guessing is one trainer inside the Geography category, with four bands, an archive, and a progress history shared with every other trainer |
+| **Worldle** | Country outlines with distance-and-direction feedback — an elegant hint system | Outlines only, and again a single daily puzzle with no way to practise more | The outline trainer sits beside the flag and capital trainers, so one site covers what currently takes three |
+| **Monkeytype** | Superb drill UX, instant stats, minimal keyboard-first interface | Trains typing on **random word sequences nobody would ever write in a real sentence**. You get faster at the test, but the content teaches you nothing usable | Keeps the tight loop and the stats screen, but every prompt is **real, usable content** |
+| **Wordle** | One puzzle, one attempt, same for everyone — the format that created the daily-habit genre | A single puzzle type, no skill progression, nothing to do when you want more | The same rhythm applied to a growing set of skills, with four bands a day instead of one puzzle, plus an archive and a practice mode |
+| **Seterra** | Large, high-quality geography question bank with free configuration | Geography only, and progress is per-quiz rather than a personal history | Free configuration lives in practice mode, while daily puzzles stay comparable |
+| **Human Benchmark** | Clean, honest measurement of raw cognitive tasks including visual memory | Pure testing, no daily structure, no sense of progress | The same tasks become daily puzzles with history behind them |
+| **Anki** | Proven spaced repetition, fully user-controlled | Slow card-by-card pace, no competitive loop, heavy setup | Zero setup: open the site, play today's puzzle |
+| **Duolingo** | Streaks and gamification that keep people coming back | One domain, heavily monetised, progress optimised for engagement over mastery | The same motivational mechanics, no monetisation, honest accuracy and speed figures |
 
-**The honest version of the pitch.** None of the individual pieces are new. Score-driven rounds exist, question banks exist, streaks exist, daily puzzles exist. What does not exist is one place where the *same* drill loop, the *same* score model, the *same* shared daily puzzle and the *same* progress history apply across unrelated skills — and where content is chosen for transfer value rather than for being easy to generate.
+**The honest version of the pitch.** None of the individual pieces are new. Score-driven rounds exist, question banks exist, streaks exist, daily puzzles exist, and Flagle and Worldle already do their one thing well. What does not exist is one place where the *same* drill loop, the *same* score model, the *same* four-band daily structure and the *same* progress history apply across unrelated skills — where a geography fan gets flags, outlines and capitals under one roof, and where a maths learner can switch off everything except the topic they keep failing.
 
-**Honest limitations.** LearningHub will not beat Seterra on geography breadth or Lichess on chess depth in version 1. Its advantage is breadth plus consistency, not depth in a single domain. Two deliberate trades are worth stating plainly. The daily limit builds habit at the cost of letting keen users practise freely, which the archive only partly offsets. And removing the difficulty selector means a beginner will sometimes meet a hard day and a strong player will sometimes meet an easy one — comparability is bought at the cost of personal fit.
+**Honest limitations.** LearningHub will not beat Seterra on geography breadth, and its flag trainer will not have the polish of a product that does only flags. Its advantage is breadth plus consistency, not depth in any single domain. Two deliberate trades are worth stating plainly. Daily puzzles take away all configuration, which will frustrate anyone who wants to tune the experience — practice mode exists precisely to absorb that complaint. And offering four bands a day across six trainers means twenty-four daily puzzles, which nobody will finish; the daily list is a menu, not a to-do list.
 
 ---
 
 ## 4. Who This Serves
 
 **Primary user for v1 — the everyday self-improver.**
-Someone who wants the skills they use in ordinary life to get sharper: working out a price or a split bill in their head without reaching for a phone, remembering a code, a shopping list or a name they were just told, and knowing where places are when they come up in conversation or in the news. They are not studying for anything in particular and have no teacher setting them tasks — they simply want to be a bit better next month than they are today.
+Someone who wants the skills they use in ordinary life to get sharper: working out a price or a split bill in their head, remembering a code or a shopping list, and knowing where places are when they come up in conversation. They are not studying for anything in particular and have no teacher setting them tasks — they simply want to be a bit better next month than they are today.
 
 They have a few spare minutes at a time, not evenings. They will not sit through a course, will not create an account before seeing whether the thing is any good, and will stop using anything that feels like homework. What keeps them coming back is seeing a number go up, knowing the practice was worth something outside the app, and having a reason to return tomorrow.
 
-Age and occupation vary — a pupil, a student, someone working full time, someone retired. What unites them is the motivation: **practical everyday usefulness, trained in small daily doses**, not qualification or exam results.
-
-Why this user: the trainers map onto everyday situations rather than onto a syllabus. Mental Math is the arithmetic you do while shopping or splitting a bill. Memory is remembering where things are and what you were just shown. Geography is general knowledge that comes up constantly. The once-a-day format fits a person with a few spare minutes far better than an open-ended practice session would, and removing the difficulty selector removes the one decision most likely to stall them before they start.
+Why the structure suits them: the category list means they can follow whichever skill they are in the mood for without hunting through a flat list of games, and choosing their own band means a beginner is never humiliated and an expert is never bored. Practice mode is there for the day they get annoyed at one specific topic and want to hammer it.
 
 **Secondary users — served later, not designed for in v1:**
 
 | Segment | Need | Phase |
 |---|---|---|
+| Geography-quiz enthusiasts | Flags, outlines and capitals in one place with real progress tracking | 1 (well served, not the design target) |
+| Pupils and students revising | Topic filters in practice mode, used for test preparation | 1 (benefits, not designed around) |
 | Musicians and music learners | Note reading, interval and chord recognition | 2 |
 | Hobbyist chess players | Tactical pattern recognition without playing full games | 2 |
-| ESL learners | Vocabulary and spelling speed | 2 |
-| Pupils and students revising | The same trainers, used for test preparation rather than daily upkeep | 1 (benefits from v1, not designed around) |
 
 ---
 
-## 5. Core Concept: One Engine, Many Trainers
+## 5. Core Concept: Categories, Trainers, Bands
 
-Build a reusable **Drill Engine** once. Each trainer supplies only:
+### 5.1 The hierarchy
 
-1. a **question generator** (or a content JSON file),
-2. a small **renderer** for the prompt type (text, grid, image, staff, audio, board), and
-3. a declared **round mode** — how its rounds end.
+Three levels, and the vocabulary is used consistently throughout this project:
 
-The engine owns the loop, answer checking, scoring, streaks, the results screen, progress storage, weak-area analysis, the daily difficulty, the daily-attempt rule and the archive. Adding a trainer must not require changing engine code. This is the main architectural bet of the project, and it is why a fourth trainer is a stretch goal: it proves the abstraction holds.
+| Level | Meaning | Examples |
+|---|---|---|
+| **Category** | A skill area | Math · Memory · Geography |
+| **Trainer** | One game inside a category | Flag Guesser · Pattern Memory · Mental Math Sprint |
+| **Topic** | A tagged sub-type of prompt, used for weak-area analysis and for practice-mode filters | `algebra` · `trigonometry` · `capitals-of-africa` |
 
-### 5.1 Round modes
+A single reusable **Drill Engine** sits underneath all of it. Each trainer supplies only a question generator, a renderer for its prompt type, and a declared round mode. The engine owns the loop, answer checking, scoring, streaks, results, persistence, weak-area analysis, daily attempts and the archive. Adding a trainer — or a whole new category — must not require changing engine code.
 
-Version 1 ships two ways for a round to end. More can be added later without disturbing existing trainers.
+### 5.2 Round modes
 
-| Mode | Round ends when | Used by | Rationale |
+| Mode | Round ends when | Used by |
+|---|---|---|
+| **Timed** | The clock runs out | Mental Math Sprint |
+| **Lives** | You run out of lives | All Geography trainers, Pattern Memory |
+| **Completion** | The board is finished | Figure Pairs — the round ends when every pair is matched |
+
+### 5.3 Four bands, four puzzles, four attempts
+
+Every trainer offers **Beginner, Intermediate, Advanced and Expert**. The player chooses. Each band is an independent puzzle with its own daily attempt and its own personal best, so playing Beginner in the morning does not stop you playing Expert in the evening.
+
+Within a band, the puzzle is **the same for every player on that date**, generated deterministically from a seed derived from trainer + band + date. That is what makes a score comparable. The band changes *how hard* the questions are; the date changes *which* questions they are.
+
+Difficulty means different things in different categories, and that is intentional:
+
+- **Math** — bands control which topics appear and how large the numbers get. Beginner is addition and subtraction; Expert reaches algebra and trigonometry.
+- **Geography** — bands control the country pool and the generosity of the hints. Beginner uses widely known countries with multiple choice; Expert uses the full set with free-text answers and fewer hints.
+- **Memory** — **bands do not apply.** See §5.5.
+
+### 5.4 Daily attempts, archive and practice mode
+
+**One scored attempt per trainer, per band, per calendar day.** Once spent, that particular puzzle is done until tomorrow.
+
+The **archive** holds every previous day's puzzles. Any past day and band you have not yet played can still be played, and counts towards your history on equal terms.
+
+**Practice mode** is the pressure valve. It is unlimited, available at any time, and fully configurable — this is the only place filters live. You can pick topics, board sizes, country regions and round length. Practice rounds show you full statistics at the end but are **not recorded in your history and never affect a personal best**, because a configurable round is not comparable to anyone else's.
+
+**The daily limit is a soft one.** With no accounts it is stored in the browser, so a determined user can clear their storage and play again. Version 1 does not try to prevent this and does not claim to; the limit shapes a habit, it does not police anyone. Real enforcement needs accounts and a server, which is Phase 2.
+
+### 5.5 Why Memory has no difficulty bands
+
+A memory pattern is random. A 4×4 grid with five tiles is not meaningfully "intermediate" — it is just a 4×4 grid with five tiles, and whether you remember it depends on you, not on how cleverly the puzzle was authored. Bolting four bands onto it would be decoration.
+
+So Memory replaces bands with **board size**. Each board size is its own daily attempt and its own personal best, exactly as bands are elsewhere. A 3×3 board and a 6×6 board are different challenges with different records, which is honest, where "Beginner 4×4" versus "Expert 4×4" would not be.
+
+### 5.6 Your real opponent is yesterday
+
+Because every puzzle is a single shared challenge, the natural motivation is not a leaderboard — it is your own record. After every round the results screen tells you how you compare with your **previous attempt** at that trainer and band, and with your **all-time best**. Beating yesterday is the daily goal; beating your best is the long one.
+
+---
+
+## 6. Category and Trainer Catalogue
+
+### 6.1 Math
+
+| Trainer | Round mode | What you do | Phase |
 |---|---|---|---|
-| **Timed** | The clock runs out | Mental Math Sprint | Arithmetic is about speed under pressure; "how many before time is up" is the natural measure |
-| **Lives** | You run out of lives | Geography (3 lives), Memory (1 life) | Recognition and recall are about accuracy; "how far can you get before you slip" is the natural measure |
+| **Mental Math Sprint** | Timed | Answer as many arithmetic prompts as you can before the clock runs out | 1 |
 
-Candidate modes for later phases: fixed prompt count, sudden-death against a target, and time-attack where correct answers add seconds.
+Topics, switchable individually in practice mode and selected by band in daily puzzles:
 
-### 5.2 One shared puzzle a day
+| Topic | Beginner | Intermediate | Advanced | Expert |
+|---|---|---|---|---|
+| Addition and subtraction | ● | ● | ● | ● |
+| Multiplication and division | | ● | ● | ● |
+| Percentages | | | ● | ● |
+| Fractions | | | ● | ● |
+| Powers and roots | | | ● | ● |
+| Algebra — solve for *x* | | | | ● |
+| Trigonometry — exact-value sine, cosine and tangent | | | | ● |
 
-**No difficulty selector.** The player does not choose how hard the round is — the date does. Today's puzzle is the same for everyone, and difficulty varies from day to day: some days are easy, some are hard, most sit in between. This is what makes a score worth having. It also removes the first decision a new user would otherwise have to make before they can start.
+Round duration scales with the band, so a harder day is harder rather than merely slower.
 
-Difficulty still exists internally, as a band from Beginner to Expert, but it is **assigned by the date rather than chosen**. Where a trainer has parameters that ought to follow difficulty, they are derived from it rather than set by the player — for example, Mental Math gives more time on a day with harder arithmetic, so that a hard day is harder, not merely slower.
+### 6.2 Memory
 
-Each trainer offers **one scored attempt per calendar day**. Once today's attempt is used, that trainer is done until tomorrow.
+| Trainer | Round mode | What you do | Phase |
+|---|---|---|---|
+| **Pattern Memory** | Lives (1) | A pattern of tiles lights up, then hides. Reproduce it. Every level adds one tile and it never stops — until you miss | 1 |
+| **Figure Pairs** | Completion | A board of face-down figures. Turn two at a time and match them all, remembering what you have seen | 1 |
 
-The **archive** holds every previous day's puzzle. Any past day you have not yet played can still be played, and counts towards your history on equal terms with today's result. This keeps the daily format meaningful without leaving a new user — or a reviewer — with nothing to do.
+Both use **board size** instead of difficulty bands. Pattern Memory offers 3×3 through 6×6; Figure Pairs offers 4×3 through 6×6, always an even number of cells. Each size is a separate daily attempt and a separate record.
 
-Daily puzzles are **deterministic**: the difficulty, the parameters and the prompts for a given trainer and date are all generated from a seed derived from that date, so every player gets the same puzzle and results are comparable. This also makes the generators straightforward to test.
+Figure Pairs is scored on **mistakes, then time** — the fewest wrong turns wins, with elapsed time breaking ties. Turning over a pair you have already seen and failing to match it is the thing being measured.
 
-**The limit is a soft one.** With no accounts, it is stored in the browser, so a determined user can clear their storage or open a private window and play again. Version 1 does not try to prevent this and does not claim to; the limit is there to shape a habit, not to police anyone. Enforcing it properly needs accounts and a server, which is Phase 2.
+### 6.3 Geography
 
-### 5.3 Your real opponent is yesterday
+| Trainer | Round mode | What you do | Phase |
+|---|---|---|---|
+| **Flag Guesser** | Lives (3) | Identify the country from its flag | 1 |
+| **Outline Guesser** | Lives (3) | Identify the country from its silhouette, with distance-and-direction hints after a wrong guess | 1 |
+| **Capital Guesser** | Lives (3) | Name the capital of the given country, or the country from its capital | 1 |
 
-Because every day is a single shared puzzle, the natural motivation is not a leaderboard — it is your own record. After every round the results screen tells you how today compares with your **previous attempt** and with your **all-time best** for that trainer. Beating yesterday is the daily goal; beating your best is the long one.
+Bands control the country pool and the answer format: Beginner uses widely known countries with four-way multiple choice, Expert uses the full set with free-text answers.
 
----
+The Outline Guesser's hint system is lifted, openly, from Worldle: after a wrong guess you are told how far away your guess was, in which direction the target lies, and how close you are as a percentage. It is a genuinely good mechanic and there is no reason to invent a worse one.
 
-## 6. Trainer Catalogue
+### 6.4 Later phases
 
-The three trainers in version 1 are a **starting point**, chosen because they need no external content and exercise different parts of the engine. The catalogue is designed to grow; the table below is the current plan, not a ceiling.
-
-| # | Trainer | Round mode | What you do | Content source | Phase |
-|---|---|---|---|---|---|
-| 1 | Mental Math Sprint | Timed | Answer as many arithmetic prompts as you can before the clock runs out | Generated | 1 |
-| 2 | Memory | Lives (1) | A pattern of tiles lights up on a grid; reproduce it. Every level adds a tile, and it never stops — until you miss | Generated | 1 |
-| 3 | Geography Speed | Lives (3) | Capitals, countries, flags and continents, three mistakes allowed | Own JSON (countries, capitals, flags) | 1 |
-| 4 | Spelling & Vocabulary | Lives | — | Own JSON word lists | 2 |
-| 5 | Music Reading Practice | Timed | — | Generated (SVG staff) | 2 |
-| 6 | Ear Training | Lives | — | Generated (Web Audio API) | 2 |
-| 7 | Chess Pattern Trainer | Lives | — | Own JSON puzzle set | 2 |
-| 8 | Code Syntax Trainer | Timed | — | Own JSON snippets | 3 |
-| 9 | Sign Language Flash | Lives | — | Own image set | 3 |
-| 10 | Reading Comprehension Sprint | Timed | — | Own JSON passages | 3 |
-
-### 6.1 Memory: endless by design
-
-Memory is the one trainer with no finish line. You get one life and the pattern grows by one tile every level, so the round always ends in failure — the only question is how far you got. The day decides where you start and which patterns appear; your score is the level you reached.
-
-This is deliberate. A fixed-length memory round with one life is over in seconds and tells you almost nothing. An endless one turns every day into a direct, legible comparison with yesterday.
+| Category | Trainer | Phase |
+|---|---|---|
+| Language | Spelling and vocabulary | 2 |
+| Music | Note reading, ear training | 2 |
+| Chess | Tactical pattern trainer | 2 |
+| Math | Unit conversion, estimation | 2 |
+| Geography | Population and area comparison | 3 |
+| Code | Syntax trainer | 3 |
 
 ---
 
@@ -167,28 +216,30 @@ This is deliberate. A fixed-length memory round with one life is over in seconds
 
 ### In v1 (MVP)
 
-- **Three trainers**, each with its own round mode: Mental Math (timed), Memory (1 life, endless), Geography (3 lives)
-- **No difficulty selection** — the date sets the difficulty, the same for every player
-- **One scored attempt per trainer per calendar day**, with a clear indication of what is still available today
-- **Archive** of previous days' puzzles, playable at any time, counting towards history on equal terms
-- **Deterministic daily puzzles** — the same date and trainer always produce the same difficulty, parameters and prompts
+- **Three categories holding six trainers**, all on one shared Drill Engine
+- **Four difficulty bands per trainer**, chosen by the player, each an independent daily puzzle
+- **Board sizes instead of bands for Memory**, each its own daily puzzle
+- **One scored attempt per trainer, per band or board size, per calendar day**
+- **Deterministic daily puzzles** — the same trainer, band and date always produce the same questions for every player
+- **Archive** of previous days, playable at any time, counting towards history on equal terms
+- **Practice mode** — unlimited, unscored, with full topic, board-size and region filters
 - **Comparison against your previous attempt and your all-time best** on every results screen
-- Live round display appropriate to the mode: remaining time for timed rounds, remaining lives for lives rounds, plus correct-count, accuracy and streak in both
-- Results screen: correct answers, accuracy, average answer time, best streak, personal best, and why the round ended
-- **Progress history with charts over time** — score and accuracy per trainer, plotted by puzzle date, with the day's difficulty visible
-- **Weak-area tracking** — per-category hit rate with a plain-language summary ("you miss fractions most"), for at least Mental Math and Geography
+- Live round display appropriate to the mode: clock, lives, or pairs remaining
+- Results screen: score, accuracy, average answer time, best streak, personal best, and why the round ended
+- **Progress history with charts over time**, per trainer and band
+- **Weak-area tracking** by topic, with a plain-language summary ("you miss algebra most")
 - Progress persisted in `localStorage` and restored on reload
-- Keyboard-first UI including full keyboard control of the Memory grid, dark and light mode, mobile-friendly, accessible
+- Keyboard-first UI including full keyboard control of every grid, dark and light mode, mobile-friendly, accessible
 - Runs as a static site with no login and no network calls
 
 ### Deferred to later phases
 
-- User accounts and server-synced progress, which would also allow the daily limit to be enforced properly (Phase 2)
+- User accounts and server-synced progress, which would also allow the daily limit to be properly enforced (Phase 2)
 - Leaderboards and comparison against other players, which the shared daily puzzle makes possible (Phase 3)
-- Further trainers and further round modes (Phases 2–3)
+- Further categories and trainers (Phases 2–3)
 - Day-streak tracking and catch-up mechanics (Phase 2)
 - Spaced repetition scheduling (Phase 3)
-- A practice mode at a difficulty of your choosing, if daily-only proves too restrictive (Phase 2)
+- Recording practice-mode statistics separately from daily results (Phase 2)
 
 ### Explicitly out of scope
 
@@ -196,7 +247,8 @@ This is deliberate. A fixed-length memory round with one life is over in seconds
 |---|---|
 | Third-party APIs or paid services | "No strings attached" principle; a reviewer must be able to run it without keys |
 | AI or LLM features inside the app | AI is used to *build* the project, not to run it; keeps behaviour deterministic and testable |
-| Player-selected difficulty | Deliberate product decision — a shared daily puzzle is the point |
+| Filters in daily puzzles | Deliberate product decision — a configurable puzzle is not a shared puzzle |
+| Difficulty bands for Memory | Deliberate product decision — see §5.5 |
 | Enforcing the daily limit against a determined user | Impossible without accounts and a server; documented as a soft limit |
 | Native mobile apps | A responsive web app is sufficient |
 | Collecting personal data | No accounts in v1, therefore no personal data at all |
@@ -205,7 +257,7 @@ This is deliberate. A fixed-length memory round with one life is over in seconds
 
 ## 8. Scope Summary
 
-**v1 is done when** a user can open the site, see which of the three trainers they still have an attempt for today and how hard today is, play that attempt under the trainer's own round mode, see a results screen that tells them how they did against yesterday and against their best, play older puzzles from the archive, view their progress chart and weak areas, and find all of it still there after closing and reopening the browser.
+**v1 is done when** a user can open the site, browse three categories, pick any of six trainers, choose a band or board size, see which attempts they still have today, play a round under that trainer's round mode, see a results screen comparing them with yesterday and with their best, play older puzzles from the archive, practise freely with filters, view progress charts and weak topics, and find all of it still there after closing and reopening the browser.
 
 ---
 
@@ -215,27 +267,31 @@ This is deliberate. A fixed-length memory round with one life is over in seconds
 
 | # | Criterion | How it is checked |
 |---|---|---|
-| S1 | A Mental Math round shows the correct number of correct answers, accuracy percentage and best streak, and the result is still stored after the page is reloaded | Manual test plus automated tests on scoring and persistence |
-| S2 | All three trainers run the full loop (prompt → answer → feedback → next) without errors across a sample of puzzle dates spanning every difficulty band | Manual test matrix, 3 trainers × 4 difficulty bands drawn from archive dates |
-| S3 | Question generators produce only valid questions — for example Mental Math never divides by zero and never produces a non-integer answer in the easier bands | Unit tests over 1000 generated questions per band |
-| S4 | Answer checking accepts correct answers and rejects incorrect ones, including whitespace and letter-case variants for text answers | Unit tests on the answer-checking function |
-| S5 | Each round ends exactly on its own end condition — a timed round when the clock reaches zero, a lives round when the last life is lost — and no answer submitted afterwards is counted | Unit tests with a mocked clock and a scripted answer sequence |
-| S6 | After five completed puzzles the progress chart shows five data points in puzzle-date order with the correct values | Manual test plus tests on the history store |
-| S7 | Weak-area tracking identifies the correct weakest category when a round is answered with a deliberately skewed pattern | Unit test with a scripted answer sequence |
-| S8 | Personal best only updates when a round genuinely beats the previous best | Unit test |
+| S1 | A round records the correct score, accuracy and best streak, and the result survives a page reload | Manual test plus automated tests on scoring and persistence |
+| S2 | All six trainers run the full loop without errors, across every band or board size they offer | Manual test matrix |
+| S3 | Question generators produce only valid questions — Mental Math never divides by zero, algebra prompts always have the stated solution, trigonometry prompts only use exact values | Unit tests over 1000 generated questions per band |
+| S4 | Answer checking accepts correct answers and rejects incorrect ones, including whitespace, letter-case and documented alternative spellings | Unit tests on the answer-checking function |
+| S5 | Each round ends exactly on its own end condition — clock, lives, or board completion — and nothing submitted afterwards is counted | Unit tests with a mocked clock and a scripted answer sequence |
+| S6 | After five completed puzzles the progress chart shows five points in puzzle-date order with the correct values | Manual test plus tests on the history store |
+| S7 | Weak-area tracking identifies the correct weakest topic when a round is answered with a deliberately skewed pattern | Unit test with a scripted answer sequence |
+| S8 | Personal best updates only when a round genuinely beats the previous best for that exact trainer and band | Unit test |
 | S9 | The whole application works offline after first load, with no requests to third parties | DevTools network inspection |
-| S10 | The site is fully operable with the keyboard alone, including selecting tiles on the Memory grid, and passes a basic accessibility audit | Manual keyboard walkthrough plus Lighthouse accessibility audit |
+| S10 | The site is fully operable with the keyboard alone, including every tile grid, and passes a basic accessibility audit | Manual keyboard walkthrough plus Lighthouse audit |
 | S11 | A reviewer can run the app locally by following the README, with no keys, accounts or build step | Fresh-clone test on another machine |
-| S12 | The same trainer and date always generate an identical difficulty, parameter set and prompt sequence, and two different dates generate different ones | Unit test comparing generated puzzles |
-| S13 | Daily difficulty varies across dates and covers every band over a long run, with no player input able to change it | Unit test over 365 simulated dates checking the distribution |
-| S14 | After today's attempt at a trainer is completed, that trainer is locked until the next local day, while the archive remains playable | Manual test plus unit test with a mocked clock |
-| S15 | A puzzle played from the archive is recorded against its own date and appears in the correct position in the progress chart | Manual test plus unit test |
-| S16 | Memory continues generating levels indefinitely, with each level one tile larger, until the player makes a mistake | Unit test driving 50 consecutive correct levels |
-| S17 | The results screen correctly reports whether the round beat the previous attempt and the all-time best | Unit test across the cases: first ever attempt, worse, equal, better |
+| S12 | The same trainer, band and date always generate an identical prompt sequence; a different band or date generates a different one | Unit test comparing generated puzzles |
+| S13 | Each band and board size holds an independent daily attempt — spending one leaves the others available | Unit test with a mocked clock |
+| S14 | A puzzle played from the archive is recorded against its own date and appears in the correct chart position | Manual test plus unit test |
+| S15 | Pattern Memory generates levels indefinitely, each one tile larger, until the player makes a mistake | Unit test driving 50 consecutive correct levels |
+| S16 | The results screen correctly reports whether the round beat the previous attempt and the all-time best | Unit test across: first ever attempt, worse, equal, better |
+| S17 | Practice rounds never write to history and never change a personal best, however well they go | Unit test playing a practice round that would otherwise set a record |
+| S18 | Practice-mode filters are honoured — switching off a topic means no prompt from that topic appears | Unit test over 500 generated prompts per filter combination |
+| S19 | Figure Pairs ends when and only when every pair is matched, and scores by mistakes with time as a tie-break | Unit test driving a scripted board to completion |
+| S20 | The Outline Guesser's distance, direction and proximity hints are correct for known country pairs | Unit test against hand-checked reference values |
+| S21 | Every trainer is reachable from its category, and adding a trainer requires no engine change | Code review plus a registration test |
 
-### Aspirational criteria (require real users over time — measured only if a test group is available)
+### Aspirational criteria (require real users over time)
 
-- A typical active user completes at least 2 of the 3 daily puzzles on a day they visit
+- A typical active user completes at least 3 daily puzzles on a day they visit
 - 7-day return rate of at least 25 %
 - Measurable per-user improvement in score over two weeks
 
@@ -247,20 +303,20 @@ This is deliberate. A fixed-length memory round with one life is over in seconds
 
 | Layer | Phase 1 (MVP) | Phase 2+ |
 |---|---|---|
-| Frontend | Static HTML, CSS and vanilla JavaScript | Same |
-| Hosting | Opened directly from disk; GitHub Pages optional | GitHub Pages plus a small Node host |
+| Frontend | Static HTML, CSS and vanilla JavaScript, native ES modules | Same |
+| Hosting | Vercel, deployed automatically from `main` | Same, plus a small Node host |
 | Progress storage | Browser `localStorage` | Server-side per user |
-| Daily puzzle generation | Seeded pseudo-random generator, seeded from trainer + date; difficulty and parameters derived from the same seed | Same, with the seed authoritative on the server |
-| Charts | Hand-drawn SVG or Canvas, no chart library | Same |
+| Daily puzzle generation | Seeded PRNG, seeded from trainer + band + date | Same, with the seed authoritative on the server |
+| Charts | Hand-drawn SVG, no chart library | Same |
 | Accounts | None | Node.js with **SQLite** (`node:sqlite`, built into Node 22+) |
-| Passwords | — | Hashed with `crypto.scrypt` from the standard library, with a per-user salt |
-| Content | JSON files in the repository | JSON files in the repository |
-| Audio | — | Web Audio API, pure tones, no sample files |
-| Testing | A JavaScript test runner chosen at the architecture stage, set up from the first story | Same |
+| Passwords | — | Hashed with `crypto.scrypt`, per-user salt |
+| Content | JSON files in the repository | Same |
+| Country outlines | Simplified SVG paths derived from **Natural Earth** public-domain data, bundled in the repository | Same |
+| Testing | Node's built-in `node --test` | Same |
+
+**On the map data.** Country outlines are the one piece of content the project cannot author by hand. They come from Natural Earth, which is explicitly public domain, are simplified and converted to SVG paths at authoring time, and are committed to the repository. There is no runtime dependency, no API and no key — the "no strings attached" principle survives intact, and the provenance is documented.
 
 **Why not a JSON file for user accounts?** Concurrent writes can corrupt it and there is no locking. SQLite is equally dependency-free, a single file on disk, and safe. JSON remains ideal for *content* such as question banks.
-
-Detailed technology decisions belong in the architecture document rather than in this brief.
 
 ---
 
@@ -268,11 +324,11 @@ Detailed technology decisions belong in the architecture document rather than in
 
 | Phase | Deliverables |
 |---|---|
-| **1 — MVP** | Drill Engine with timed and lives modes, date-assigned difficulty, daily-attempt rule, archive, deterministic generation, Mental Math, Memory, Geography, results comparison against previous and best, progress charts, weak-area tracking, `localStorage` persistence, dark and light mode, test suite, README |
-| **2 — Expansion and accounts** | Further trainers and round modes, day-streak tracking, Node and SQLite login, synced progress, enforced daily limit, optional free-practice mode |
+| **1 — MVP** | Drill Engine with three round modes, category/trainer/topic hierarchy, player-chosen bands, board sizes for Memory, daily attempts, archive, practice mode with filters, six trainers across three categories, results comparison, progress charts, weak-topic tracking, `localStorage` persistence, dark and light mode, test suite, README, Vercel deployment |
+| **2 — Expansion and accounts** | Further categories and trainers, day-streak tracking, Node and SQLite login, synced progress, enforced daily limit, recorded practice statistics |
 | **3 — Growth** | Remaining trainers, leaderboards built on the shared daily puzzle, spaced repetition |
 
-Phase 1 is the only committed scope for this course. A fourth trainer is a stretch goal, attempted only if v1 is finished and tested, because it demonstrates that the Drill Engine is genuinely reusable.
+Phase 1 is the only committed scope for this course.
 
 ---
 
@@ -280,32 +336,31 @@ Phase 1 is the only committed scope for this course. A fourth trainer is a stret
 
 | Risk | Probability | Impact | Mitigation |
 |---|---|---|---|
-| Scope creep from a growing trainer catalogue | High | High | Strict phasing; engine first, three trainers only in the MVP |
-| The daily limit leaves a reviewer unable to evaluate the app | Medium | High | The archive makes every past day playable, so there is always something to assess; documented in the README |
-| Removing difficulty selection frustrates users on days that do not suit them | Medium | Medium | Archive offers days of other difficulties; a free-practice mode is held in reserve for Phase 2 |
-| Determinism bugs make a daily puzzle differ between players or reloads | Medium | High | Seeded generator isolated from the DOM and covered by dedicated tests (S12, S13) |
-| Daily difficulty distribution turns out lopsided — too many hard or easy days | Medium | Medium | Distribution asserted by test over a simulated year (S13) |
-| Endless Memory rounds run long enough to be tedious | Low | Medium | Growth by one tile per level makes failure arrive naturally; observed during testing |
-| The Drill Engine abstraction turns out to be wrong | Medium | High | Build two trainers with *different* round modes before generalising; a fourth trainer validates the abstraction |
-| Testing left until the end | Medium | High | Test framework set up in the first story; generators, scoring and end conditions tested as they are written |
-| Content authoring effort | Medium | Medium | Prefer generated content; JSON files only where generation is impossible |
-| Backend maintenance | Low | Low | No backend in v1; SQLite and the standard library when it arrives |
+| Scope creep — six trainers is double the previous plan | High | High | Engine first; trainers share generators and renderers wherever possible; Geography's three trainers differ only in prompt and hint, not in machinery |
+| Twenty-four daily puzzles overwhelm the user | Medium | Medium | The home screen presents categories, not a flat list; the daily list is framed as a menu, not a checklist |
+| Practice mode cannibalises the daily puzzles | Medium | Medium | Practice is unscored and unrecorded, so there is no reward in it beyond the practice itself |
+| Map data is heavy and slows first load | Medium | Medium | Outlines are simplified aggressively at authoring time and loaded only by the trainer that needs them |
+| Map data licensing is challenged | Low | High | Natural Earth is public domain; provenance and processing steps are documented in the repository |
+| Determinism bugs make a puzzle differ between players | Medium | High | Seeded generator isolated from the DOM, covered by dedicated tests (S12) |
+| The Drill Engine abstraction turns out to be wrong | Medium | High | Three round modes and six trainers stress it in genuinely different ways; a completion-mode trainer is the real test |
+| Trigonometry and algebra prompts are ambiguous or unfair | Medium | Medium | Expert topics restricted to exact values and integer solutions, enforced by generator tests (S3) |
+| Testing left until the end | Medium | High | Tests written alongside each generator, as they were in the previous version |
 
 ---
 
 ## 13. Decisions
 
-Every decision left open when this brief was written has now been settled and implemented. They are recorded in full in PRD §9, with the module embodying each one named alongside it.
-
 | Decision | Outcome |
 |---|---|
-| Product name | **LearningHub** — confirmed, no longer a working title |
+| Product name | **LearningHub** |
+| Difficulty | Player chooses the band; each band is an independent daily puzzle with its own record |
+| Filters | Daily puzzles have none; all filtering lives in practice mode |
+| Memory difficulty | Replaced by board size — see §5.5 |
+| Country outlines | Natural Earth public-domain data, simplified and bundled in the repository |
 | Vanilla JavaScript or a framework | Vanilla JavaScript, native ES modules, zero runtime dependencies |
 | Test runner | Node's built-in `node --test` |
 | Archive depth | Reaches back to 2026-10-01 |
-| Difficulty distribution across days | 20 % beginner, 40 % intermediate, 25 % advanced, 15 % expert |
-| Per-band trainer parameters | Mental Math 45/60/75/90 s; Memory starting tiles and display time per band; Geography country pool per band |
-| Stretch-goal fourth trainer | Not attempted in v1 |
+| Hosting | Vercel, automatic deployment from `main` |
 
 ---
 
@@ -314,11 +369,12 @@ Every decision left open when this brief was written has now been settled and im
 | Date | Decision |
 |---|---|
 | 2026-09-27 | Initial concept: **GameHub**, a game-discovery and backlog-decision platform |
-| 2026-10-05 | Switched to **LearningHub**. Two problems killed GameHub. First, it could not function without external services: all game data would have come from a third-party games API, and several planned features needed further paid or key-protected services on top. That conflicts with the "no strings attached" principle and would have left a reviewer unable to run the application without our own credentials. Second, and more fundamentally, the core feature did not work. GameHub was meant to recommend what to play based on how much you had played something and when you last played it — but that data lives inside each platform. Pulling playtime out of Steam, Epic, Xbox and PlayStation would have meant a separate integration for every one of them, and for a game like Minecraft, which runs through several different launchers and has no single authoritative playtime source, it would have been effectively impossible. Without reliable playtime the recommendations would have been guesswork. LearningHub keeps comparable logical complexity — question generators, timing, scoring, progress analysis — using content the project fully owns and data it generates itself |
+| 2026-10-05 | Switched to **LearningHub**. Two problems killed GameHub. First, it could not function without external services: all game data would have come from a third-party games API, and several planned features needed further paid or key-protected services. That conflicts with the "no strings attached" principle and would have left a reviewer unable to run the application without our credentials. Second, the core feature did not work. GameHub was meant to recommend what to play based on how much you had played something and when — but that data lives inside each platform. Pulling playtime out of Steam, Epic, Xbox and PlayStation would have meant a separate integration for each, and for a game like Minecraft, which runs through several launchers with no authoritative playtime source, it was effectively impossible. Without reliable playtime the recommendations would have been guesswork |
 | 2026-10-06 | Supervisor feedback received on the brief |
-| 2026-10-10 | Brief revised to v2: added an Executive Summary and a *What Makes This Different* section, narrowed to a single primary user, replaced engagement-based success metrics with verifiable functional criteria, pulled progress charts and weak-area tracking into v1, removed the discarded GameHub brief, and restored `README.md` and `.gitignore` |
-| 2026-10-10 | Brief revised to v3 after a product decision on round structure. Rounds are no longer uniformly timed: each trainer declares a **round mode**, with *timed* and *lives* in v1 and room for more. Added the **one scored attempt per trainer per day** rule with an **archive** of previous days, and the determinism requirement that follows from it. Clarified that the three v1 trainers are a starting point rather than the final catalogue |
-| 2026-10-10 | Brief revised to v4 after four further product decisions. **Difficulty selection removed entirely** — the date assigns difficulty and everyone faces the same puzzle, with trainer parameters such as the Mental Math clock derived from the day's difficulty rather than chosen. **Memory redefined** as a visual grid of tiles rather than digit and word sequences, and made **endless**: one life, one more tile each level, with the score being how far you got. Archive results confirmed as counting towards personal bests on equal terms. Added **comparison against your previous attempt and all-time best** as the core motivational loop in place of a leaderboard |
-| 2026-11-02 | v1 implemented and published. Two remaining decisions confirmed: **LearningHub** is the final product name, and **Memory judges a level as a set of tiles rather than a sequence** — the order you select them in does not matter, which makes it a visual-memory task rather than a Simon-style recall task. §13 closed out accordingly |
+| 2026-10-10 | Brief revised to v2: added an Executive Summary and a *What Makes This Different* section, narrowed to a single primary user, replaced engagement metrics with verifiable functional criteria, pulled progress charts and weak-area tracking into v1 |
+| 2026-10-10 | Brief revised to v3: each trainer declares a **round mode**; added the **one attempt per day** rule with an **archive**, and the determinism requirement that follows |
+| 2026-10-10 | Brief revised to v4: **difficulty selection removed**, with the date assigning the band; **Memory redefined** as an endless visual tile grid; added comparison against previous attempt and all-time best |
+| 2026-11-02 | v1 implemented, tested and published to Vercel. Product name confirmed as LearningHub; Memory confirmed as a set-based rather than sequence-based task |
+| 2026-11-02 | Brief revised to v5 after a structural redesign. **Difficulty selection returns**, reversing v4 — but in a stronger form: rather than the date assigning one band to everyone, every trainer offers all four bands, and **each band is an independent daily puzzle with its own attempt and its own record**. Comparability is preserved within a band, while the player regains control. Trainers are now grouped into **categories**, and the catalogue grows from three trainers to six: Math holds Mental Math Sprint with algebra and trigonometry at Expert; Memory holds Pattern Memory and the new Figure Pairs; Geography splits into Flag, Outline and Capital guessers, taking the hint mechanic from Worldle. **Practice mode** is introduced as the home for all filters, keeping daily puzzles configuration-free and therefore comparable. **Memory drops difficulty bands entirely** in favour of board sizes, because a random pattern cannot meaningfully be authored as "intermediate" |
 
-**Where the BMAD flow stands:** brief → PRD → architecture → epics and stories → implementation are all complete. v1 is built, tested and published.
+**Where the BMAD flow stands:** brief v5 is complete. The PRD is being rewritten to match, after which the implementation is rebuilt against it.
