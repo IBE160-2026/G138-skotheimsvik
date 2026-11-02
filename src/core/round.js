@@ -1,21 +1,22 @@
 /**
  * The Drill Engine round lifecycle.
  *
- * Owns the loop, both round modes, scoring hand-off and the end conditions.
- * Knows nothing about the DOM and nothing about any individual trainer beyond
- * the registration contract (FR-11), which is what lets E-6 add a third trainer
- * without touching this file.
+ * Owns the loop, all three round modes, scoring hand-off and the end
+ * conditions. Knows nothing about the DOM and nothing about any individual
+ * trainer beyond the registration contract (FR-6), which is what lets the
+ * Geography category add three trainers without touching this file.
  *
- * Covers FR-8..FR-25, FR-54..FR-59, FR-63.
+ * Covers FR-9 to FR-25 and FR-68 to FR-73.
  */
 
 import { checkAnswer, formatExpected } from './answer.js';
 import { createScoreboard } from './scoring.js';
+import { modeParamFor } from './variants.js';
 
-/** @typedef {'idle'|'running'|'ended'|'abandoned'} RoundState */
-/** @typedef {'time-expired'|'lives-exhausted'|'prompts-exhausted'} EndReason */
+/** @typedef {'idle'|'running'|'ended'} RoundState */
+/** @typedef {'time-expired'|'lives-exhausted'|'board-complete'|'prompts-exhausted'|'abandoned'} EndReason */
 
-/** How many times to re-roll a prompt that duplicates the previous one (FR-23). */
+/** How many times to re-roll a prompt that duplicates the previous one (FR-24). */
 const DUPLICATE_RETRY_LIMIT = 5;
 
 function createId() {
@@ -28,21 +29,15 @@ function createId() {
 /**
  * @param {object} options
  * @param {object} options.trainer registered trainer definition
+ * @param {string} options.variantKey band or board size
  * @param {string} options.puzzleDate ISO date the result is recorded against
- * @param {string} options.difficulty band for that date
  * @param {object} options.generator must expose next(context)
- * @param {object} options.clock injectable clock (NFR-15)
- * @param {number} options.modeParam seconds when timed, lives when lives
+ * @param {object} options.clock injectable clock (NFR-16)
+ * @param {boolean} [options.practice] practice rounds are never persisted (FR-47)
  */
-export function createRound({
-  trainer,
-  puzzleDate,
-  difficulty,
-  generator,
-  clock,
-  modeParam,
-}) {
+export function createRound({ trainer, variantKey, puzzleDate, generator, clock, practice = false }) {
   const roundMode = trainer.roundMode;
+  const modeParam = modeParamFor(trainer, variantKey);
   const scoreboard = createScoreboard();
 
   /** @type {RoundState} */
@@ -57,6 +52,7 @@ export function createRound({
   let endedAtMs = 0;
   let promptShownAtMs = 0;
   let livesRemaining = roundMode === 'lives' ? modeParam : null;
+  let pairsRemaining = roundMode === 'completion' ? modeParam : null;
 
   const durationMs = roundMode === 'timed' ? modeParam * 1000 : null;
 
@@ -84,15 +80,16 @@ export function createRound({
   }
 
   /**
-   * Pull the next prompt, rejecting an immediate repeat (FR-23).
+   * Pull the next prompt, rejecting an immediate repeat (FR-24).
    * Returns null when the generator is exhausted (FR-25).
    */
   function pullPrompt() {
     const context = {
       index: promptIndex,
       ...scoreboard.snapshot(),
-      difficulty,
+      variantKey,
       puzzleDate,
+      practice,
     };
 
     let candidate = null;
@@ -120,6 +117,15 @@ export function createRound({
     promptShownAtMs = clock.now();
   }
 
+  /** The headline number, per the trainer's declaration (FR-69). */
+  function headlineScore() {
+    const summary = scoreboard.snapshot();
+    if (trainer.headlineScore === 'mistakes') return summary.mistakes;
+    // Levels complete exactly one per correct answer, so "levels reached" and
+    // "correct answers" are the same number.
+    return summary.correctCount;
+  }
+
   return {
     get state() {
       return state;
@@ -130,6 +136,9 @@ export function createRound({
     get livesRemaining() {
       return livesRemaining;
     },
+    get pairsRemaining() {
+      return pairsRemaining;
+    },
     get endedBy() {
       return endedBy;
     },
@@ -139,20 +148,24 @@ export function createRound({
     get modeParam() {
       return modeParam;
     },
-    get difficulty() {
-      return difficulty;
+    get variantKey() {
+      return variantKey;
     },
     get puzzleDate() {
       return puzzleDate;
     },
+    get isPractice() {
+      return practice;
+    },
 
     remainingMs,
     elapsedMs,
+    score: headlineScore,
     stats: () => scoreboard.snapshot(),
 
-    /** Begin the round and present the first prompt immediately (FR-8). */
+    /** Begin the round and present the first prompt immediately (FR-11). */
     start() {
-      if (state !== 'idle') return;
+      if (state !== 'idle') return null;
       state = 'running';
       startedAtMs = clock.now();
       advance();
@@ -161,7 +174,7 @@ export function createRound({
 
     /**
      * Poll the clock. Timed rounds need this so expiry ends the round even when
-     * the user has stopped submitting answers (FR-12).
+     * the user has stopped submitting answers (FR-14).
      */
     tick() {
       if (state === 'running' && isExpired()) {
@@ -179,7 +192,7 @@ export function createRound({
         return { status: 'rejected', reason: 'round-not-running' };
       }
 
-      // An answer that arrives after expiry counts for nothing (FR-13).
+      // An answer that arrives after expiry counts for nothing (FR-14).
       if (isExpired()) {
         finish('time-expired');
         return { status: 'rejected', reason: 'time-expired' };
@@ -188,7 +201,7 @@ export function createRound({
       const prompt = currentPrompt;
       const status = checkAnswer(prompt, value);
 
-      // Empty submissions change nothing at all (FR-52).
+      // Empty submissions change nothing at all (FR-66).
       if (status === 'ignored') {
         return { status: 'ignored', prompt };
       }
@@ -201,6 +214,9 @@ export function createRound({
         livesRemaining -= 1;
         lifeLost = true;
       }
+      if (roundMode === 'completion' && isCorrect) {
+        pairsRemaining = Math.max(0, pairsRemaining - 1);
+      }
 
       const feedback = {
         status,
@@ -208,12 +224,20 @@ export function createRound({
         expected: formatExpected(prompt),
         lifeLost,
         livesRemaining,
+        pairsRemaining,
         stats: scoreboard.snapshot(),
       };
 
-      // The last life ends the round at once, with no further prompt (FR-17).
+      // The last life ends the round at once, with no further prompt (FR-16).
       if (roundMode === 'lives' && livesRemaining <= 0) {
         finish('lives-exhausted');
+        feedback.ended = true;
+        return feedback;
+      }
+
+      // A completion round ends only when the board is clear (FR-18).
+      if (roundMode === 'completion' && pairsRemaining <= 0) {
+        finish('board-complete');
         feedback.ended = true;
         return feedback;
       }
@@ -230,12 +254,23 @@ export function createRound({
       return feedback;
     },
 
-    /** Leave without recording anything; the day's attempt survives (FR-6). */
+    /**
+     * Leave early.
+     *
+     * Starting a daily round commits the attempt (FR-10), so this ends the
+     * round and keeps the score as it stood rather than discarding it. Practice
+     * rounds are exempt only in the sense that nothing persists them — the
+     * round itself still ends the same way.
+     */
     abandon() {
-      if (state === 'running' || state === 'idle') {
-        state = 'abandoned';
-        currentPrompt = null;
+      if (state === 'idle') {
+        state = 'ended';
+        endedBy = 'abandoned';
+        startedAtMs = clock.now();
+        endedAtMs = startedAtMs;
+        return;
       }
+      finish('abandoned');
     },
 
     /**
@@ -245,18 +280,16 @@ export function createRound({
     result() {
       if (state !== 'ended') return null;
       const summary = scoreboard.summary();
-
-      // Both headline kinds resolve to the correct-answer count: Mental Math and
-      // Geography score one point per right answer, and Memory completes exactly
-      // one level per right answer, so "levels completed" is the same number.
-      const score = summary.correctCount;
-      const maxLevel = trainer.headlineScore === 'maxLevel' ? score : null;
+      const score =
+        trainer.headlineScore === 'mistakes' ? summary.mistakes : summary.correctCount;
 
       return {
         id: createId(),
+        categoryId: trainer.categoryId,
         trainerId: trainer.id,
+        variantKind: trainer.variantKind,
+        variantKey,
         puzzleDate,
-        difficulty,
         roundMode,
         modeParam,
         score,
@@ -264,7 +297,8 @@ export function createRound({
         endedBy,
         elapsedMs: elapsedMs(),
         livesRemaining: roundMode === 'lives' ? Math.max(0, livesRemaining) : null,
-        maxLevel,
+        maxLevel: trainer.headlineScore === 'maxLevel' ? summary.correctCount : null,
+        mistakes: roundMode === 'completion' ? summary.mistakes : null,
         ...summary,
       };
     },

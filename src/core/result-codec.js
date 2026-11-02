@@ -1,21 +1,26 @@
 /**
  * Compact storage codec for round results.
  *
- * A RoundResult is comfortable to work with but wasteful to store: three of its
+ * A RoundResult is comfortable to work with but wasteful to store: four of its
  * fields duplicate the keys it is filed under, two more are derivable, and the
- * category labels repeat on every single record. Stored verbatim, two years of
- * daily play across three trainers overruns the 1 MB budget in NFR-10.
+ * topic labels repeat on every single record. Stored verbatim, two years of
+ * daily play across six trainers and their variants overruns the 2 MB budget in
+ * NFR-11.
  *
  * So results are packed on the way out and rehydrated on the way in. The rest of
  * the application never sees the packed shape.
  */
 
-import { BANDS } from './difficulty.js';
+const END_REASONS = [
+  'time-expired',
+  'lives-exhausted',
+  'board-complete',
+  'prompts-exhausted',
+  'abandoned',
+];
+const ROUND_MODES = ['timed', 'lives', 'completion'];
 
-const END_REASONS = ['time-expired', 'lives-exhausted', 'prompts-exhausted'];
-const ROUND_MODES = ['timed', 'lives'];
-
-/** Accuracy is recomputed rather than stored (it is a pure function of two fields). */
+/** Accuracy is recomputed rather than stored (a pure function of two fields). */
 function accuracyOf(correctCount, totalAnswered) {
   if (totalAnswered === 0) return 0;
   return Math.round((correctCount / totalAnswered) * 1000) / 10;
@@ -24,16 +29,16 @@ function accuracyOf(correctCount, totalAnswered) {
 /**
  * Pack one result.
  *
- * `id`, `trainerId` and `puzzleDate` are dropped because they are already the
- * keys the record is filed under. Category labels are replaced by indices into
- * a shared dictionary.
+ * `id`, `trainerId`, `variantKey` and `puzzleDate` are dropped because they are
+ * already the keys the record is filed under. Topic labels are replaced by
+ * indices into a shared dictionary.
  *
  * @param {object} result
- * @param {{idFor: (categoryId: string, label: string) => number}} labels
+ * @param {{idFor: (topicId: string, label: string) => number}} labels
  */
 export function packResult(result, labels) {
   return {
-    d: BANDS.indexOf(result.difficulty),
+    k: result.categoryId,
     m: ROUND_MODES.indexOf(result.roundMode),
     p: result.modeParam,
     s: result.score,
@@ -45,8 +50,9 @@ export function packResult(result, labels) {
     v: result.avgAnswerTimeMs,
     b: result.bestStreak,
     r: result.livesRemaining,
-    g: (result.categoryStats ?? []).map((entry) => [
-      labels.idFor(entry.categoryId, entry.label),
+    x: result.mistakes ?? null,
+    g: (result.topicStats ?? []).map((entry) => [
+      labels.idFor(entry.topicId, entry.label),
       entry.asked,
       entry.correct,
     ]),
@@ -59,17 +65,18 @@ export function packResult(result, labels) {
  * @param {object} packed
  * @param {string} trainerId
  * @param {string} puzzleDate
- * @param {{entryFor: (id: number) => {categoryId: string, label: string}}} labels
+ * @param {{entryFor: (id: number) => {topicId: string, label: string}}} labels
+ * @param {string} variantKey
  */
-export function unpackResult(packed, trainerId, puzzleDate, labels) {
+export function unpackResult(packed, trainerId, puzzleDate, labels, variantKey) {
   const roundMode = ROUND_MODES[packed.m] ?? 'timed';
-  const headlineIsLevel = roundMode === 'lives' && packed.r !== null && packed.r !== undefined;
 
   return {
-    id: `${trainerId}:${puzzleDate}`,
+    id: `${trainerId}:${variantKey}:${puzzleDate}`,
+    categoryId: packed.k ?? 'unknown',
     trainerId,
+    variantKey,
     puzzleDate,
-    difficulty: BANDS[packed.d] ?? 'intermediate',
     roundMode,
     modeParam: packed.p,
     score: packed.s,
@@ -82,36 +89,37 @@ export function unpackResult(packed, trainerId, puzzleDate, labels) {
     avgAnswerTimeMs: packed.v,
     bestStreak: packed.b,
     livesRemaining: packed.r ?? null,
-    maxLevel: headlineIsLevel ? packed.s : null,
-    categoryStats: (packed.g ?? []).map(([labelId, asked, correct]) => {
+    mistakes: packed.x ?? null,
+    maxLevel: roundMode === 'lives' ? packed.s : null,
+    topicStats: (packed.g ?? []).map(([labelId, asked, correct]) => {
       const entry = labels.entryFor(labelId);
-      return { categoryId: entry.categoryId, label: entry.label, asked, correct };
+      return { topicId: entry.topicId, label: entry.label, asked, correct };
     }),
   };
 }
 
 /**
- * A shared category dictionary, so "Country → capital" is stored once rather
- * than on every one of a thousand records.
- * @param {Array<[string, string]>} [initial] serialised [categoryId, label] pairs
+ * A shared topic dictionary, so "Country → capital" is stored once rather than
+ * on every one of a thousand records.
+ * @param {Array<[string, string]>} [initial] serialised [topicId, label] pairs
  */
 export function createLabelDictionary(initial = []) {
-  const entries = initial.map(([categoryId, label]) => ({ categoryId, label }));
-  const index = new Map(entries.map((entry, i) => [entry.categoryId, i]));
+  const entries = initial.map(([topicId, label]) => ({ topicId, label }));
+  const index = new Map(entries.map((entry, i) => [entry.topicId, i]));
 
   return {
-    idFor(categoryId, label) {
-      if (index.has(categoryId)) return index.get(categoryId);
+    idFor(topicId, label) {
+      if (index.has(topicId)) return index.get(topicId);
       const id = entries.length;
-      entries.push({ categoryId, label: label ?? categoryId });
-      index.set(categoryId, id);
+      entries.push({ topicId, label: label ?? topicId });
+      index.set(topicId, id);
       return id;
     },
     entryFor(id) {
-      return entries[id] ?? { categoryId: 'unknown', label: 'Unknown' };
+      return entries[id] ?? { topicId: 'unknown', label: 'Unknown' };
     },
     serialise() {
-      return entries.map((entry) => [entry.categoryId, entry.label]);
+      return entries.map((entry) => [entry.topicId, entry.label]);
     },
   };
 }

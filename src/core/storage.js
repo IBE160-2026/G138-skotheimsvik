@@ -9,8 +9,9 @@
 export const SCHEMA_VERSION = 1;
 
 export const STORAGE_KEYS = Object.freeze({
-  progress: 'learninghub.v1.progress',
-  settings: 'learninghub.v1.settings',
+  progress: 'learninghub.v2.progress',
+  settings: 'learninghub.v2.settings',
+  practice: 'learninghub.v2.practice',
 });
 
 /** An in-memory stand-in used by tests and as the fallback when storage is blocked. */

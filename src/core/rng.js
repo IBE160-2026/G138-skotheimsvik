@@ -22,25 +22,30 @@ export function hashString(text) {
 }
 
 /**
- * Build the seed for a trainer's puzzle on a given date.
+ * Build the seed for one trainer's puzzle, at one variant, on one date.
+ *
+ * The variant is part of the seed because Beginner and Expert on the same day
+ * are different puzzles (FR-31), while every player sharing a variant and date
+ * must get identical prompts (FR-30).
+ *
  * @param {string} trainerId
+ * @param {string} variantKey band or board size
  * @param {string} puzzleDate ISO date, e.g. "2026-10-12"
  * @returns {number}
  */
-export function seedFor(trainerId, puzzleDate) {
-  return hashString(`${trainerId}:${puzzleDate}`);
+export function seedFor(trainerId, variantKey, puzzleDate) {
+  return hashString(`${trainerId}:${variantKey}:${puzzleDate}`);
 }
 
 /**
- * Build the seed for a date's difficulty band.
+ * A seed for a practice round.
  *
- * Deliberately excludes the trainer: FR-26 assigns a band to the *date*, so
- * every trainer shares the same band on a given day.
- * @param {string} puzzleDate
- * @returns {number}
+ * Practice is explicitly *not* reproducible (FR-58) — playing the same filters
+ * twice should give different questions — so this is the one place in the
+ * engine that is allowed to reach for entropy.
  */
-export function difficultySeedFor(puzzleDate) {
-  return hashString(`difficulty:${puzzleDate}`);
+export function practiceSeed() {
+  return hashString(`practice:${Date.now()}:${Math.random()}`);
 }
 
 /**
