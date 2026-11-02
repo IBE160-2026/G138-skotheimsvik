@@ -201,6 +201,8 @@ Figure Pairs is scored on **mistakes, then time** — the fewest wrong turns win
 
 Bands control the country pool and the answer format: Beginner uses widely known countries with four-way multiple choice, Expert uses the full set with free-text answers.
 
+The content covers **all 195 sovereign states** — every UN member plus Vatican City and Palestine. Flags are derived from each country's ISO code rather than stored as images, so there is nothing to download and nothing to license. Outlines exist for 166 of the 195; the 29 without are microstates and small island nations too small to appear in the public-domain map data, so they feature in the Flag and Capital trainers but not the Outline Guesser.
+
 The Outline Guesser's hint system is lifted, openly, from Worldle: after a wrong guess you are told how far away your guess was, in which direction the target lies, and how close you are as a percentage. It is a genuinely good mechanic and there is no reason to invent a worse one.
 
 ### 6.4 Later phases

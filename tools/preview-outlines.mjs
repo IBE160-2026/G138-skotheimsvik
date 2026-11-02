@@ -4,10 +4,10 @@ import { join } from 'node:path';
 
 const data = JSON.parse(readFileSync('src/trainers/geography/outlines.json', 'utf8'));
 const pick = [
-  'Norway', 'France', 'Italy', 'Japan', 'United States',
-  'Brazil', 'India', 'Australia', 'Chile', 'Egypt',
-  'Spain', 'Greece', 'Indonesia', 'Canada', 'Mexico',
-  'New Zealand', 'United Kingdom', 'Germany', 'Sweden', 'South Africa',
+  'Democratic Republic of the Congo', 'Republic of the Congo', 'Ivory Coast', 'Eswatini', 'South Sudan',
+  'Bosnia and Herzegovina', 'North Macedonia', 'Dominican Republic', 'Equatorial Guinea', 'Central African Republic',
+  'Solomon Islands', 'Nigeria', 'Kazakhstan', 'Vietnam', 'Philippines',
+  'Peru', 'Turkey', 'Ukraine', 'Saudi Arabia', 'Papua New Guinea',
 ];
 
 const cells = pick

@@ -23,8 +23,28 @@ const TOPO_PATH = join(here, 'data', 'countries-110m.topo.json');
 const COUNTRIES_PATH = join(root, 'src', 'trainers', 'geography', 'countries.json');
 const OUT_PATH = join(root, 'src', 'trainers', 'geography', 'outlines.json');
 
-/** Upstream uses a few different names from ours. */
-const NAME_ALIASES = new Map([['United States', 'United States of America']]);
+/**
+ * Natural Earth abbreviates long names, so ours have to be translated.
+ *
+ * Anything not listed here and not found upstream simply has no outline: the
+ * 110m dataset leaves out microstates and small island nations, which is why
+ * Malta, Singapore and most of the Caribbean are absent. Those countries still
+ * appear in the Flag and Capital trainers — only the Outline Guesser skips them.
+ */
+const NAME_ALIASES = new Map([
+  ['United States', 'United States of America'],
+  ['Bosnia and Herzegovina', 'Bosnia and Herz.'],
+  ['Central African Republic', 'Central African Rep.'],
+  ['Republic of the Congo', 'Congo'],
+  ['Democratic Republic of the Congo', 'Dem. Rep. Congo'],
+  ['Dominican Republic', 'Dominican Rep.'],
+  ['Equatorial Guinea', 'Eq. Guinea'],
+  ['Eswatini', 'eSwatini'],
+  ['Ivory Coast', "Côte d'Ivoire"],
+  ['North Macedonia', 'Macedonia'],
+  ['Solomon Islands', 'Solomon Is.'],
+  ['South Sudan', 'S. Sudan'],
+]);
 
 /** Every silhouette is normalised into this square (FR-147). */
 const VIEWBOX = 100;

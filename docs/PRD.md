@@ -359,7 +359,9 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 
 | ID | Requirement | Priority | Traces to |
 |---|---|---|---|
-| FR-135 | All three Geography trainers draw from one validated content file of countries, capitals, continents, flags and outline references | M | S9 |
+| FR-135 | All three Geography trainers draw from one validated content file covering **all 195 sovereign states** — the 193 UN member states plus Vatican City and Palestine — with capital, continent, ISO 3166-1 alpha-2 code and tier | M | S9 |
+| FR-135a | Flag glyphs are **derived from the ISO code** at runtime by mapping each letter to its Unicode regional indicator, never stored per country | M | S9 |
+| FR-135b | The Outline Guesser draws only from countries that have an outline; the 29 microstates and small island nations absent from the source data are excluded from that trainer and remain fully available in the Flag and Capital trainers | M | S20 |
 | FR-136 | The content file is validated at load; malformed entries are skipped and logged, never crashing the trainer | M | NFR-7 |
 | FR-137 | Bands control the country pool: Beginner widely known, Intermediate adds mid-frequency, Advanced and Expert the full set | M | S2 |
 | FR-138 | Beginner, Intermediate and Advanced use four-way multiple choice; Expert uses free text | M | S2 |
@@ -424,8 +426,7 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | NFR-7 | No unhandled exception reaches the user; failures degrade to a readable message | Fault-injection tests | S9 |
 | NFR-8 | The application works fully offline after first load | DevTools offline mode | S9 |
 | NFR-9 | No third-party runtime dependencies, no external network requests, no API keys | Dependency review and network inspection | S9, S11 |
-| NFR-10 | Bundled outline data stays under 400 kB total and is loaded only by the trainer that needs it | Build inspection and network panel | FR-146 |
-| NFR-11 | Stored progress stays below 2 MB after two years of daily play across all trainers and variants | Calculation plus generated-data test | FR-99 |
+| NFR-10 | Bundled outline data stays under 400 kB total and is loaded only by the trainer that needs it | Build inspection and network panel | FR-146 || NFR-11 | Stored progress stays below 2 MB after two years of daily play across all trainers and variants | Calculation plus generated-data test | FR-99 |
 | NFR-12 | The app runs in current Chrome, Firefox and Edge | Manual cross-browser check | S11 |
 | NFR-13 | The app runs from a clone with no build step | Fresh-clone test | S11 |
 | NFR-14 | No personal data is collected, transmitted or stored | Code review | — |
