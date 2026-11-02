@@ -1,284 +1,360 @@
-/**
- * The three trainers.
- * Covers US-4.1, US-4.2, US-4.5, US-5.4..US-5.8, US-6.1..US-6.5.
- */
-
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
-import { BANDS } from '../src/core/difficulty.js';
-import { checkAnswer } from '../src/core/answer.js';
-import { mentalMathTrainer, DURATION_BY_BAND } from '../src/trainers/mental-math/index.js';
+import { buildRegistry } from '../src/trainers/index.js';
+import { mentalMathTrainer, topicsForBand } from '../src/trainers/math/mental-math.js';
 import {
-  memoryTrainer,
+  patternMemoryTrainer,
   buildLevel,
-  gridSizeFor,
-  START_TILES_BY_BAND,
-  MAX_FILL_RATIO,
-} from '../src/trainers/memory/index.js';
-import { createGeographyTrainer, validateCountries } from '../src/trainers/geography/index.js';
-import { seedFor } from '../src/core/rng.js';
+  tilesForLevel,
+  maxLevelFor,
+} from '../src/trainers/memory/pattern.js';
+import { figurePairsTrainer, dealBoard, pairsFor } from '../src/trainers/memory/pairs.js';
+import { validateCountries, poolFor, flagFor } from '../src/trainers/geography/content.js';
+import {
+  haversineKm,
+  bearingDegrees,
+  compassPoint,
+  proximityPercent,
+} from '../src/trainers/geography/geo.js';
+import { createRng } from '../src/core/rng.js';
+import { checkAnswer } from '../src/core/answer.js';
+import { BANDS, modeParamFor } from '../src/core/variants.js';
 
-const countriesUrl = new URL('../src/trainers/geography/countries.json', import.meta.url);
-const rawCountries = JSON.parse(readFileSync(fileURLToPath(countriesUrl), 'utf8'));
+const here = dirname(fileURLToPath(import.meta.url));
+const root = join(here, '..');
+const countriesRaw = JSON.parse(
+  readFileSync(join(root, 'src/trainers/geography/countries.json'), 'utf8'),
+);
+const outlines = JSON.parse(
+  readFileSync(join(root, 'src/trainers/geography/outlines.json'), 'utf8'),
+);
+const countries = validateCountries(countriesRaw, { warn: () => {} });
+const registry = buildRegistry({ countries: countriesRaw, outlines }, { warn: () => {} });
 
-const silentLogger = { warn() {} };
-
-/* ---------------------------------------------------------------- Mental Math */
-
-test('Mental Math generates only valid prompts across every band (US-4.1)', () => {
-  for (const band of BANDS) {
-    const generator = mentalMathTrainer.createGenerator({
-      puzzleDate: '2026-10-12',
-      difficulty: band,
-    });
-
-    for (let i = 0; i < 1000; i += 1) {
-      const prompt = generator.next({ index: i });
-
-      assert.ok(Number.isFinite(prompt.answer), `${band}: non-finite answer in "${prompt.question}"`);
-      assert.ok(!/÷ 0\b/.test(prompt.question), `${band}: division by zero — ${prompt.question}`);
-
-      if (prompt.categoryId === 'division') {
-        assert.ok(
-          Number.isInteger(prompt.answer),
-          `${band}: division must be whole — ${prompt.question} = ${prompt.answer}`,
-        );
-      }
-
-      if (band === 'beginner' && prompt.categoryId === 'subtraction') {
-        assert.ok(prompt.answer >= 0, `beginner subtraction went negative: ${prompt.question}`);
-      }
-    }
-  }
-});
-
-test('Mental Math draws only each band\'s permitted categories (US-4.2, FR-89)', () => {
-  const allowed = {
-    beginner: new Set(['addition', 'subtraction']),
-    intermediate: new Set(['addition', 'subtraction', 'multiplication', 'division']),
-    advanced: new Set(['addition', 'subtraction', 'multiplication', 'division', 'percentages']),
-    expert: new Set(['addition', 'subtraction', 'multiplication', 'division', 'percentages', 'fractions']),
-  };
-
-  for (const band of BANDS) {
-    const generator = mentalMathTrainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: band });
-    for (let i = 0; i < 400; i += 1) {
-      const { categoryId } = generator.next({ index: i });
-      assert.ok(allowed[band].has(categoryId), `${band} must not draw ${categoryId}`);
-    }
-  }
-});
-
-test('Mental Math round duration follows the band, with no player input (US-3.3)', () => {
-  assert.equal(mentalMathTrainer.modeParam('beginner'), 45);
-  assert.equal(mentalMathTrainer.modeParam('expert'), 90);
-  assert.deepEqual(DURATION_BY_BAND, {
-    beginner: 45, intermediate: 60, advanced: 75, expert: 90,
+/** Pull `count` prompts from a trainer at one variant. */
+function pull(trainer, variantKey, count, options = {}) {
+  const generator = trainer.createGenerator({
+    puzzleDate: '2026-11-02',
+    variantKey,
+    practice: options.practice ?? false,
+    filters: options.filters ?? null,
   });
-});
-
-test('Mental Math prompts are all categorised (US-4.3, FR-76)', () => {
-  const generator = mentalMathTrainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'expert' });
-  for (let i = 0; i < 100; i += 1) {
+  const prompts = [];
+  for (let i = 0; i < count; i += 1) {
     const prompt = generator.next({ index: i });
-    assert.ok(prompt.categoryId, 'every prompt needs a category');
-    assert.ok(prompt.categoryLabel, 'every category needs a readable label');
+    if (!prompt) break;
+    prompts.push(prompt);
   }
+  return prompts;
+}
+
+// --- catalogue --------------------------------------------------------------
+
+test('six trainers register across three categories (FR-6, S21)', () => {
+  assert.equal(registry.size, 6);
+  assert.deepEqual(
+    registry.listCategories().map((c) => c.id),
+    ['math', 'memory', 'geography'],
+  );
+  assert.deepEqual(registry.trainersIn('memory').map((t) => t.id), [
+    'pattern-memory',
+    'figure-pairs',
+  ]);
+  assert.deepEqual(registry.trainersIn('geography').map((t) => t.id), [
+    'flag-guesser',
+    'outline-guesser',
+    'capital-guesser',
+  ]);
 });
 
-test('Mental Math fraction answers accept equivalent forms (US-4.4)', () => {
-  const generator = mentalMathTrainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'expert' });
-  let fraction = null;
-  for (let i = 0; i < 500 && !fraction; i += 1) {
-    const prompt = generator.next({ index: i });
-    if (prompt.categoryId === 'fractions') fraction = prompt;
-  }
+// --- Mental Math ------------------------------------------------------------
 
-  assert.ok(fraction, 'expert band must produce fraction prompts');
-  assert.ok(fraction.formatHint, 'the expected format must be stated (FR-93)');
-  assert.equal(checkAnswer(fraction, String(fraction.answer)), 'correct');
-  assert.equal(checkAnswer(fraction, fraction.displayAnswer), 'correct');
-});
-
-test('Mental Math is deterministic for a given date (FR-32)', () => {
-  const makeSequence = () => {
-    const generator = mentalMathTrainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'advanced' });
-    return Array.from({ length: 40 }, (_, i) => generator.next({ index: i }).question);
-  };
-  assert.deepEqual(makeSequence(), makeSequence());
-});
-
-/* -------------------------------------------------------------------- Memory */
-
-test('Memory adds exactly one tile per level (US-5.4, FR-100)', () => {
-  const seed = seedFor('memory', '2026-10-12');
+test('arithmetic is always valid (FR-106 to FR-108, S3)', () => {
   for (const band of BANDS) {
-    for (let level = 1; level < 20; level += 1) {
-      const current = buildLevel(seed, band, level);
-      const next = buildLevel(seed, band, level + 1);
-      assert.equal(next.tileCount, current.tileCount + 1);
-    }
-    assert.equal(buildLevel(seed, band, 1).tileCount, START_TILES_BY_BAND[band]);
-  }
-});
+    for (const prompt of pull(mentalMathTrainer, band, 400)) {
+      assert.ok(!/÷ 0\b/.test(prompt.question), `divide by zero: ${prompt.question}`);
 
-test('Memory never runs out of levels and stays deterministic (US-5.5, NFR-5)', () => {
-  const seed = seedFor('memory', '2026-10-12');
-  for (const level of [1, 10, 50, 200]) {
-    const first = buildLevel(seed, 'intermediate', level);
-    const second = buildLevel(seed, 'intermediate', level);
-    assert.deepEqual(first.answer, second.answer, `level ${level} must be reproducible`);
-    assert.equal(first.answer.length, first.tileCount);
-    assert.equal(new Set(first.answer).size, first.tileCount, 'tiles must be distinct');
-    assert.ok(first.answer.every((i) => i >= 0 && i < first.gridSize ** 2), 'tiles must fit the grid');
-  }
-});
-
-test('Memory level n is independent of levels before it (NFR-5)', () => {
-  const seed = seedFor('memory', '2026-10-12');
-  // Generated cold, with nothing before it — must match the same level generated
-  // after walking up from level 1.
-  const cold = buildLevel(seed, 'advanced', 37);
-  for (let i = 1; i < 37; i += 1) buildLevel(seed, 'advanced', i);
-  const warm = buildLevel(seed, 'advanced', 37);
-  assert.deepEqual(cold.answer, warm.answer);
-});
-
-test('the Memory grid grows to stay legible (US-5.6, FR-102)', () => {
-  assert.equal(gridSizeFor(3), 4);
-  let previous = 0;
-  for (let tiles = 1; tiles <= 120; tiles += 1) {
-    const size = gridSizeFor(tiles);
-    assert.ok(size >= previous, 'grid must never shrink as tiles increase');
-    assert.ok(tiles <= size * size * MAX_FILL_RATIO, `grid too crowded at ${tiles} tiles`);
-    previous = size;
-  }
-});
-
-test('Memory band sets the starting tiles and display time (US-5.7, FR-103)', () => {
-  const seed = seedFor('memory', '2026-10-12');
-  const beginner = buildLevel(seed, 'beginner', 1);
-  const expert = buildLevel(seed, 'expert', 1);
-  assert.ok(expert.tileCount > beginner.tileCount);
-  assert.ok(expert.displayMs < beginner.displayMs, 'expert shows the pattern more briefly');
-});
-
-test('Memory reports one life and scores by level reached (US-5.8, FR-97, FR-104)', () => {
-  assert.equal(memoryTrainer.modeParam(), 1);
-  assert.equal(memoryTrainer.headlineScore, 'maxLevel');
-  assert.equal(memoryTrainer.roundMode, 'lives');
-});
-
-test('Memory generator advances with the number of correct answers (FR-101)', () => {
-  const generator = memoryTrainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'beginner' });
-  assert.equal(generator.next({ correctCount: 0 }).level, 1);
-  assert.equal(generator.next({ correctCount: 7 }).level, 8);
-  assert.equal(generator.next({ correctCount: 99 }).level, 100);
-});
-
-/* ----------------------------------------------------------------- Geography */
-
-test('Geography validates content and skips malformed entries (US-6.2, FR-115)', () => {
-  const valid = validateCountries(rawCountries, silentLogger);
-  assert.ok(valid.length > 40, 'the bundled content must survive validation');
-
-  const polluted = {
-    countries: [
-      { name: 'Norway', capital: 'Oslo', continent: 'Europe', tier: 1 },
-      { name: '', capital: 'Nowhere', continent: 'Europe', tier: 1 },
-      { name: 'Broken', capital: 'X', continent: 'Europe', tier: 99 },
-      { name: 'NoCapital', continent: 'Europe', tier: 1 },
-      null,
-    ],
-  };
-  const survivors = validateCountries(polluted, silentLogger);
-  assert.equal(survivors.length, 1, 'only the valid entry may survive');
-  assert.equal(survivors[0].name, 'Norway');
-
-  assert.deepEqual(validateCountries({ nonsense: true }, silentLogger), []);
-});
-
-test('Geography runs with exactly three lives (US-6.1, FR-109)', () => {
-  const trainer = createGeographyTrainer(rawCountries, silentLogger);
-  assert.equal(trainer.modeParam(), 3);
-  assert.equal(trainer.roundMode, 'lives');
-});
-
-test('Geography produces all four prompt categories (US-6.3, FR-111)', () => {
-  const trainer = createGeographyTrainer(rawCountries, silentLogger);
-  const generator = trainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'advanced' });
-
-  const seen = new Set();
-  for (let i = 0; i < 300; i += 1) seen.add(generator.next({ index: i }).categoryId);
-
-  for (const category of ['country-capital', 'capital-country', 'flag-country', 'country-continent']) {
-    assert.ok(seen.has(category), `category ${category} never appeared`);
-  }
-});
-
-test('Geography narrows the pool on easier days and types answers at expert (US-6.4, FR-112)', () => {
-  const trainer = createGeographyTrainer(rawCountries, silentLogger);
-  const tierByName = new Map(validateCountries(rawCountries, silentLogger).map((c) => [c.name, c.tier]));
-
-  const beginner = trainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'beginner' });
-  for (let i = 0; i < 200; i += 1) {
-    const prompt = beginner.next({ index: i });
-    assert.equal(prompt.kind, 'choice', 'beginner answers by choosing');
-    const subject = prompt.key.split(':')[1];
-    assert.equal(tierByName.get(subject), 1, `${subject} is outside the beginner pool`);
-  }
-
-  const expert = trainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'expert' });
-  let freeTextSeen = false;
-  for (let i = 0; i < 100; i += 1) {
-    const prompt = expert.next({ index: i });
-    if (prompt.categoryId !== 'country-continent') {
-      assert.equal(prompt.kind, 'text', 'expert answers by typing');
-      freeTextSeen = true;
+      if (prompt.topicId === 'division' && band !== 'expert') {
+        assert.ok(Number.isInteger(prompt.answer), `non-integer division: ${prompt.question}`);
+      }
+      if (prompt.topicId === 'subtraction' && band === 'beginner') {
+        assert.ok(prompt.answer >= 0, `negative beginner subtraction: ${prompt.question}`);
+      }
     }
   }
-  assert.ok(freeTextSeen);
 });
 
-test('Geography offers four distinct plausible choices (US-6.5, FR-113)', () => {
-  const trainer = createGeographyTrainer(rawCountries, silentLogger);
-  const generator = trainer.createGenerator({ puzzleDate: '2026-10-12', difficulty: 'advanced' });
+test('topics follow the band, with algebra and trig only at expert (FR-105, S3)', () => {
+  for (const band of BANDS) {
+    const allowed = new Set(topicsForBand(band));
+    for (const topicId of new Set(pull(mentalMathTrainer, band, 400).map((p) => p.topicId))) {
+      assert.ok(allowed.has(topicId), `${band} produced out-of-band topic ${topicId}`);
+    }
+  }
 
-  for (let i = 0; i < 200; i += 1) {
-    const prompt = generator.next({ index: i });
-    if (prompt.kind !== 'choice') continue;
-    assert.equal(prompt.choices.length, 4);
-    assert.equal(new Set(prompt.choices).size, 4, 'choices must be distinct');
-    assert.ok(prompt.choices.includes(prompt.answer), 'the correct answer must be present');
-    assert.equal(checkAnswer(prompt, prompt.answer), 'correct');
+  const expertTopics = new Set(pull(mentalMathTrainer, 'expert', 600).map((p) => p.topicId));
+  assert.ok(expertTopics.has('algebra'));
+  assert.ok(expertTopics.has('trigonometry'));
+
+  for (const band of ['beginner', 'intermediate', 'advanced']) {
+    const topics = new Set(pull(mentalMathTrainer, band, 400).map((p) => p.topicId));
+    assert.ok(!topics.has('algebra'), `${band} must not ask algebra`);
+    assert.ok(!topics.has('trigonometry'), `${band} must not ask trigonometry`);
   }
 });
 
-test('Geography content needs no network and ships flags locally (US-6.6, FR-114)', () => {
-  const serialised = JSON.stringify(rawCountries);
-  assert.ok(!/https?:\/\//.test(serialised), 'content must contain no external URLs');
-});
+test('algebra prompts have an integer solution that satisfies them (FR-109, S3)', () => {
+  const prompts = pull(mentalMathTrainer, 'expert', 800).filter((p) => p.topicId === 'algebra');
+  assert.ok(prompts.length > 20, 'expected a reasonable sample of algebra prompts');
 
-test('Geography is deterministic for a given date (FR-32)', () => {
-  const trainer = createGeographyTrainer(rawCountries, silentLogger);
-  const makeSequence = () => {
-    const generator = trainer.createGenerator({ puzzleDate: '2026-11-03', difficulty: 'advanced' });
-    return Array.from({ length: 30 }, (_, i) => generator.next({ index: i }).key);
-  };
-  assert.deepEqual(makeSequence(), makeSequence());
-});
+  for (const prompt of prompts) {
+    assert.ok(Number.isInteger(prompt.answer), `non-integer solution: ${prompt.question}`);
 
-test('every trainer satisfies the registration contract (FR-11)', () => {
-  const trainers = [mentalMathTrainer, memoryTrainer, createGeographyTrainer(rawCountries, silentLogger)];
-  for (const trainer of trainers) {
-    assert.ok(trainer.id && trainer.name && trainer.description);
-    assert.ok(['timed', 'lives'].includes(trainer.roundMode));
-    assert.ok(['correct', 'maxLevel'].includes(trainer.headlineScore));
-    assert.equal(typeof trainer.createGenerator, 'function');
-    assert.equal(typeof trainer.modeParam, 'function');
-    assert.equal(typeof trainer.describeMode, 'function');
+    const linear = /^(\d+)x ([+−]) (\d+) = (-?\d+)$/.exec(prompt.question);
+    if (linear) {
+      const [, a, sign, b, c] = linear;
+      const offset = sign === '−' ? -Number(b) : Number(b);
+      assert.equal(Number(a) * prompt.answer + offset, Number(c), prompt.question);
+    }
   }
+});
+
+test('trigonometry uses exact values and never asks tan 90 (FR-110, S3)', () => {
+  const prompts = pull(mentalMathTrainer, 'expert', 800).filter(
+    (p) => p.topicId === 'trigonometry',
+  );
+  assert.ok(prompts.length > 20);
+  const exact = new Set(['0', '1/2', '√2/2', '√3/2', '1', '√3/3', '√3']);
+
+  for (const prompt of prompts) {
+    assert.notEqual(prompt.question, 'tan 90°', 'tan 90 is undefined');
+    assert.ok(exact.has(prompt.answer), `inexact value: ${prompt.answer}`);
+    assert.equal(prompt.options.length, 4);
+    assert.ok(prompt.options.includes(prompt.answer));
+    assert.equal(new Set(prompt.options).size, 4, 'options must be distinct');
+  }
+});
+
+test('practice honours the topic filter exactly (FR-55, S18)', () => {
+  const prompts = pull(mentalMathTrainer, 'expert', 500, {
+    practice: true,
+    filters: { topics: ['algebra'] },
+  });
+  assert.ok(prompts.length > 0);
+  for (const prompt of prompts) assert.equal(prompt.topicId, 'algebra');
+});
+
+test('an empty topic filter is refused rather than played (FR-56, S18)', () => {
+  assert.equal(mentalMathTrainer.validateFilters({ topics: [] }).ok, false);
+  assert.equal(mentalMathTrainer.validateFilters({ topics: ['addition'] }).ok, true);
+});
+
+test('duration scales with the band (FR-29, US-3.3)', () => {
+  assert.equal(modeParamFor(mentalMathTrainer, 'beginner'), 45);
+  assert.equal(modeParamFor(mentalMathTrainer, 'expert'), 90);
+});
+
+// --- Pattern Memory ---------------------------------------------------------
+
+test('each level adds exactly one tile (FR-117, S15)', () => {
+  for (let level = 1; level <= 10; level += 1) {
+    assert.equal(tilesForLevel(level + 1) - tilesForLevel(level), 1);
+  }
+});
+
+test('the board never grows mid-round (FR-119)', () => {
+  const prompts = pull(patternMemoryTrainer, '4x4', 50);
+  assert.ok(prompts.length > 1);
+  for (const prompt of prompts) {
+    assert.equal(prompt.columns, 4);
+    assert.equal(prompt.rows, 4);
+  }
+});
+
+test('levels are a pure function of seed and level number (NFR-5)', () => {
+  assert.deepEqual(
+    buildLevel(createRng(1234), '6x6', 1).answer,
+    buildLevel(createRng(1234), '6x6', 1).answer,
+  );
+
+  const level = buildLevel(createRng(99), '6x6', 12);
+  assert.equal(level.tileCount, tilesForLevel(12));
+  assert.equal(new Set(level.answer).size, level.tileCount, 'tiles must be distinct');
+  for (const index of level.answer) assert.ok(index >= 0 && index < 36);
+});
+
+test('a bigger board allows more levels, and the round ends at capacity (FR-119, S15)', () => {
+  assert.ok(maxLevelFor('6x6') > maxLevelFor('3x3'));
+  assert.equal(pull(patternMemoryTrainer, '3x3', 100).length, maxLevelFor('3x3'));
+});
+
+test('a pattern is checked as a set, not a sequence (FR-116, S4)', () => {
+  const prompt = { kind: 'grid', answer: [1, 4, 7] };
+  assert.equal(checkAnswer(prompt, [7, 1, 4]), 'correct');
+  assert.equal(checkAnswer(prompt, [1, 4]), 'incorrect');
+  assert.equal(checkAnswer(prompt, [1, 4, 7, 9]), 'incorrect');
+});
+
+// --- Figure Pairs -----------------------------------------------------------
+
+test('a board holds each figure exactly twice (FR-125, FR-126, S19)', () => {
+  for (const size of figurePairsTrainer.variants) {
+    const board = dealBoard(createRng(7), size);
+    assert.equal(board.faces.length, board.cells);
+    assert.equal(board.cells % 2, 0);
+
+    const counts = new Map();
+    for (const face of board.faces) counts.set(face, (counts.get(face) ?? 0) + 1);
+    assert.equal(counts.size, pairsFor(size));
+    for (const [face, count] of counts) assert.equal(count, 2, `${face} appears ${count} times`);
+  }
+});
+
+test('the completion target is the number of pairs (FR-18, S19)', () => {
+  assert.equal(modeParamFor(figurePairsTrainer, '6x4'), 12);
+  assert.equal(modeParamFor(figurePairsTrainer, '4x4'), 8);
+});
+
+test('two cards match when their figures match (FR-127, FR-128)', () => {
+  const prompt = { kind: 'pairs', faces: ['★', '●', '★', '●'] };
+  assert.equal(checkAnswer(prompt, [0, 2]), 'correct');
+  assert.equal(checkAnswer(prompt, [0, 1]), 'incorrect');
+  assert.equal(checkAnswer(prompt, [0, 0]), 'ignored', 'one card is not a turn');
+  assert.equal(checkAnswer(prompt, [0]), 'ignored');
+});
+
+test('matched cards stay face up as the board progresses (FR-127)', () => {
+  const generator = figurePairsTrainer.createGenerator({
+    puzzleDate: '2026-11-02',
+    variantKey: '4x3',
+  });
+  const first = generator.next({ index: 0 });
+  assert.deepEqual(first.matched, []);
+
+  const twin = first.faces.indexOf(first.faces[0], 1);
+  const pair = [0, twin];
+  const second = generator.next({ index: 1, lastCorrect: true, lastSubmission: pair });
+  assert.deepEqual(
+    second.matched.slice().sort((a, b) => a - b),
+    pair.slice().sort((a, b) => a - b),
+  );
+  assert.equal(second.pairsMatched, 1);
+});
+
+// --- Geography --------------------------------------------------------------
+
+test('all 195 countries validate and every flag derives (FR-135, FR-135a)', () => {
+  assert.equal(countries.length, 195);
+  assert.equal(countries.filter((c) => !c.flag).length, 0);
+  assert.equal(flagFor({ code: 'NO' }), '🇳🇴');
+  assert.equal(flagFor({ code: 'nope' }), '');
+});
+
+test('malformed entries are skipped, not fatal (FR-136, S9)', () => {
+  const warnings = [];
+  const result = validateCountries(
+    {
+      countries: [
+        { name: 'Good', capital: 'City', continent: 'Europe', tier: 1, code: 'XX' },
+        { name: '' },
+      ],
+    },
+    { warn: (message) => warnings.push(message) },
+  );
+  assert.equal(result.length, 1);
+  assert.equal(warnings.length, 1);
+});
+
+test('bands widen the country pool (FR-137, S2)', () => {
+  const beginner = poolFor(countries, 'beginner').length;
+  const intermediate = poolFor(countries, 'intermediate').length;
+  const expert = poolFor(countries, 'expert').length;
+  assert.ok(beginner < intermediate && intermediate < expert);
+  assert.equal(expert, 195);
+});
+
+test('choice bands offer four distinct plausible options, expert types (FR-138, FR-139)', () => {
+  const flags = registry.getTrainer('flag-guesser');
+
+  for (const prompt of pull(flags, 'beginner', 60)) {
+    assert.equal(prompt.kind, 'choice');
+    assert.equal(prompt.options.length, 4);
+    assert.equal(new Set(prompt.options).size, 4);
+    assert.ok(prompt.options.includes(prompt.answer));
+  }
+  for (const prompt of pull(flags, 'expert', 20)) {
+    assert.equal(prompt.kind, 'text');
+  }
+});
+
+test('every Geography trainer runs three lives (FR-140, S5)', () => {
+  for (const id of ['flag-guesser', 'outline-guesser', 'capital-guesser']) {
+    assert.equal(modeParamFor(registry.getTrainer(id), 'expert'), 3);
+  }
+});
+
+test('the Outline Guesser only asks countries it can draw (FR-135b)', () => {
+  const outlineTrainer = registry.getTrainer('outline-guesser');
+  for (const prompt of pull(outlineTrainer, 'expert', 120)) {
+    assert.ok(prompt.outline && prompt.outline.length > 10, `${prompt.answer} has no shape`);
+    assert.equal(prompt.viewBox, outlines.viewBox);
+  }
+});
+
+test('the Capital Guesser asks both directions (FR-153, FR-154)', () => {
+  const capitals = registry.getTrainer('capital-guesser');
+  const topics = new Set(pull(capitals, 'advanced', 200).map((p) => p.topicId));
+  assert.ok(topics.has('country-capital'));
+  assert.ok(topics.has('capital-country'));
+});
+
+test('documented alternative names are accepted (FR-65, FR-155, S4)', () => {
+  const uk = countries.find((c) => c.name === 'United Kingdom');
+  const prompt = { kind: 'text', answer: uk.name, alternatives: uk.alternatives };
+  assert.equal(checkAnswer(prompt, 'UK'), 'correct');
+  assert.equal(checkAnswer(prompt, '  great britain '), 'correct');
+  assert.equal(checkAnswer(prompt, 'Ireland'), 'incorrect');
+});
+
+// --- Outline hints ----------------------------------------------------------
+
+test('distance matches hand-checked haversine values (FR-151, S20)', () => {
+  // Oslo to Rome is about 2010 km.
+  const km = haversineKm([59.91, 10.75], [41.9, 12.5]);
+  assert.ok(Math.abs(km - 2010) < 30, `got ${km}`);
+  assert.equal(Math.round(haversineKm([0, 0], [0, 0])), 0);
+});
+
+test('direction is reported as a compass point (FR-149, S20)', () => {
+  assert.equal(compassPoint(bearingDegrees([40.2, -4.5], [52.1, 19.4])).name, 'north-east');
+  assert.equal(compassPoint(0).name, 'north');
+  assert.equal(compassPoint(90).name, 'east');
+  assert.equal(compassPoint(180).name, 'south');
+  assert.equal(compassPoint(270).name, 'west');
+});
+
+test('proximity is 100 only when exact and falls with distance (FR-150, S20)', () => {
+  assert.equal(proximityPercent(0), 100);
+  assert.ok(proximityPercent(2000) < 100);
+  assert.ok(proximityPercent(8000) < proximityPercent(2000));
+  assert.equal(proximityPercent(1e9), 0);
+});
+
+test('a wrong guess produces a usable hint (FR-148, S20)', () => {
+  const outlineTrainer = registry.getTrainer('outline-guesser');
+  const hint = outlineTrainer.hintFor('France', 'Germany');
+  assert.equal(hint.guess, 'France');
+  assert.ok(hint.distanceKm > 300 && hint.distanceKm < 1200, `got ${hint.distanceKm}`);
+  assert.match(hint.direction, /east/);
+  assert.ok(hint.proximity > 85);
+  assert.equal(outlineTrainer.hintFor('Atlantis', 'Germany'), null);
+});
+
+test('an alternative spelling still resolves to a hint (FR-65)', () => {
+  const outlineTrainer = registry.getTrainer('outline-guesser');
+  assert.equal(outlineTrainer.hintFor('UK', 'Germany').guess, 'United Kingdom');
 });

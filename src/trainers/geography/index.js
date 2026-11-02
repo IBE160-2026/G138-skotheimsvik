@@ -1,219 +1,224 @@
 /**
- * Geography Speed — lives trainer with three lives.
+ * The three Geography trainers: flags, outlines and capitals.
  *
- * FR-109..FR-116. Content comes from countries.json rather than code, and the
- * trainer was written after the engine was finished without requiring a single
- * change to src/core/ — which is the point of US-6.8.
+ * FR-140 to FR-155. They share one content file and one set of band rules, and
+ * differ only in what they show and what they ask — which is exactly the test
+ * of whether the engine abstraction holds (S21): all three were added without
+ * touching a single file in src/core/.
  */
 
-import { createRng, seedFor } from '../../core/rng.js';
+import { createRng, seedFor, practiceSeed } from '../../core/rng.js';
+import { buildChoices, continentsIn, poolFor, usesChoices } from './content.js';
+import { describeGuess } from './geo.js';
 
-export const CATEGORIES = Object.freeze({
-  'country-capital': 'Country → capital',
-  'capital-country': 'Capital → country',
-  'flag-country': 'Flag → country',
-  'country-continent': 'Country → continent',
-});
+const LIVES = 3;
 
-/** Highest tier included per band (FR-112). */
-const MAX_TIER_BY_BAND = Object.freeze({
-  beginner: 1,
-  intermediate: 2,
-  advanced: 3,
-  expert: 3,
-});
-
-const CHOICE_COUNT = 4;
-
-/** Offset from 'A' to the Unicode regional indicator block. */
-const REGIONAL_INDICATOR_A = 0x1f1e6;
-
-/**
- * The flag glyph for a country, built from its ISO 3166-1 alpha-2 code.
- *
- * Deriving it beats storing 195 emoji by hand, and still needs no image files
- * and no network request (FR-143). Older content files carrying a literal flag
- * are still honoured.
- */
-export function flagFor(entry) {
-  const code = typeof entry?.code === 'string' ? entry.code.trim().toUpperCase() : '';
-  if (/^[A-Z]{2}$/.test(code)) {
-    return String.fromCodePoint(
-      ...[...code].map((letter) => REGIONAL_INDICATOR_A + letter.charCodeAt(0) - 65),
-    );
-  }
-  return typeof entry?.flag === 'string' ? entry.flag : '';
-}
-
-/**
- * Validate the content file, skipping malformed entries rather than crashing
- * the trainer (FR-115).
- * @param {unknown} raw parsed JSON
- * @param {{warn: Function}} [logger]
- */
-export function validateCountries(raw, logger = console) {
-  const list = Array.isArray(raw) ? raw : raw?.countries;
-  if (!Array.isArray(list)) {
-    logger.warn('[geography] Content file has no countries array; trainer will be unavailable.');
-    return [];
-  }
-
-  const valid = [];
-  for (const [index, entry] of list.entries()) {    const problems = [];
-    if (typeof entry?.name !== 'string' || entry.name.trim() === '') problems.push('name');
-    if (typeof entry?.capital !== 'string' || entry.capital.trim() === '') problems.push('capital');
-    if (typeof entry?.continent !== 'string' || entry.continent.trim() === '') problems.push('continent');
-    if (!Number.isInteger(entry?.tier) || entry.tier < 1 || entry.tier > 3) problems.push('tier');
-
-    if (problems.length > 0) {
-      logger.warn(`[geography] Skipping entry ${index}: invalid ${problems.join(', ')}.`);
-      continue;
-    }
-
-    valid.push({
-      name: entry.name,
-      capital: entry.capital,
-      continent: entry.continent,
-      tier: entry.tier,
-      flag: flagFor(entry),
-      alternatives: Array.isArray(entry.alternatives) ? entry.alternatives : [],
-    });
-  }
-
-  return valid;
-}
-
-/**
- * Build the four distractors, preferring the same continent so they are
- * plausible, and never repeating the correct answer (FR-113).
- */
-function buildChoices(rng, correct, pool, valueOf) {
-  const sameContinent = pool.filter(
-    (entry) => entry.continent === correct.continent && valueOf(entry) !== valueOf(correct),
-  );
-  const elsewhere = pool.filter(
-    (entry) => entry.continent !== correct.continent && valueOf(entry) !== valueOf(correct),
-  );
-
-  const distractors = [];
-  const seen = new Set([valueOf(correct)]);
-
-  for (const candidate of [...rng.shuffle(sameContinent), ...rng.shuffle(elsewhere)]) {
-    if (distractors.length >= CHOICE_COUNT - 1) break;
-    const value = valueOf(candidate);
-    if (seen.has(value)) continue;
-    seen.add(value);
-    distractors.push(value);
-  }
-
-  return rng.shuffle([valueOf(correct), ...distractors]);
-}
-
-function buildContinentChoices(rng, correct, pool) {
-  const continents = [...new Set(pool.map((entry) => entry.continent))];
-  const others = rng.shuffle(continents.filter((name) => name !== correct.continent));
-  return rng.shuffle([correct.continent, ...others.slice(0, CHOICE_COUNT - 1)]);
-}
-
-/**
- * Build one prompt.
- * @param {object} rng
- * @param {Array} pool
- * @param {string} categoryId
- * @param {boolean} freeText expert bands answer by typing (FR-112)
- */
-export function buildPrompt(rng, pool, categoryId, freeText) {
-  const subject = rng.pick(pool);
-
-  const specs = {
-    'country-capital': {
-      question: `What is the capital of ${subject.name}?`,
-      answer: subject.capital,
-      valueOf: (entry) => entry.capital,
-      alternatives: [],
-    },
-    'capital-country': {
-      question: `${subject.capital} is the capital of which country?`,
-      answer: subject.name,
-      valueOf: (entry) => entry.name,
-      alternatives: subject.alternatives,
-    },
-    'flag-country': {
-      question: 'Which country does this flag belong to?',
-      answer: subject.name,
-      valueOf: (entry) => entry.name,
-      alternatives: subject.alternatives,
-      flag: subject.flag,
-    },
-    'country-continent': {
-      question: `Which continent is ${subject.name} in?`,
-      answer: subject.continent,
-      valueOf: (entry) => entry.continent,
-      alternatives: [],
-    },
-  };
-
-  const spec = specs[categoryId];
-
-  const prompt = {
-    key: `${categoryId}:${subject.name}`,
-    categoryId,
-    categoryLabel: CATEGORIES[categoryId],
-    question: spec.question,
-    answer: spec.answer,
-    alternatives: spec.alternatives,
-    flag: spec.flag ?? null,
-  };
-
-  // Continent prompts stay multiple choice even at expert: free-typing one of
-  // six fixed continents tests spelling, not geography.
-  if (freeText && categoryId !== 'country-continent') {
-    return { ...prompt, kind: 'text' };
-  }
-
-  const choices =
-    categoryId === 'country-continent'
-      ? buildContinentChoices(rng, subject, pool)
-      : buildChoices(rng, subject, pool, spec.valueOf);
-
-  return { ...prompt, kind: 'choice', choices };
-}
-
-export function createGeographyTrainer(rawContent, logger = console) {
-  const countries = validateCountries(rawContent, logger);
-
+/** Shared practice filters: all three ask about the same countries. */
+function geographyFilters(continents) {
   return {
-    id: 'geography',
-    name: 'Geography Speed',
-    description: 'Capitals, countries, flags and continents. Three mistakes allowed.',
+    continents: {
+      label: 'Continents',
+      kind: 'multi',
+      options: continents.map((id) => ({ id, label: id })),
+      default: continents,
+    },
+    answerFormat: {
+      label: 'Answer format',
+      kind: 'single',
+      options: [
+        { id: 'choice', label: 'Multiple choice' },
+        { id: 'text', label: 'Type the answer' },
+      ],
+      default: 'choice',
+    },
+  };
+}
+
+function baseTrainer(countries) {
+  return {
+    categoryId: 'geography',
     roundMode: 'lives',
+    variantKind: 'band',
+    scoreDirection: 'higher',
     headlineScore: 'correct',
-    renderer: 'choice',
-    supportsCategories: true,
     scoreLabel: 'Correct answers',
-    available: countries.length >= CHOICE_COUNT,
+    modeParam: LIVES,
+    practiceFilters: geographyFilters(continentsIn(countries)),
 
-    /** Three lives, always (FR-109). */
-    modeParam() {
-      return 3;
+    validateFilters(filters) {
+      const chosen = filters?.continents ?? [];
+      if (chosen.length === 0) {
+        return { ok: false, reason: 'Pick at least one continent to practise.' };
+      }
+      return { ok: true };
     },
+  };
+}
 
-    describeMode() {
-      return '3 lives — one mistake costs a life';
-    },
+/** Pick the round's subject and decide how it will be answered. */
+function prepare({ rng, countries, variantKey, practice, filters }) {
+  const pool = poolFor(countries, variantKey, practice ? filters : null);
+  if (pool.length < 4) return null;
+  return {
+    pool,
+    subject: rng.pick(pool),
+    choices: usesChoices(variantKey, practice ? filters : null),
+  };
+}
 
-    createGenerator({ puzzleDate, difficulty }) {
-      const rng = createRng(seedFor(this.id, puzzleDate));
-      const maxTier = MAX_TIER_BY_BAND[difficulty];
-      const pool = countries.filter((entry) => entry.tier <= maxTier);
-      const freeText = difficulty === 'expert';
-      const categoryIds = Object.keys(CATEGORIES);
+function makeRng(trainerId, { puzzleDate, variantKey, practice }) {
+  return createRng(practice ? practiceSeed() : seedFor(trainerId, variantKey, puzzleDate));
+}
+
+// --- Flag Guesser -----------------------------------------------------------
+
+export function createFlagTrainer(countries) {
+  return {
+    ...baseTrainer(countries),
+    id: 'flag-guesser',
+    name: 'Flag Guesser',
+    description: 'Identify the country from its flag. Three mistakes allowed.',
+    renderer: 'flag',
+    topics: continentsIn(countries).map((id) => ({ id, label: id })),
+
+    createGenerator(context) {
+      const rng = makeRng('flag-guesser', context);
+      const { variantKey, practice = false, filters = null } = context;
 
       return {
         next() {
-          if (pool.length < CHOICE_COUNT) return null;
-          const categoryId = rng.pick(categoryIds);
-          return buildPrompt(rng, pool, categoryId, freeText);
+          const setup = prepare({ rng, countries, variantKey, practice, filters });
+          if (!setup) return null;
+          const { pool, subject, choices } = setup;
+
+          return {
+            kind: choices ? 'choice' : 'text',
+            key: `flag:${subject.code}`,
+            topicId: subject.continent,
+            topicLabel: subject.continent,
+            question: 'Which country does this flag belong to?',
+            flag: subject.flag,
+            answer: subject.name,
+            alternatives: subject.alternatives,
+            options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
+          };
+        },
+      };
+    },
+  };
+}
+
+// --- Outline Guesser --------------------------------------------------------
+
+export function createOutlineTrainer(countries, outlines) {
+  // Only countries with a silhouette can be asked here (FR-135b).
+  const withOutline = countries.filter((entry) => outlines.outlines?.[entry.name]);
+  const byName = new Map(countries.map((entry) => [entry.name, entry]));
+  const normalise = (value) => String(value ?? '').trim().toLocaleLowerCase();
+
+  return {
+    ...baseTrainer(withOutline),
+    id: 'outline-guesser',
+    name: 'Outline Guesser',
+    description: 'Identify the country from its shape. Wrong guesses tell you how far off you are.',
+    renderer: 'outline',
+    topics: continentsIn(withOutline).map((id) => ({ id, label: id })),
+
+    /**
+     * Distance, direction and proximity for a wrong guess (FR-148 to FR-150).
+     * Returns null when the guess is not a country we recognise.
+     */
+    hintFor(guessName, answerName) {
+      const guess = [...byName.values()].find(
+        (entry) =>
+          normalise(entry.name) === normalise(guessName) ||
+          entry.alternatives.some((alt) => normalise(alt) === normalise(guessName)),
+      );
+      const target = byName.get(answerName);
+      const guessCentroid = guess && outlines.outlines?.[guess.name]?.centroid;
+      const targetCentroid = target && outlines.outlines?.[target.name]?.centroid;
+      if (!guessCentroid || !targetCentroid) return null;
+      return { guess: guess.name, ...describeGuess(guessCentroid, targetCentroid) };
+    },
+
+    createGenerator(context) {
+      const rng = makeRng('outline-guesser', context);
+      const { variantKey, practice = false, filters = null } = context;
+
+      return {
+        next() {
+          const setup = prepare({ rng, countries: withOutline, variantKey, practice, filters });
+          if (!setup) return null;
+          const { pool, subject, choices } = setup;
+          const outline = outlines.outlines[subject.name];
+
+          return {
+            kind: choices ? 'choice' : 'text',
+            key: `outline:${subject.code}`,
+            topicId: subject.continent,
+            topicLabel: subject.continent,
+            question: 'Which country has this shape?',
+            outline: outline.d,
+            viewBox: outlines.viewBox,
+            answer: subject.name,
+            alternatives: subject.alternatives,
+            options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
+            // Hints only make sense where the player types a country name (FR-152).
+            hintable: !choices,
+          };
+        },
+      };
+    },
+  };
+}
+
+// --- Capital Guesser --------------------------------------------------------
+
+export function createCapitalTrainer(countries) {
+  return {
+    ...baseTrainer(countries),
+    id: 'capital-guesser',
+    name: 'Capital Guesser',
+    description: 'Name the capital, or the country it belongs to. Three mistakes allowed.',
+    renderer: 'prompt',
+    topics: [
+      { id: 'country-capital', label: 'Country → capital' },
+      { id: 'capital-country', label: 'Capital → country' },
+    ],
+
+    createGenerator(context) {
+      const rng = makeRng('capital-guesser', context);
+      const { variantKey, practice = false, filters = null } = context;
+
+      return {
+        next() {
+          const setup = prepare({ rng, countries, variantKey, practice, filters });
+          if (!setup) return null;
+          const { pool, subject, choices } = setup;
+
+          // Both directions appear, as separate topics (FR-153, FR-154).
+          if (rng.float() < 0.5) {
+            return {
+              kind: choices ? 'choice' : 'text',
+              key: `capital-of:${subject.code}`,
+              topicId: 'country-capital',
+              topicLabel: 'Country → capital',
+              question: `What is the capital of ${subject.name}?`,
+              answer: subject.capital,
+              options: choices ? buildChoices(rng, pool, subject, (entry) => entry.capital) : null,
+            };
+          }
+
+          return {
+            kind: choices ? 'choice' : 'text',
+            key: `country-of:${subject.code}`,
+            topicId: 'capital-country',
+            topicLabel: 'Capital → country',
+            question: `${subject.capital} is the capital of which country?`,
+            answer: subject.name,
+            alternatives: subject.alternatives,
+            options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
+          };
         },
       };
     },

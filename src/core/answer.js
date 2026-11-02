@@ -89,6 +89,17 @@ export function checkAnswer(prompt, submitted) {
       return setEquals(submitted, prompt.answer) ? 'correct' : 'incorrect';
     }
 
+    case 'pairs': {
+      // Any two cells showing the same figure match, so there is no single
+      // correct answer to compare against (FR-127).
+      const picks = Array.isArray(submitted) ? submitted : [];
+      if (picks.length !== 2) return 'ignored';
+      const [first, second] = picks;
+      if (first === second) return 'ignored';
+      const faces = prompt.faces ?? [];
+      return faces[first] !== undefined && faces[first] === faces[second] ? 'correct' : 'incorrect';
+    }
+
     case 'choice':
     case 'text':
     default: {

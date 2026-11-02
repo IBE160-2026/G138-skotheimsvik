@@ -53,6 +53,9 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
   let promptShownAtMs = 0;
   let livesRemaining = roundMode === 'lives' ? modeParam : null;
   let pairsRemaining = roundMode === 'completion' ? modeParam : null;
+  /** What the player last submitted, so stateful boards can update themselves. */
+  let lastSubmission = null;
+  let lastCorrect = null;
 
   const durationMs = roundMode === 'timed' ? modeParam * 1000 : null;
 
@@ -90,6 +93,8 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
       variantKey,
       puzzleDate,
       practice,
+      lastSubmission,
+      lastCorrect,
     };
 
     let candidate = null;
@@ -208,6 +213,8 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
 
       const isCorrect = status === 'correct';
       scoreboard.record(prompt, isCorrect, clock.now() - promptShownAtMs);
+      lastSubmission = value;
+      lastCorrect = isCorrect;
 
       let lifeLost = false;
       if (roundMode === 'lives' && !isCorrect) {
