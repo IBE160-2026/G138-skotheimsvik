@@ -72,7 +72,7 @@ Testene kjører med Node sin innebygde test runner (`node --test`) — ingen tes
 
 ## Publisering
 
-**Live:** _adressen fylles inn her når Vercel-prosjektet er opprettet (`<navn>.vercel.app`)._
+**Live:** <https://g138-skotheimsvik.vercel.app/>
 
 Appen publiseres med **Vercel**, som er den eneste publiseringsløsningen emnet støtter. Hver endring som kommer inn i `main` publiseres automatisk, og hver pull request får sin egen forhåndsvisning.
 
@@ -124,7 +124,7 @@ Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å t
 | Arkitektur | Avklart i koden — se §9-beslutningene nedenfor |
 | Epics og stories | Definert i PRD |
 | Implementasjon | v1 implementert — motor, tre trenere, arkiv, progresjon og UI |
-| Publisering | Vercel-oppsett klart — se [Publisering](#publisering) |
+| Publisering | Publisert — <https://g138-skotheimsvik.vercel.app/> |
 
 ### Arkitekturvalg (PRD §9)
 
