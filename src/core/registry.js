@@ -14,7 +14,7 @@
 import { BANDS, isValidVariant, parseBoardSize } from './variants.js';
 
 const ROUND_MODES = ['timed', 'lives', 'completion'];
-const VARIANT_KINDS = ['band', 'boardSize'];
+const VARIANT_KINDS = ['band', 'boardSize', 'pool'];
 const SCORE_DIRECTIONS = ['higher', 'lower'];
 
 const REQUIRED_FIELDS = [
@@ -67,6 +67,13 @@ export function createRegistry() {
       for (const key of trainer.variants) {
         assert(parseBoardSize(key), `Trainer "${id}" has unparseable board size "${key}".`);
       }
+    }
+
+    if (variantKind === 'pool') {
+      assert(
+        Array.isArray(trainer.variants) && trainer.variants.length > 0,
+        `Trainer "${id}" uses pools but declares no variants.`,
+      );
     }
 
     // A timed band trainer gets its duration from the band, so modeParam is

@@ -712,3 +712,17 @@ select:hover { border-color: var(--border-strong); }
   .choices { grid-template-columns: 1fr; }
   .hero { flex-direction: column; align-items: stretch; }
 }
+
+/* People trainer: a clue is a sentence, not a sum. */
+.prompt-prefix {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-faint); margin: var(--sp-4) 0 0;
+}
+.question-long {
+  font-size: clamp(1.05rem, 0.95rem + 0.7vw, 1.35rem);
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0;
+  max-width: 32rem;
+  margin-inline: auto;
+}

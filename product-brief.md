@@ -106,8 +106,8 @@ Three levels, and the vocabulary is used consistently throughout this project:
 
 | Level | Meaning | Examples |
 |---|---|---|
-| **Category** | A skill area | Math · Memory · Geography |
-| **Trainer** | One game inside a category | Flag Guesser · Pattern Memory · Mental Math Sprint |
+| **Category** | A skill area | Math · Memory · Geography · People |
+| **Trainer** | One game inside a category | Flag Guesser · Pattern Memory · Famous People |
 | **Topic** | A tagged sub-type of prompt, used for weak-area analysis and for practice-mode filters | `algebra` · `trigonometry` · `capitals-of-africa` |
 
 A single reusable **Drill Engine** sits underneath all of it. Each trainer supplies only a question generator, a renderer for its prompt type, and a declared round mode. The engine owns the loop, answer checking, scoring, streaks, results, persistence, weak-area analysis, daily attempts and the archive. Adding a trainer — or a whole new category — must not require changing engine code.
@@ -152,8 +152,13 @@ So Memory replaces bands with **board size**. Each board size is its own daily a
 
 The board you pick is the board you keep. It never grows mid-round — you chose that size, and overriding your choice halfway through would be rude. A Pattern Memory round therefore ends naturally as the pattern approaches the board's capacity.
 
-### 5.6 Your real opponent is yesterday
+The numbers come from the **Corsi block-tapping test**, the standard visuo-spatial memory task since 1972. Corsi uses nine blocks, starts at two, and reports an average span of five to six. So LearningHub starts at two tiles and lets a pattern cover up to two thirds of the board — which means the smallest 3×3 board reaches six tiles, just past the average human limit, rather than stopping short of it.
 
+### 5.6 Categories as the thing you choose
+
+Not every trainer splits by difficulty or board size. **Famous People** splits by subject: pick Everything, or just music, film, sport, science or history before you start. Each is its own daily puzzle with its own record, so being good at music trivia is tracked separately from being good at science trivia — which is the honest way round, because they are different knowledge.
+
+### 5.6 Your real opponent is yesterday
 Because every puzzle is a single shared challenge, the natural motivation is not a leaderboard — it is your own record. After every round the results screen tells you how you compare with your **previous attempt** at that trainer and band, and with your **all-time best**. Beating yesterday is the daily goal; beating your best is the long one.
 
 ---
@@ -203,9 +208,19 @@ Bands control the country pool and the answer format: Beginner uses widely known
 
 The content covers **all 195 sovereign states** — every UN member plus Vatican City and Palestine. Flags are derived from each country's ISO code rather than stored as images, so there is nothing to download and nothing to license. Outlines exist for 166 of the 195; the 29 without are microstates and small island nations too small to appear in the public-domain map data, so they feature in the Flag and Capital trainers but not the Outline Guesser.
 
-The Outline Guesser's hint system is lifted, openly, from Worldle: after a wrong guess you are told how far away your guess was, in which direction the target lies, and how close you are as a percentage. It is a genuinely good mechanic and there is no reason to invent a worse one.
+The Outline Guesser's hint system is lifted, openly, from Worldle: after a wrong guess you are told how far away your guess was, in which direction the target lies, and how close you are as a percentage. It is a genuinely good mechanic and there is no reason to invent a worse one. Each shape gives you three guesses, because a distance hint is worthless if a wrong answer moves straight on to the next country.
 
-### 6.4 Later phases
+### 6.4 People
+
+| Trainer | Round mode | What you do | Phase |
+|---|---|---|---|
+| **Famous People** | Lives (3) | Fifteen clues a day. Name the person, or find out who it was and move on | 1 |
+
+This is the one trainer where the thing you choose is a **subject**, not a difficulty: Everything, Music, Film and TV, Sport, Science and invention, or History and leadership. Each is a separate daily puzzle with a separate record.
+
+Answers are typed rather than picked from a list. Four options would give a clue this specific away, and the point of seeing the name after a wrong guess is that you did not already have it in front of you. A surname on its own is accepted, and spelling is forgiving about accents — *Pele* passes for *Pelé*.
+
+### 6.5 Later phases
 
 | Category | Trainer | Phase |
 |---|---|---|

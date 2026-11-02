@@ -21,7 +21,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const countries = JSON.parse(readFileSync(join(root, 'src/trainers/geography/countries.json'), 'utf8'));
 const outlines = JSON.parse(readFileSync(join(root, 'src/trainers/geography/outlines.json'), 'utf8'));
-const registry = buildRegistry({ countries, outlines }, { warn: () => {} });
+const people = JSON.parse(readFileSync(join(root, 'src/trainers/people/people.json'), 'utf8'));
+const registry = buildRegistry({ countries, outlines, people }, { warn: () => {} });
 
 const VALID_END_REASONS = ['time-expired', 'lives-exhausted', 'board-complete', 'prompts-exhausted'];
 

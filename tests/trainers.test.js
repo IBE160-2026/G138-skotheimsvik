@@ -14,6 +14,7 @@ import {
 } from '../src/trainers/memory/pattern.js';
 import { figurePairsTrainer, dealBoard, pairsFor } from '../src/trainers/memory/pairs.js';
 import { validateCountries, poolFor, flagFor } from '../src/trainers/geography/content.js';
+import { validatePeople, poolFor as peoplePoolFor, PEOPLE_PER_ROUND } from '../src/trainers/people/index.js';
 import {
   haversineKm,
   bearingDegrees,
@@ -32,8 +33,12 @@ const countriesRaw = JSON.parse(
 const outlines = JSON.parse(
   readFileSync(join(root, 'src/trainers/geography/outlines.json'), 'utf8'),
 );
+const peopleRaw = JSON.parse(readFileSync(join(root, 'src/trainers/people/people.json'), 'utf8'));
 const countries = validateCountries(countriesRaw, { warn: () => {} });
-const registry = buildRegistry({ countries: countriesRaw, outlines }, { warn: () => {} });
+const registry = buildRegistry(
+  { countries: countriesRaw, outlines, people: peopleRaw },
+  { warn: () => {} },
+);
 
 /** Pull `count` prompts from a trainer at one variant. */
 function pull(trainer, variantKey, count, options = {}) {
@@ -54,11 +59,11 @@ function pull(trainer, variantKey, count, options = {}) {
 
 // --- catalogue --------------------------------------------------------------
 
-test('six trainers register across three categories (FR-6, S21)', () => {
-  assert.equal(registry.size, 6);
+test('seven trainers register across four categories (FR-6, S21)', () => {
+  assert.equal(registry.size, 7);
   assert.deepEqual(
     registry.listCategories().map((c) => c.id),
-    ['math', 'memory', 'geography'],
+    ['math', 'memory', 'geography', 'people'],
   );
   assert.deepEqual(registry.trainersIn('memory').map((t) => t.id), [
     'pattern-memory',
@@ -190,6 +195,9 @@ test('levels are a pure function of seed and level number (NFR-5)', () => {
 test('a bigger board allows more levels, and the round ends at capacity (FR-119, S15)', () => {
   assert.ok(maxLevelFor('6x6') > maxLevelFor('3x3'));
   assert.equal(pull(patternMemoryTrainer, '3x3', 100).length, maxLevelFor('3x3'));
+  // Corsi reports an average span of five to six on nine blocks, so the
+  // smallest board must allow at least that far before it runs out.
+  assert.ok(tilesForLevel(maxLevelFor('3x3')) >= 5, 'a 3x3 board must reach the average human span');
 });
 
 test('a pattern is checked as a set, not a sequence (FR-116, S4)', () => {
@@ -357,4 +365,81 @@ test('a wrong guess produces a usable hint (FR-148, S20)', () => {
 test('an alternative spelling still resolves to a hint (FR-65)', () => {
   const outlineTrainer = registry.getTrainer('outline-guesser');
   assert.equal(outlineTrainer.hintFor('UK', 'Germany').guess, 'United Kingdom');
+});
+
+// --- Famous People ----------------------------------------------------------
+
+const peopleContent = validatePeople(peopleRaw, { warn: () => {} });
+
+test('every person has a category and a clue that does not give the answer away', () => {
+  assert.ok(peopleContent.people.length >= 80, `only ${peopleContent.people.length} people`);
+  for (const person of peopleContent.people) {
+    assert.ok(person.clue.length > 20, `clue too thin for ${person.name}`);
+    assert.ok(
+      !person.clue.toLocaleLowerCase().includes(person.name.toLocaleLowerCase()),
+      `clue names ${person.name}`,
+    );
+    assert.ok(peopleContent.categories[person.category], `unknown category for ${person.name}`);
+  }
+  assert.equal(new Set(peopleContent.people.map((p) => p.name)).size, peopleContent.people.length);
+});
+
+test('every category pool is big enough for a full round', () => {
+  for (const key of Object.keys(peopleContent.categories)) {
+    const pool = peoplePoolFor(peopleContent.people, key);
+    assert.ok(pool.length >= PEOPLE_PER_ROUND, `${key} has only ${pool.length}`);
+  }
+  assert.equal(peoplePoolFor(peopleContent.people, 'all').length, peopleContent.people.length);
+});
+
+test('a round draws fifteen distinct people (US-12.1)', () => {
+  const trainer = registry.getTrainer('famous-people');
+  const prompts = pull(trainer, 'all', 40);
+  assert.equal(prompts.length, PEOPLE_PER_ROUND);
+  assert.equal(new Set(prompts.map((p) => p.answer)).size, PEOPLE_PER_ROUND);
+});
+
+test('a category round only asks that category (FR-156)', () => {
+  const trainer = registry.getTrainer('famous-people');
+  for (const key of Object.keys(peopleContent.categories)) {
+    for (const prompt of pull(trainer, key, 20)) {
+      assert.equal(prompt.topicId, key);
+    }
+  }
+});
+
+test('surnames and unaccented spellings are accepted (FR-64, FR-65)', () => {
+  const byName = new Map(peopleContent.people.map((p) => [p.name, p]));
+
+  const mercury = byName.get('Freddie Mercury');
+  assert.equal(checkAnswer({ kind: 'text', ...mercury }, 'mercury'), 'correct');
+
+  const pele = byName.get('Pelé');
+  assert.equal(checkAnswer({ kind: 'text', ...pele }, 'Pele'), 'correct');
+
+  const king = byName.get('Martin Luther King Jr.');
+  assert.equal(checkAnswer({ kind: 'text', ...king }, 'Martin Luther King'), 'correct');
+  assert.equal(checkAnswer({ kind: 'text', ...king }, 'King'), 'correct');
+
+  // A lowercase particle means no automatic surname, so "Great" is not a name.
+  const alexander = byName.get('Alexander the Great');
+  assert.equal(checkAnswer({ kind: 'text', ...alexander }, 'Great'), 'incorrect');
+  assert.equal(checkAnswer({ kind: 'text', ...alexander }, 'Alexander'), 'correct');
+});
+
+test('a malformed person is skipped, and a clue naming its answer is rejected', () => {
+  const warnings = [];
+  const result = validatePeople(
+    {
+      categories: { music: 'Music' },
+      people: [
+        { name: 'Good Person', category: 'music', clue: 'A clue that is long enough to pass.' },
+        { name: 'No Clue', category: 'music' },
+        { name: 'Giveaway', category: 'music', clue: 'This clue names Giveaway outright.' },
+      ],
+    },
+    { warn: (message) => warnings.push(message) },
+  );
+  assert.equal(result.people.length, 1);
+  assert.equal(warnings.length, 2);
 });

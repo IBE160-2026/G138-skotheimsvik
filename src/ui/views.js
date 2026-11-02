@@ -10,7 +10,7 @@
 
 import { el, render, stat, formatDate, formatDuration } from './dom.js';
 import { lineChart, chartLegend } from './chart.js';
-import { variantLabel, variantsFor, describeRound, modeParamFor } from '../core/variants.js';
+import { variantLabel, variantsFor, describeRound, VARIANT_AXIS_LABEL } from '../core/variants.js';
 import { analyseWeakAreas, aggregateTopics } from '../core/weak-areas.js';
 
 const ROUND_MODE_LABEL = {
@@ -26,6 +26,11 @@ const END_REASON_LABEL = {
   'prompts-exhausted': 'You ran out of questions',
   abandoned: 'You left the round early',
 };
+
+/** A trainer may name its own variants; otherwise fall back to the generic label. */
+function labelFor(trainer, key) {
+  return trainer.variantLabels?.[key] ?? variantLabel(trainer.variantKind, key);
+}
 
 /** A thin progress rail showing how much of something is done. */
 function meter(done, total) {
@@ -127,7 +132,7 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
 /** A trainer's variants, marking what has already been spent (FR-3). */
 export function trainerView({ today, trainer, progress, onPlay, onPractice, onBack }) {
   const spent = new Set(progress.spentVariants(trainer.id, today));
-  const axisLabel = trainer.variantKind === 'band' ? 'Difficulty' : 'Board size';
+  const axisLabel = VARIANT_AXIS_LABEL[trainer.variantKind] ?? 'Level';
 
   const options = variantsFor(trainer).map((key) => {
     const played = spent.has(key);
@@ -136,7 +141,7 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onBa
       trainer.variantKind === 'band'
         ? el('span', { class: `band-stripe band-${key}`, 'aria-hidden': 'true' })
         : null,
-      el('h3', { text: variantLabel(trainer.variantKind, key) }),
+      el('h3', { text: labelFor(trainer, key) }),
       el('p', { class: 'muted', text: describeRound(trainer, key) }),
       el('p', {
         class: 'muted small',
@@ -178,7 +183,7 @@ export function briefingView({ trainer, variantKey, puzzleDate, isArchive, onSta
     el('p', { class: 'muted', text: trainer.description }),
     el('div', { class: 'brief-stats' }, [
       stat('Date', formatDate(puzzleDate)),
-      stat(trainer.variantKind === 'band' ? 'Difficulty' : 'Board', variantLabel(trainer.variantKind, variantKey)),
+      stat(VARIANT_AXIS_LABEL[trainer.variantKind] ?? 'Level', labelFor(trainer, variantKey)),
       stat('Round ends', ROUND_MODE_LABEL[trainer.roundMode]),
     ]),
     el('p', { class: 'brief-mode', text: describeRound(trainer, variantKey) }),
@@ -263,7 +268,7 @@ export function resultsView({ result, trainer, comparison, isPractice, onBack, o
   return el('section', { class: 'results' }, [
     el('h1', { text: isPractice ? 'Practice complete' : 'Round complete' }),
     el('p', { class: 'muted' }, [
-      `${trainer.name} — ${variantLabel(trainer.variantKind, result.variantKey)}`,
+      `${trainer.name} — ${labelFor(trainer, result.variantKey)}`,
     ]),
     el('p', { class: 'end-reason', text: END_REASON_LABEL[result.endedBy] ?? 'Round over' }),
 
@@ -337,12 +342,12 @@ export function archiveView({ entries, onPlay, onBack }) {
                     variant.played
                       ? el('span', {
                           class: 'badge badge-done',
-                          text: `${variantLabel(trainerState.variantKind, variant.key)} · ${variant.score}`,
+                          text: `${trainerState.variantLabels?.[variant.key] ?? variantLabel(trainerState.variantKind, variant.key)} · ${variant.score}`,
                         })
                       : el('button', {
                           type: 'button',
                           class: 'ghost small',
-                          text: variantLabel(trainerState.variantKind, variant.key),
+                          text: trainerState.variantLabels?.[variant.key] ?? variantLabel(trainerState.variantKind, variant.key),
                           onClick: () => onPlay(trainerState.trainerId, variant.key, entry.puzzleDate),
                         }),
                   ),
@@ -382,14 +387,14 @@ export function progressView({ trainers, progress, selection, onSelect, onBack }
   const variantPicker = el(
     'select',
     {
-      'aria-label': trainer.variantKind === 'band' ? 'Difficulty' : 'Board size',
+      'aria-label': VARIANT_AXIS_LABEL[trainer.variantKind] ?? 'Level',
       onChange: (event) => onSelect({ trainerId: trainer.id, variantKey: event.target.value }),
     },
     variants.map((key) =>
       el('option', {
         value: key,
         selected: key === variantKey ? 'selected' : null,
-        text: variantLabel(trainer.variantKind, key),
+        text: labelFor(trainer, key),
       }),
     ),
   );

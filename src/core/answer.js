@@ -7,9 +7,17 @@
 
 /** @typedef {'correct'|'incorrect'|'ignored'} AnswerStatus */
 
-/** Collapse whitespace and case so comparison is forgiving (FR-49, FR-50). */
+/**
+ * Collapse whitespace, case and diacritics so comparison is forgiving
+ * (FR-63, FR-64).
+ *
+ * Stripping accents matters for content like Beyoncé and Pelé, where insisting
+ * on the exact glyph would punish a correct answer typed on a plain keyboard.
+ */
 export function normaliseText(value) {
   return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .replace(/\s+/g, ' ')
     .toLocaleLowerCase();

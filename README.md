@@ -23,6 +23,7 @@ Innholdet er delt i tre nivåer: **kategori → trener → tema**.
 | **Math** | Mental Math Sprint |
 | **Memory** | Pattern Memory, Figure Pairs |
 | **Geography** | Flag Guesser, Outline Guesser, Capital Guesser |
+| **People** | Famous People |
 
 ### Du velger nivået selv
 
@@ -32,15 +33,17 @@ Innenfor én grad er oppgaven **den samme for alle i hele verden den dagen**. De
 
 Hukommelse er unntaket: et tilfeldig mønster kan ikke meningsfullt forfattes som «intermediate», så der velger du **brettstørrelse** i stedet. Hver størrelse er sin egen dagsoppgave med sin egen rekord.
 
+Famous People er det andre unntaket: der velger du **emne** — alt, musikk, film, sport, vitenskap eller historie. Hvert emne er sin egen dagsoppgave, så å være god på musikk telles for seg.
+
 ### Rundene slutter på tre måter
 
 | Modus | Slutter når | Brukes av |
 |---|---|---|
 | **Timed** | Tiden går ut | Mental Math Sprint |
-| **Lives** | Du er tom for liv | Geografi-trenerne (3 liv), Pattern Memory (1 liv) |
+| **Lives** | Du er tom for liv | Geografi-trenerne (3 liv), Famous People (3 liv), Pattern Memory (1 liv) |
 | **Completion** | Brettet er tomt | Figure Pairs |
 
-Figure Pairs scorer **feil**, ikke riktige — der er lavest best.
+Figure Pairs scorer **feil**, ikke riktige — der er lavest best. Famous People gir deg 15 personer per dag: gjetter du feil, får du se navnet før du går videre.
 
 ### Å starte en runde forbruker forsøket
 
@@ -92,7 +95,7 @@ npm run serve
 npm test
 ```
 
-46 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `Memory adds exactly one tile per level (US-5.4, FR-100)`.
+84 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `each level adds exactly one tile (FR-117, S15)`. Testmatrisen i `tests/matrix.test.js` spiller alle trener- og variantkombinasjoner til en naturlig slutt.
 
 ## Publisering
 
@@ -133,6 +136,7 @@ src/trainers/           En mappe per kategori
   math/                 Mental Math Sprint
   memory/               Pattern Memory og Figure Pairs
   geography/            Delt innhold, geo-matematikk og de tre trenerne
+  people/               Famous People og personlista
 src/ui/                 DOM, visninger, rundevisning og stilark
 tests/                  Testsuite
 tools/build-outlines.js Forfatterverktøy: TopoJSON → SVG-omriss
@@ -150,10 +154,10 @@ Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å t
 | PRD | Ferdig (v4.1) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Avklart i koden — se §9-beslutningene nedenfor |
 | Epics og stories | Definert i PRD |
-| Implementasjon | v1 implementert — motor, seks trenere, arkiv, practice mode, progresjon og UI |
+| Implementasjon | v1 implementert — motor, sju trenere, arkiv, practice mode, progresjon og UI |
 | Publisering | Publisert — <https://g138-skotheimsvik.vercel.app/> |
 
-PRD-en inneholder 163 funksjonelle krav, 22 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 21 suksesskriteriene i briefen.
+PRD-en inneholder 166 funksjonelle krav, 22 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 22 suksesskriteriene i briefen.
 
 ### Arkitekturvalg (PRD §9)
 
@@ -166,7 +170,7 @@ PRD-en inneholder 163 funksjonelle krav, 22 ikke-funksjonelle krav, 11 epics og 
 | 5 | Nivåer | Spilleren velger selv; hvert nivå er en egen dagsoppgave |
 | 6 | Tidligste arkivdato | 2026-10-01 |
 | 7 | Deteksjon av datoskifte | Intervall hvert 30. sekund pluss `visibilitychange` |
-| 8 | Brettstørrelse i Hukommelse | Valgt av spilleren og fast gjennom runden; mønsteret kan dekke maks 55 % av brettet |
+| 8 | Brettstørrelse i Hukommelse | Valgt av spilleren og fast gjennom runden. Starter på 2 ruter, og mønsteret kan dekke maks 67 % av brettet — tallene er hentet fra **Corsi block-tapping-testen**, som bruker ni ruter, starter på to og rapporterer et snittspenn på fem til seks |
 | 9 | Grafer | Håndskrevet SVG, ingen tredjepartsbibliotek |
 | 10 | Registreringskontrakt for trenere | Kategori, rundemodus, variantakse, score-retning, temaer, generator og renderer — se `src/core/registry.js` |
 | 11 | Lisens for geografiinnhold og flagg | Land og hovedsteder er faktaopplysninger vi har skrevet selv. Flagg utledes fra ISO-koden som Unicode-tegn. Omriss kommer fra Natural Earth, som er public domain |

@@ -46,7 +46,7 @@ Priority uses MoSCoW: **M** = must, **S** = should, **C** = could. Every **M** r
 | **Completion round** | Ends when the board is finished. Used by Figure Pairs |
 | **Band** | A difficulty level — `beginner`, `intermediate`, `advanced` or `expert`. **Chosen by the player** |
 | **Board size** | Memory's replacement for bands, e.g. `4x4`. Chosen by the player |
-| **Variant** | The generic term for whichever axis a trainer uses to split its daily puzzles — a band for most trainers, a board size for Memory. A trainer declares which kind it uses |
+| **Variant** | The generic term for whichever axis a trainer uses to split its daily puzzles — a **band** for most trainers, a **board size** for Memory, a **pool** (subject category) for Famous People. A trainer declares which kind it uses |
 | **Variant key** | The stable string identifying a variant, e.g. `expert` or `5x5` |
 | **Puzzle** | The deterministic prompt sequence for a given trainer, variant and date |
 | **Puzzle date** | The calendar date a puzzle belongs to, in the user's local time zone |
@@ -130,6 +130,7 @@ Three consequences of the v5 redesign:
 | Geography | Flag Guesser | `lives` (3) | band | beginner…expert | Correct answers | higher |
 | Geography | Outline Guesser | `lives` (3) | band | beginner…expert | Correct answers | higher |
 | Geography | Capital Guesser | `lives` (3) | band | beginner…expert | Correct answers | higher |
+| People | Famous People | `lives` (3) | pool | all, music, film, sport, science, history | Correct answers | higher |
 
 **Mental Math duration by band:** Beginner 45 s, Intermediate 60 s, Advanced 75 s, Expert 90 s.
 
@@ -400,6 +401,22 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | FR-153 | Asks for the capital of a named country | M | S2 |
 | FR-154 | Also asks the reverse — the country for a named capital — as a separate topic | M | S2 |
 | FR-155 | Accepts documented alternative capital spellings and transliterations | M | S4 |
+
+### 4.18b People — Famous People
+
+| ID | Requirement | Priority | Traces to |
+|---|---|---|---|
+| FR-156 | The player chooses a subject pool before starting: Everything, or one of music, film, sport, science or history. Each pool is an independent daily puzzle with its own attempt and record | M | S13 |
+| FR-157 | A round presents exactly **15 people**, or ends earlier if the player runs out of lives | M | S22 |
+| FR-158 | No person appears twice within a round | M | S22 |
+| FR-159 | Runs in lives mode with exactly 3 lives | M | S5 |
+| FR-160 | Each prompt is a clue that identifies the person without naming them; a clue containing its own answer is rejected at load | M | S22 |
+| FR-161 | Answers are typed, not chosen from options, so the reveal after a wrong guess is meaningful | M | S4 |
+| FR-162 | A wrong guess shows the person's full name before the round moves on | M | S4 |
+| FR-163 | A surname alone is accepted where the name has no lowercase particle; names such as "Alexander the Great" require more | M | S4 |
+| FR-164 | Every pool holds at least 15 people, so a full round never repeats or runs short | M | S22 |
+| FR-165 | Prompts are tagged by subject, so weak-area analysis reports which subject the player misses most | M | S7 |
+| FR-166 | Malformed entries are skipped and logged rather than crashing the trainer | M | NFR-7 |
 
 ### 4.19 Presentation, theming and accessibility
 
@@ -853,6 +870,7 @@ Format: *As a learner, I want … so that …* Acceptance criteria are Given/Whe
 | S19 — Figure Pairs completion and scoring | FR-18, FR-125–131, FR-83 | US-2.4, US-6.8, US-6.9, US-6.10, US-6.11 |
 | S20 — outline hints are correct | FR-145, FR-148–152 | US-7.7, US-7.9, US-7.10, US-7.11 |
 | S21 — trainers reachable, engine untouched | FR-2, FR-6, FR-7 | US-1.3, US-7.15 |
+| S22 — Famous People rounds are 15 distinct, fairly clued people | FR-156 to FR-166 | US-12.1 |
 
 Every success criterion is covered by at least one requirement and one story. No requirement exists without a traceable origin in the brief.
 
@@ -899,6 +917,5 @@ Chosen in the absence of a stated preference, and flagged so they can be overrul
 | v3.2 | 2026-11-02 | Product name and the set-based Memory rule confirmed |
 | v4 | 2026-11-02 | Rewritten against brief v5. **Difficulty selection restored** in a stronger form — four bands per trainer, each an independent daily puzzle with its own record (FR-26 to FR-37). Introduced the **category / trainer / topic hierarchy**, renaming the old weak-area "category" to **topic**. Added **practice mode** as the sole home of filters (FR-45 to FR-58). Added **completion** as a third round mode and **score direction** so a lower score can be better. Catalogue grows from three trainers to six, adding **Figure Pairs**, **Flag Guesser**, **Outline Guesser** and **Capital Guesser**, with Worldle-style distance, direction and proximity hints (FR-148 to FR-152) and bundled Natural Earth outline data. Storage keys move to `v2`. FRs 125 → 163, NFRs 20 → 22, epics 10 → 11, stories 75 → 93, success criteria 17 → 21 |
 | v4.1 | 2026-11-02 | **Starting a daily round now commits the attempt** (FR-10, FR-10a to FR-10d). Quitting records the round as `abandoned` and spends it; switching variant mid-round does the same to the round being left, so it is never a free restart. Practice is exempt. This reverses the previous no-penalty rule, which would otherwise have made the switching rule trivially avoidable. Pattern Memory's fixed board confirmed as intended design rather than an assumption |
-| v4.2 | 2026-11-02 | Reconciled with the built application. **FR-148 rewritten**: the Outline Guesser shows each country up to three times, because a distance hint is worthless if a wrong answer moves straight on to the next shape. Added **FR-10e**, so header navigation cannot be used to walk out of a round for free, and **FR-44a**, documenting that a mid-round reload escapes the commitment rule — the same class of limitation as the soft daily limit |
-
+| v4.2 | 2026-11-02 | Reconciled with the built application. **FR-148 rewritten**: the Outline Guesser shows each country up to three times, because a distance hint is worthless if a wrong answer moves straight on to the next shape. Added **FR-10e**, so header navigation cannot be used to walk out of a round for free, and **FR-44a**, documenting that a mid-round reload escapes the commitment rule — the same class of limitation as the soft daily limit || v4.3 | 2026-11-02 | Added the **People** category and the **Famous People** trainer (FR-156 to FR-166, S22): fifteen clues a day, three lives, and a subject chosen before play. This introduced a third variant axis, **pool**, alongside bands and board sizes — the engine already treated a variant as an opaque list of keys, so it needed only the new kind registering. Pattern Memory's limits were re-grounded in the **Corsi block-tapping test**: starting tiles 3 → 2 and the fill ceiling 55 % → 67 %, because Corsi reports an average span of five to six on nine blocks and the old cap stopped a 3×3 board at four tiles, below where an average player would fail. Text matching is now accent-insensitive as FR-64 always required |
 **Status:** implemented and deployed. The application at <https://g138-skotheimsvik.vercel.app/> reflects this document.

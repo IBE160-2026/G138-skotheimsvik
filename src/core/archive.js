@@ -47,6 +47,7 @@ export function trainerDayState(trainer, puzzleDate, progress) {
     categoryId: trainer.categoryId,
     name: trainer.name,
     variantKind: trainer.variantKind,
+    variantLabels: trainer.variantLabels ?? null,
     variants,
     remaining: variants.filter((entry) => !entry.played).length,
   };

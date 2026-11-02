@@ -15,16 +15,23 @@ import { parseBoardSize } from '../../core/variants.js';
 
 export const BOARD_SIZES = Object.freeze(['3x3', '4x4', '5x5', '6x6']);
 
-/** Level 1 starts here; every level adds one tile (FR-117). */
-export const STARTING_TILES = 3;
+/**
+ * Level 1 starts here; every level adds one tile (FR-117).
+ *
+ * Two, following the Corsi block-tapping test — the standard visuo-spatial
+ * memory task since 1972, which also starts at two blocks.
+ */
+export const STARTING_TILES = 2;
 
 /**
  * A pattern may fill at most this share of the board.
  *
- * Past roughly half, "remember the lit tiles" quietly becomes "remember the
- * unlit ones", which is a different and much easier task.
+ * Corsi uses nine blocks and reports an average span of five to six, so a
+ * ceiling below roughly two thirds would cut a 3×3 board off before an average
+ * player had even reached their limit. An earlier 55 % cap did exactly that:
+ * it left the smallest board with four tiles and barely two levels.
  */
-export const MAX_FILL_RATIO = 0.55;
+export const MAX_FILL_RATIO = 0.67;
 
 export const DISPLAY_MS = Object.freeze({
   '3x3': 1800,

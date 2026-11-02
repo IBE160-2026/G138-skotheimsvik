@@ -16,6 +16,7 @@ import {
   createFlagTrainer,
   createOutlineTrainer,
 } from './geography/index.js';
+import { createFamousPeopleTrainer, validatePeople } from './people/index.js';
 
 export const CATEGORIES = [
   {
@@ -36,6 +37,12 @@ export const CATEGORIES = [
     tagline: 'Flags, shapes and capitals for all 195 countries.',
     icon: '◴',
   },
+  {
+    id: 'people',
+    name: 'People',
+    tagline: 'Fifteen clues a day. Music, film, sport, science or history.',
+    icon: '☺',
+  },
 ];
 
 /**
@@ -44,9 +51,10 @@ export const CATEGORIES = [
  * @param {object} content
  * @param {unknown} content.countries parsed countries.json
  * @param {object} content.outlines parsed outlines.json
+ * @param {unknown} content.people parsed people.json
  * @param {{warn: Function}} [logger]
  */
-export function buildRegistry({ countries, outlines }, logger = console) {
+export function buildRegistry({ countries, outlines, people }, logger = console) {
   const registry = createRegistry();
   for (const category of CATEGORIES) registry.registerCategory(category);
 
@@ -61,6 +69,8 @@ export function buildRegistry({ countries, outlines }, logger = console) {
   registry.registerTrainer(createFlagTrainer(validated));
   registry.registerTrainer(createOutlineTrainer(validated, outlines));
   registry.registerTrainer(createCapitalTrainer(validated));
+
+  registry.registerTrainer(createFamousPeopleTrainer(validatePeople(people, logger)));
 
   return registry;
 }

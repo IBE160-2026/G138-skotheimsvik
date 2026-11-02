@@ -52,13 +52,27 @@ export function boardSizeLabel(key) {
   return size ? `${size.columns}×${size.rows}` : String(key);
 }
 
+/** Default labels for pool variants; a trainer may override with variantLabels. */
+export const POOL_LABELS = Object.freeze({
+  all: 'Everything',
+});
+
+/** What the variant picker is called on screen. */
+export const VARIANT_AXIS_LABEL = Object.freeze({
+  band: 'Difficulty',
+  boardSize: 'Board size',
+  pool: 'Category',
+});
+
 /**
  * Human-readable name for any variant key.
- * @param {'band'|'boardSize'} kind
+ * @param {'band'|'boardSize'|'pool'} kind
  * @param {string} key
  */
 export function variantLabel(kind, key) {
-  return kind === 'band' ? (BAND_LABELS[key] ?? key) : boardSizeLabel(key);
+  if (kind === 'band') return BAND_LABELS[key] ?? key;
+  if (kind === 'boardSize') return boardSizeLabel(key);
+  return POOL_LABELS[key] ?? key;
 }
 
 /**

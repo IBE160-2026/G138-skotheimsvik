@@ -264,11 +264,15 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     );
   }
 
-  /** Mental Math, Capitals — a question and an answer box or options. */
+  /** Mental Math, Capitals, Famous People — a question and an answer box. */
   function renderPrompt(prompt) {
+    // A clue runs to a sentence or two, so it cannot use the display size a
+    // short arithmetic question does.
+    const long = String(prompt.question).length > 60;
     render(
       promptBody,
-      el('p', { class: 'question', text: prompt.question }),
+      prompt.prefix ? el('p', { class: 'prompt-prefix', text: prompt.prefix }) : null,
+      el('p', { class: long ? 'question question-long' : 'question', text: prompt.question }),
       prompt.formatHint ? el('p', { class: 'format-hint', text: prompt.formatHint }) : null,
       answerArea(prompt),
     );
