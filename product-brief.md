@@ -1,6 +1,5 @@
-# Product Brief — LearningHub (working name)
+# Product Brief — LearningHub
 
-**Alternative names:** SkillSprint · DrillDeck · BrainReps
 **Status:** Draft v4
 **Author:** Daniel Skotheimsvik, with AI support (BMAD Analyst role)
 **Course:** IBE160 Programmering med KI, Høgskolen i Molde, autumn 2026
@@ -294,15 +293,19 @@ Phase 1 is the only committed scope for this course. A fourth trainer is a stret
 
 ---
 
-## 13. Open Decisions
+## 13. Decisions
 
-- Final product name
-- Vanilla JavaScript versus a lightweight framework
-- Which JavaScript test runner
-- How far back the archive should reach, and what the earliest puzzle date is
-- The exact difficulty distribution across days — how often a hard day should come round
-- Exact per-band parameters for each trainer
-- Whether the stretch-goal fourth trainer is attempted
+Every decision left open when this brief was written has now been settled and implemented. They are recorded in full in PRD §9, with the module embodying each one named alongside it.
+
+| Decision | Outcome |
+|---|---|
+| Product name | **LearningHub** — confirmed, no longer a working title |
+| Vanilla JavaScript or a framework | Vanilla JavaScript, native ES modules, zero runtime dependencies |
+| Test runner | Node's built-in `node --test` |
+| Archive depth | Reaches back to 2026-10-01 |
+| Difficulty distribution across days | 20 % beginner, 40 % intermediate, 25 % advanced, 15 % expert |
+| Per-band trainer parameters | Mental Math 45/60/75/90 s; Memory starting tiles and display time per band; Geography country pool per band |
+| Stretch-goal fourth trainer | Not attempted in v1 |
 
 ---
 
@@ -316,5 +319,6 @@ Phase 1 is the only committed scope for this course. A fourth trainer is a stret
 | 2026-10-10 | Brief revised to v2: added an Executive Summary and a *What Makes This Different* section, narrowed to a single primary user, replaced engagement-based success metrics with verifiable functional criteria, pulled progress charts and weak-area tracking into v1, removed the discarded GameHub brief, and restored `README.md` and `.gitignore` |
 | 2026-10-10 | Brief revised to v3 after a product decision on round structure. Rounds are no longer uniformly timed: each trainer declares a **round mode**, with *timed* and *lives* in v1 and room for more. Added the **one scored attempt per trainer per day** rule with an **archive** of previous days, and the determinism requirement that follows from it. Clarified that the three v1 trainers are a starting point rather than the final catalogue |
 | 2026-10-10 | Brief revised to v4 after four further product decisions. **Difficulty selection removed entirely** — the date assigns difficulty and everyone faces the same puzzle, with trainer parameters such as the Mental Math clock derived from the day's difficulty rather than chosen. **Memory redefined** as a visual grid of tiles rather than digit and word sequences, and made **endless**: one life, one more tile each level, with the score being how far you got. Archive results confirmed as counting towards personal bests on equal terms. Added **comparison against your previous attempt and all-time best** as the core motivational loop in place of a leaderboard |
+| 2026-11-02 | v1 implemented and published. Two remaining decisions confirmed: **LearningHub** is the final product name, and **Memory judges a level as a set of tiles rather than a sequence** — the order you select them in does not matter, which makes it a visual-memory task rather than a Simon-style recall task. §13 closed out accordingly |
 
-**Next step in the BMAD flow:** the architecture document.
+**Where the BMAD flow stands:** brief → PRD → architecture → epics and stories → implementation are all complete. v1 is built, tested and published.

@@ -810,7 +810,7 @@ Every success criterion in the brief is covered by at least one requirement and 
 
 ## 9. Architecture Decisions
 
-These questions were carried from brief §13. All but one are now **resolved and implemented**; each decision is recorded in the module that embodies it, so the code and this table cannot drift apart silently.
+These questions were carried from brief §13. All are now **resolved and implemented**; each decision is recorded in the module that embodies it, so the code and this table cannot drift apart silently.
 
 | # | Question | Decision | Where |
 |---|---|---|---|
@@ -825,19 +825,19 @@ These questions were carried from brief §13. All but one are now **resolved and
 | 9 | SVG or Canvas for charts? | **Hand-written SVG**, no charting library; difficulty is conveyed per data point | `src/ui/chart.js` |
 | 10 | Trainer registration contract? | A trainer supplies a generator, a renderer kind, a round mode and a headline-score type | `src/core/registry.js` |
 | 11 | Geography content and flag licensing? | Content is **hand-authored factual data** in this repository. Flags are **Unicode regional-indicator glyphs** rendered by the system font — **no image files and no third-party assets**, so there is nothing to license | `src/trainers/geography/countries.json` |
-| 12 | Final product name? | **Open.** The code, README and these documents all use *LearningHub*; renaming remains cheap because the name appears only in presentation strings | — |
+| 12 | Final product name? | **LearningHub** — confirmed 2026-11-02 | — |
 
 ### 9.1 Assumptions, now implemented
 
-These were chosen in the absence of a stated preference. They are **implemented as described** and remain cheap to overrule.
+These were chosen in the absence of a stated preference. They are **implemented as described**. The set-based Memory rule was the one with a real cost of reversal, and it has since been confirmed as the intended design.
 
-| Assumption | Why it matters | Cost of reversing |
+| Assumption | Why it matters | Status |
 |---|---|---|
-| Mental Math duration scales 45/60/75/90 s across the four bands | Harder days get more time, so a hard day is harder rather than merely slower | Low — values only; the derivation mechanism is unaffected |
-| Memory levels are judged as a *set* — tile order does not matter | Decides whether the task is visual-memory or Simon-style sequence recall | **High** — FR-99 inverts, and both answer checking and the renderer change |
-| Memory starts at the day's tile count and grows by exactly one per level | Makes the score a clean "level reached" number | Medium — FR-100 and the score definition change |
-| A single personal best per trainer, not split by difficulty band | Honest, because the player cannot choose an easier band | Medium — best becomes a map keyed by band; comparison logic grows |
-| Geography keeps 3 lives on every band, difficulty expressed through the country pool | Keeps lives meaningful and comparable | Low — lives would become band-derived like the Mental Math clock |
+| Mental Math duration scales 45/60/75/90 s across the four bands | Harder days get more time, so a hard day is harder rather than merely slower | Implemented; values only, cheap to retune |
+| Memory levels are judged as a *set* — tile order does not matter | Decides whether the task is visual-memory or Simon-style sequence recall | **Confirmed 2026-11-02.** LearningHub is a visual-memory task, not sequence recall (FR-99) |
+| Memory starts at the day's tile count and grows by exactly one per level | Makes the score a clean "level reached" number | Implemented; FR-100 |
+| A single personal best per trainer, not split by difficulty band | Honest, because the player cannot choose an easier band | Implemented; FR-60 |
+| Geography keeps 3 lives on every band, difficulty expressed through the country pool | Keeps lives meaningful and comparable | Implemented; FR-109, FR-112 |
 
 ---
 
@@ -849,5 +849,6 @@ These were chosen in the absence of a stated preference. They are **implemented 
 | v2 | 2026-10-10 | Rewritten against brief Draft v3. Added `timed` and `lives` round modes, deterministic seeded generation, one attempt per trainer per date, and the archive |
 | v3 | 2026-10-10 | Rewritten against brief Draft v4. **Difficulty selection removed**: difficulty is assigned by the date (FR-26 to FR-31), trainer parameters are derived from it, and the pre-round screen became a briefing with no controls. **Memory redefined** as an endless visual tile grid judged by set rather than order, requiring lazy prompt supply (FR-24) and unbounded deterministic level generation (NFR-5). **Personal best simplified** to one number per trainer. Added **comparison against previous attempt and all-time best** (FR-65 to FR-67). Added success criteria S13, S16 and S17. FRs 108 → 125, NFRs 18 → 19, stories 63 → 75 |
 | v3.1 | 2026-11-02 | Reconciled with the implementation. §9 turned from open questions into **recorded architecture decisions**, eleven of twelve now resolved and implemented; only the final product name stays open. §9.1 assumptions restated as implemented, with the cost of reversing each. Added **NFR-20** for automatic publication to a public URL |
+| v3.2 | 2026-11-02 | Final two decisions confirmed by the product owner: **LearningHub** is the product name (§9 Q12 closed), and **Memory is judged as a set of tiles rather than a sequence** (§9.1, FR-99 confirmed). No open questions remain |
 
-**Status:** the requirements in this document are implemented and covered by the test suite. The remaining open item is the product name.
+**Status:** the requirements in this document are implemented and covered by the test suite. No open questions remain.

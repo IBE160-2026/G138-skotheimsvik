@@ -120,7 +120,7 @@ Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å t
 | Fase | Status |
 |---|---|
 | Product brief | Ferdig (v4) — [product-brief.md](product-brief.md) |
-| PRD | Ferdig (v3.1) — [docs/PRD.md](docs/PRD.md) |
+| PRD | Ferdig (v3.2) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Avklart i koden — se §9-beslutningene nedenfor |
 | Epics og stories | Definert i PRD |
 | Implementasjon | v1 implementert — motor, tre trenere, arkiv, progresjon og UI |
@@ -141,7 +141,7 @@ Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å t
 | 9 | Grafer | Håndskrevet SVG, ingen tredjepartsbibliotek |
 | 10 | Registreringskontrakt for trenere | Generator, renderer, rundemodus og poengtype — se `src/core/registry.js` |
 | 11 | Lisens for geografiinnhold og flagg | Innholdet er faktaopplysninger vi har skrevet selv. Flaggene er Unicode-tegn, ikke bildefiler — ingenting å lisensiere |
-| 12 | Endelig produktnavn | **Fortsatt åpent.** Navnet *LearningHub* brukes inntil videre |
+| 12 | Endelig produktnavn | **LearningHub** — bekreftet 2026-11-02 |
 
 
 PRD-en inneholder 125 funksjonelle krav, 20 ikke-funksjonelle krav, 10 epics og 75 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 17 suksesskriteriene i briefen.
