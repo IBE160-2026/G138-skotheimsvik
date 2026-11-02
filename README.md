@@ -33,7 +33,7 @@ Innenfor én grad er oppgaven **den samme for alle i hele verden den dagen**. De
 
 Hukommelse er unntaket: et tilfeldig mønster kan ikke meningsfullt forfattes som «intermediate», så der velger du **brettstørrelse** i stedet. Hver størrelse er sin egen dagsoppgave med sin egen rekord.
 
-Famous People er det andre unntaket: der velger du **emne** — alt, musikk, film, sport, vitenskap eller historie. Hvert emne er sin egen dagsoppgave, så å være god på musikk telles for seg. De fleste personene vises med **portrett** i tillegg til hintet.
+Famous People er det andre unntaket: der velger du **emne** — alt, musikk, film, sport, vitenskap eller historie. Hvert emne er sin egen dagsoppgave, så å være god på musikk telles for seg. Lista er på 1134 personer, og de mest kjente vises med **portrett** i tillegg til hintet.
 
 ### Rundene slutter på tre måter
 
@@ -95,7 +95,7 @@ npm run serve
 npm test
 ```
 
-86 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `each level adds exactly one tile (FR-117, S15)`. Testmatrisen i `tests/matrix.test.js` spiller alle trener- og variantkombinasjoner til en naturlig slutt.
+87 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `each level adds exactly one tile (FR-117, S15)`. Testmatrisen i `tests/matrix.test.js` spiller alle trener- og variantkombinasjoner til en naturlig slutt.
 
 ## Publisering
 
@@ -140,6 +140,7 @@ src/trainers/           En mappe per kategori
 src/ui/                 DOM, visninger, rundevisning og stilark
 tests/                  Testsuite
 tools/build-outlines.js Forfatterverktøy: TopoJSON → SVG-omriss
+tools/build-people.js   Forfatterverktøy: personlista fra Wikidata og Wikipedia
 tools/build-people-images.js  Forfatterverktøy: fritt lisensierte portretter
 tools/serve.js          Lokal statisk server
 vercel.json             Publiseringsoppsett
@@ -152,13 +153,13 @@ Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å t
 | Fase | Status |
 |---|---|
 | Product brief | Ferdig (v5) — [product-brief.md](product-brief.md) |
-| PRD | Ferdig (v4.1) — [docs/PRD.md](docs/PRD.md) |
+| PRD | Ferdig (v4.5) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Avklart i koden — se §9-beslutningene nedenfor |
 | Epics og stories | Definert i PRD |
 | Implementasjon | v1 implementert — motor, sju trenere, arkiv, practice mode, progresjon og UI |
 | Publisering | Publisert — <https://g138-skotheimsvik.vercel.app/> |
 
-PRD-en inneholder 170 funksjonelle krav, 23 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 23 suksesskriteriene i briefen.
+PRD-en inneholder 174 funksjonelle krav, 23 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 23 suksesskriteriene i briefen.
 
 ### Arkitekturvalg (PRD §9)
 
@@ -181,7 +182,9 @@ PRD-en inneholder 170 funksjonelle krav, 23 ikke-funksjonelle krav, 11 epics og 
 
 Landomrissene i Outline Guesser er avledet fra **Natural Earth**, som er public domain, konvertert til rene SVG-baner av `tools/build-outlines.js` og committet til repoet. 166 av 195 land har omriss — de 29 uten er mikrostater og småøystater som ikke finnes i datasettet.
 
-Portrettene i Famous People hentes fra Wikimedia av `tools/build-people-images.js`, som **bare laster ned bilder med lisens som tillater gjenbruk** — public domain, CC0, CC BY, CC BY-SA, OGL. Alt annet hoppes over, og personen blir hintebasert i stedet. Fotograf, lisens og kildefil lagres i `portraits.json` og vises ved siden av bildet. 133 av 134 personer har portrett; den ene som mangler har bare et GFDL-bilde, en lisens som ville krevd at vi distribuerte hele lisensteksten.
+Portrettene i Famous People hentes fra Wikimedia av `tools/build-people-images.js`, som **bare laster ned bilder med lisens som tillater gjenbruk** — public domain, CC0, CC BY, CC BY-SA, OGL. Alt annet hoppes over, og personen blir hintebasert i stedet. Fotograf, lisens og kildefil lagres i `portraits.json` og vises ved siden av bildet. 400 av 1134 personer har portrett; taket er satt bevisst, siden 1134 bilder ville lagt rundt 29 MB i repoet for et spill som viser femten personer om dagen. Personene er sortert etter hvor kjent de er, så de du oftest møter er de som har bilde.
+
+Selve personlista bygges av `tools/build-people.js`. 134 av hintene er håndskrevne og ligger i `people.curated.json` — de har alltid forrang. De øvrige 1000 er generert: Wikidata rangerer folk etter hvor mange Wikipedia-utgaver som har en artikkel om dem, som er et rimelig mål på hvor kjent noen er og som ikke favoriserer étt lands presse. Ingressen fra Wikipedia blir hintet etter at alle former av navnet er sladdet bort. Kategorien avgjøres av hvordan artikkelen beskriver personen, ikke av yrkeskoden som fant dem — Wikidata har Shakespeare som skuespiller og Nietzsche som komponist, som er riktig, men ikke der en spiller ville lett etter dem.
 
 Begge verktøyene kjøres for hånd. Applikasjonen leser aldri TopoJSON og gjør aldri et nettverkskall til Wikimedia — alt innhold serveres fra vårt eget opphav.
 

@@ -46,6 +46,18 @@ const USER_AGENT = 'LearningHub-coursework/1.0 (student project; contact daniel.
  */
 const THUMB_WIDTH = 250;
 
+/**
+ * Upper bound on the bundled set.
+ *
+ * The roster is around a thousand people and a portrait averages 29 kB, so
+ * fetching every one would put roughly 25 MB of images in the repository for
+ * a game that shows fifteen a day. people.json is ordered most-famous-first,
+ * so taking the first few hundred gives pictures to the people a player is
+ * most likely to meet; everyone else stays clue-only, which the trainer
+ * supports by design (FR-167).
+ */
+const MAX_PORTRAITS = 400;
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -153,6 +165,10 @@ const skipped = [];
 let bytes = 0;
 
 for (const person of people) {
+  if (Object.keys(credits).length >= MAX_PORTRAITS) {
+    console.log(`\nTak p\u00e5 ${MAX_PORTRAITS} portretter n\u00e5dd; resten blir hintebaserte.`);
+    break;
+  }
   if (credits[person.name] && existsSync(join(IMAGE_DIR, credits[person.name].file))) continue;
   const slug = person.name
     .normalize('NFD')
@@ -162,7 +178,9 @@ for (const person of people) {
     .replace(/^-|-$/g, '');
 
   try {
-    const file = await findFile(person.lookup ?? person.name);
+    // Generated entries already carry the lead image's file name from the
+    // roster build, which saves a request and the thumbnail-URL guesswork.
+    const file = person.pageimage ?? (await findFile(person.lookup ?? person.name));
     if (!file) {
       skipped.push(`${person.name}: no lead image`);
       continue;
@@ -212,7 +230,7 @@ writeFileSync(
   'utf8',
 );
 
-console.log(`\n${Object.keys(credits).length} portrety av ${people.length}, ${(bytes / 1024 / 1024).toFixed(2)} MB`);
+console.log(`\n${Object.keys(credits).length} portretter av ${people.length}, ${(bytes / 1024 / 1024).toFixed(2)} MB`);
 if (skipped.length) {
   console.log(`\nUten bilde (${skipped.length}):`);
   for (const line of skipped) console.log(`  - ${line}`);

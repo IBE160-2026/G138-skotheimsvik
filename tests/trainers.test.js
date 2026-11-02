@@ -387,6 +387,26 @@ test('every person has a category and a clue that does not give the answer away'
   assert.equal(new Set(peopleContent.people.map((p) => p.name)).size, peopleContent.people.length);
 });
 
+// Most clues are generated from encyclopedia intros, so the things that go
+// wrong are mechanical: a surviving name fragment, a half-stripped
+// pronunciation guide, or a sentence that starts mid-word.
+test('no clue leaks a part of the name or the leftovers of its own cleanup', () => {
+  for (const person of peopleContent.people) {
+    for (const part of person.name.split(/[\s'’-]+/)) {
+      if (part.length < 4) continue;
+      // Whole words only: "Amsterdam annexe" is not a leak of "Anne".
+      const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      assert.ok(
+        !new RegExp(`\\b${escaped}\\b`, 'i').test(person.clue),
+        `clue for ${person.name} contains "${part}"`,
+      );
+    }
+    assert.ok(!/[()[\]]/.test(person.clue), `clue for ${person.name} has a stray bracket`);
+    assert.ok(/^[A-Z"“]/.test(person.clue), `clue for ${person.name} starts mid-sentence`);
+    assert.ok(!/[—–]\s*[—–]/.test(person.clue), `clue for ${person.name} has doubled dashes`);
+  }
+});
+
 test('every category pool is big enough for a full round', () => {
   for (const key of Object.keys(peopleContent.categories)) {
     const pool = peoplePoolFor(peopleContent.people, key);

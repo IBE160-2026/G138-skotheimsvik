@@ -218,7 +218,7 @@ The Outline Guesser's hint system is lifted, openly, from Worldle: after a wrong
 
 This is the one trainer where the thing you choose is a **subject**, not a difficulty: Everything, Music, Film and TV, Sport, Science and invention, or History and leadership. Each is a separate daily puzzle with a separate record.
 
-Most people come with a **portrait** as well as a clue — 133 of the 134 in the set. Every picture is public domain or under a licence that permits reuse, bundled in the repository and credited to its photographer on screen. The one person without a picture is still perfectly playable; the clue carries the prompt on its own.
+The set holds **1134 people**. 134 of the clues are hand-written; the rest are generated from encyclopedia intros with every form of the name removed, ranked by how many languages carry an article about the person so the list is not weighted towards any one country. The 400 best-known come with a **portrait** as well as a clue. Every picture is public domain or under a licence that permits reuse, bundled in the repository and credited to its photographer on screen. Everyone else is still perfectly playable; the clue carries the prompt on its own.
 
 The cast is deliberately international: Fela Kuti and Ravi Shankar alongside Mick Jagger and Willie Nelson, Mansa Musa and Toussaint Louverture alongside Churchill and Lincoln, Tu Youyou and Ibn al-Haytham alongside Newton and Curie.
 

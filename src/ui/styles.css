@@ -1,4 +1,4 @@
-/* LearningHub — single stylesheet, no build step (NFR-13). */
+﻿/* LearningHub â€” single stylesheet, no build step (NFR-13). */
 
 /* ============================================================== 1. Tokens */
 
@@ -531,7 +531,7 @@ select:hover { border-color: var(--border-strong); }
   animation: pop 0.2s var(--ease) both;
 }
 .tile-selected { border-color: var(--accent); background: var(--accent-soft); }
-.tile-selected::after { content: '✓'; font-weight: 700; }
+.tile-selected::after { content: 'âœ“'; font-weight: 700; }
 
 /* ------------------------------------------------- Figure Pairs board */
 
@@ -733,10 +733,12 @@ select:hover { border-color: var(--border-strong); }
   width: clamp(130px, 34vw, 190px);
   aspect-ratio: 1;
   object-fit: cover;
-  object-position: center top;
+  object-position: 50% 22%;
   border-radius: var(--r);
   border: 1px solid var(--border);
   background: var(--surface-2);
   box-shadow: var(--shadow-2);
 }
 .portrait-credit { font-size: 0.7rem; color: var(--text-faint); max-width: 22rem; }
+
+.topic-chip { margin: 0 0 var(--sp-2); }

@@ -1,0 +1,771 @@
+{
+  "schemaVersion": 1,
+  "note": "Hand-written entries. These always take priority over anything generated: the clues are better, and they guarantee the obvious names are present. Edit this file, then run node tools/build-people.js to rebuild people.json.",
+  "categories": {
+    "music": "Music",
+    "film": "Film and TV",
+    "sport": "Sport",
+    "science": "Science and invention",
+    "history": "History and leadership"
+  },
+  "people": [
+    {
+      "name": "Freddie Mercury",
+      "category": "music",
+      "clue": "Lead singer of Queen, famous for the six-minute operatic epic Bohemian Rhapsody."
+    },
+    {
+      "name": "Elvis Presley",
+      "category": "music",
+      "clue": "American singer crowned the King of Rock and Roll, known for Jailhouse Rock and a Memphis mansion called Graceland."
+    },
+    {
+      "name": "Michael Jackson",
+      "category": "music",
+      "clue": "The King of Pop, whose 1982 album Thriller is the best-selling of all time, and who popularised the moonwalk."
+    },
+    {
+      "name": "Bob Marley",
+      "category": "music",
+      "clue": "Jamaican reggae musician behind One Love and No Woman No Cry."
+    },
+    {
+      "name": "Beyoncé",
+      "category": "music",
+      "accept": [
+        "Beyonce",
+        "Beyoncé Knowles"
+      ],
+      "clue": "American singer who rose to fame with Destiny's Child before a solo career including Single Ladies."
+    },
+    {
+      "name": "Taylor Swift",
+      "category": "music",
+      "clue": "American singer-songwriter who re-recorded her early albums to own the masters, and whose Eras Tour broke box-office records."
+    },
+    {
+      "name": "Wolfgang Amadeus Mozart",
+      "category": "music",
+      "clue": "Austrian composer and child prodigy who wrote The Magic Flute and died at 35 leaving a Requiem unfinished."
+    },
+    {
+      "name": "Ludwig van Beethoven",
+      "category": "music",
+      "accept": [
+        "Beethoven"
+      ],
+      "clue": "German composer who continued writing, including the Ninth Symphony, after going deaf."
+    },
+    {
+      "name": "Johann Sebastian Bach",
+      "category": "music",
+      "clue": "Baroque German composer of the Brandenburg Concertos and a great many church cantatas."
+    },
+    {
+      "name": "John Lennon",
+      "category": "music",
+      "clue": "Beatles songwriter who later wrote Imagine and was shot outside his New York apartment in 1980."
+    },
+    {
+      "name": "Madonna",
+      "category": "music",
+      "clue": "American singer called the Queen of Pop, known for Like a Prayer and constant reinvention."
+    },
+    {
+      "name": "Aretha Franklin",
+      "category": "music",
+      "clue": "American singer known as the Queen of Soul, whose version of Respect became an anthem."
+    },
+    {
+      "name": "David Bowie",
+      "category": "music",
+      "clue": "English musician who invented the alter ego Ziggy Stardust and recorded Space Oddity."
+    },
+    {
+      "name": "Jimi Hendrix",
+      "category": "music",
+      "clue": "American guitarist famous for Purple Haze and for playing the US anthem at Woodstock."
+    },
+    {
+      "name": "Dolly Parton",
+      "category": "music",
+      "clue": "American country singer who wrote Jolene and I Will Always Love You, and founded a literacy charity."
+    },
+    {
+      "name": "Adele",
+      "category": "music",
+      "clue": "English singer whose albums are named after her age, including the one containing Rolling in the Deep."
+    },
+    {
+      "name": "Ed Sheeran",
+      "category": "music",
+      "clue": "English singer-songwriter who performs solo with a loop pedal, known for Shape of You."
+    },
+    {
+      "name": "Lady Gaga",
+      "category": "music",
+      "clue": "American singer known for Poker Face and theatrical costumes, who later won an Oscar for Shallow."
+    },
+    {
+      "name": "Mick Jagger",
+      "category": "music",
+      "clue": "Frontman of the Rolling Stones, known for a strutting stage presence across six decades."
+    },
+    {
+      "name": "Keith Richards",
+      "category": "music",
+      "clue": "Rolling Stones guitarist who wrote the riff to Satisfaction, reportedly in his sleep."
+    },
+    {
+      "name": "Slash",
+      "lookup": "Slash (musician)",
+      "category": "music",
+      "clue": "Top-hatted Guns N' Roses lead guitarist behind the opening riff of Sweet Child o' Mine."
+    },
+    {
+      "name": "Willie Nelson",
+      "category": "music",
+      "clue": "American country singer with braids and a battered guitar named Trigger, known for On the Road Again."
+    },
+    {
+      "name": "Bob Dylan",
+      "category": "music",
+      "clue": "American songwriter of Blowin' in the Wind who won the Nobel Prize in Literature."
+    },
+    {
+      "name": "Johnny Cash",
+      "category": "music",
+      "clue": "American singer dressed in black who recorded a famous live album at Folsom Prison."
+    },
+    {
+      "name": "Shakira",
+      "category": "music",
+      "clue": "Colombian singer known for Hips Don't Lie and the 2010 World Cup anthem."
+    },
+    {
+      "name": "Rihanna",
+      "category": "music",
+      "clue": "Barbadian singer behind Umbrella who later built a cosmetics empire."
+    },
+    {
+      "name": "Céline Dion",
+      "accept": [
+        "Celine Dion"
+      ],
+      "category": "music",
+      "clue": "Canadian singer whose ballad closed the film Titanic."
+    },
+    {
+      "name": "Fela Kuti",
+      "category": "music",
+      "clue": "Nigerian musician who pioneered Afrobeat and used it to attack military rule."
+    },
+    {
+      "name": "Ravi Shankar",
+      "category": "music",
+      "clue": "Indian sitar player who brought classical Indian music to Western audiences and taught George Harrison."
+    },
+    {
+      "name": "Björk",
+      "accept": [
+        "Bjork"
+      ],
+      "category": "music",
+      "clue": "Icelandic singer known for experimental music and a swan-shaped dress at the Oscars."
+    },
+    {
+      "name": "Tupac Shakur",
+      "accept": [
+        "Tupac",
+        "2Pac"
+      ],
+      "category": "music",
+      "clue": "American rapper and actor shot dead in Las Vegas in 1996, known for Changes."
+    },
+    {
+      "name": "Charlie Chaplin",
+      "category": "film",
+      "clue": "Silent-film comedian who created the bowler-hatted Tramp with a cane and moustache."
+    },
+    {
+      "name": "Alfred Hitchcock",
+      "category": "film",
+      "clue": "English director called the Master of Suspense, behind Psycho and The Birds, who appeared briefly in his own films."
+    },
+    {
+      "name": "Meryl Streep",
+      "category": "film",
+      "clue": "American actor with more Academy Award nominations than anyone, known for Sophie's Choice and The Devil Wears Prada."
+    },
+    {
+      "name": "Steven Spielberg",
+      "category": "film",
+      "clue": "American director of Jaws, E.T. and Jurassic Park, who also made Schindler's List."
+    },
+    {
+      "name": "Marilyn Monroe",
+      "category": "film",
+      "clue": "American actor and 1950s icon, star of Some Like It Hot, whose white dress over a subway grate became famous."
+    },
+    {
+      "name": "Audrey Hepburn",
+      "category": "film",
+      "clue": "Belgian-born actor who starred in Breakfast at Tiffany's and later worked as a UNICEF ambassador."
+    },
+    {
+      "name": "Denzel Washington",
+      "category": "film",
+      "clue": "American actor who won Oscars for Glory and Training Day."
+    },
+    {
+      "name": "Quentin Tarantino",
+      "category": "film",
+      "clue": "American director of Pulp Fiction and Kill Bill, known for non-linear storytelling and long dialogue scenes."
+    },
+    {
+      "name": "Tom Hanks",
+      "category": "film",
+      "clue": "American actor who won back-to-back Oscars and played the title role in Forrest Gump."
+    },
+    {
+      "name": "Leonardo DiCaprio",
+      "category": "film",
+      "clue": "American actor who starred in Titanic and finally won an Oscar for The Revenant."
+    },
+    {
+      "name": "Morgan Freeman",
+      "category": "film",
+      "clue": "American actor with an instantly recognisable narrating voice, who played Red in The Shawshank Redemption."
+    },
+    {
+      "name": "Christopher Nolan",
+      "category": "film",
+      "clue": "British-American director of Inception and Interstellar, who won Best Director for Oppenheimer."
+    },
+    {
+      "name": "Viola Davis",
+      "category": "film",
+      "clue": "American actor who won an Oscar for Fences and has completed the acting Triple Crown."
+    },
+    {
+      "name": "Keanu Reeves",
+      "category": "film",
+      "clue": "Canadian actor who played Neo in The Matrix and the title role in John Wick."
+    },
+    {
+      "name": "Judi Dench",
+      "category": "film",
+      "clue": "English actor who played M in seven James Bond films and won an Oscar for eight minutes on screen."
+    },
+    {
+      "name": "Martin Scorsese",
+      "category": "film",
+      "clue": "American director of Goodfellas and Taxi Driver, who won Best Director for The Departed."
+    },
+    {
+      "name": "Scarlett Johansson",
+      "category": "film",
+      "clue": "American actor who played Black Widow in the Marvel films and starred in Lost in Translation."
+    },
+    {
+      "name": "Emma Watson",
+      "category": "film",
+      "clue": "English actor who played Hermione Granger and later campaigned for gender equality at the UN."
+    },
+    {
+      "name": "Akira Kurosawa",
+      "category": "film",
+      "clue": "Japanese director of Seven Samurai and Rashomon, whose work inspired Western remakes."
+    },
+    {
+      "name": "Bruce Lee",
+      "category": "film",
+      "clue": "Martial artist and actor who starred in Enter the Dragon and died at 32."
+    },
+    {
+      "name": "Jackie Chan",
+      "category": "film",
+      "clue": "Hong Kong actor famous for comic fight choreography and performing his own stunts."
+    },
+    {
+      "name": "Bong Joon-ho",
+      "category": "film",
+      "clue": "South Korean director whose Parasite became the first non-English film to win Best Picture."
+    },
+    {
+      "name": "Sophia Loren",
+      "category": "film",
+      "clue": "Italian actor and the first to win an acting Oscar for a non-English-language performance."
+    },
+    {
+      "name": "Penélope Cruz",
+      "accept": [
+        "Penelope Cruz"
+      ],
+      "category": "film",
+      "clue": "Spanish actor and frequent Almodóvar collaborator who won an Oscar for Vicky Cristina Barcelona."
+    },
+    {
+      "name": "Lupita Nyong'o",
+      "accept": [
+        "Lupita Nyongo",
+        "Nyongo"
+      ],
+      "category": "film",
+      "clue": "Kenyan-Mexican actor who won an Oscar for 12 Years a Slave and appeared in Black Panther."
+    },
+    {
+      "name": "Pelé",
+      "category": "sport",
+      "accept": [
+        "Pele"
+      ],
+      "clue": "Brazilian footballer who won three World Cups and scored over a thousand career goals."
+    },
+    {
+      "name": "Muhammad Ali",
+      "category": "sport",
+      "clue": "American boxer who promised to float like a butterfly and sting like a bee, and won the Rumble in the Jungle."
+    },
+    {
+      "name": "Serena Williams",
+      "category": "sport",
+      "clue": "American tennis player with 23 Grand Slam singles titles, who won one while pregnant."
+    },
+    {
+      "name": "Michael Jordan",
+      "category": "sport",
+      "clue": "American basketball player who won six NBA titles with the Chicago Bulls wearing number 23."
+    },
+    {
+      "name": "Usain Bolt",
+      "category": "sport",
+      "clue": "Jamaican sprinter who holds the 100m and 200m world records and celebrated by striking an archer's pose."
+    },
+    {
+      "name": "Lionel Messi",
+      "category": "sport",
+      "clue": "Argentine footballer with eight Ballons d'Or who finally lifted the World Cup in 2022."
+    },
+    {
+      "name": "Cristiano Ronaldo",
+      "category": "sport",
+      "clue": "Portuguese footballer and the all-time leading scorer in men's international football."
+    },
+    {
+      "name": "Roger Federer",
+      "category": "sport",
+      "clue": "Swiss tennis player with 20 Grand Slam titles, known for an elegant one-handed backhand."
+    },
+    {
+      "name": "Rafael Nadal",
+      "category": "sport",
+      "clue": "Spanish tennis player called the King of Clay, who won the French Open fourteen times."
+    },
+    {
+      "name": "Simone Biles",
+      "category": "sport",
+      "clue": "American gymnast with more world championship medals than anyone, with several skills named after her."
+    },
+    {
+      "name": "Tiger Woods",
+      "category": "sport",
+      "clue": "American golfer who won the Masters five times, the first at 21."
+    },
+    {
+      "name": "Diego Maradona",
+      "category": "sport",
+      "clue": "Argentine footballer who scored both the Hand of God and the Goal of the Century in the same 1986 match."
+    },
+    {
+      "name": "Lewis Hamilton",
+      "category": "sport",
+      "clue": "British racing driver with seven Formula One world titles and the most career pole positions."
+    },
+    {
+      "name": "Michael Phelps",
+      "category": "sport",
+      "clue": "American swimmer and the most decorated Olympian ever, with 23 gold medals."
+    },
+    {
+      "name": "Magnus Carlsen",
+      "category": "sport",
+      "clue": "Norwegian chess grandmaster who became world champion in 2013 and holds the highest rating ever recorded."
+    },
+    {
+      "name": "Babe Ruth",
+      "category": "sport",
+      "clue": "American baseball player nicknamed the Sultan of Swat, who moved from the Red Sox to the Yankees."
+    },
+    {
+      "name": "Wayne Gretzky",
+      "category": "sport",
+      "clue": "Canadian ice hockey player known simply as The Great One, whose number 99 is retired league-wide."
+    },
+    {
+      "name": "Katie Ledecky",
+      "category": "sport",
+      "clue": "American swimmer who dominates long-distance freestyle and first won Olympic gold at 15."
+    },
+    {
+      "name": "Sachin Tendulkar",
+      "category": "sport",
+      "clue": "Indian cricketer called the Little Master, the only player with a hundred international centuries."
+    },
+    {
+      "name": "Ayrton Senna",
+      "category": "sport",
+      "clue": "Brazilian racing driver with three world titles, killed at Imola in 1994."
+    },
+    {
+      "name": "Novak Djokovic",
+      "accept": [
+        "Djokovic"
+      ],
+      "category": "sport",
+      "clue": "Serbian tennis player with the most men's Grand Slam singles titles."
+    },
+    {
+      "name": "Nadia Comăneci",
+      "accept": [
+        "Nadia Comaneci",
+        "Comaneci"
+      ],
+      "category": "sport",
+      "clue": "Romanian gymnast who scored the first perfect 10 at the Olympics, aged 14."
+    },
+    {
+      "name": "Haile Gebrselassie",
+      "category": "sport",
+      "clue": "Ethiopian distance runner with two Olympic 10,000m golds and more than twenty world records."
+    },
+    {
+      "name": "Yao Ming",
+      "category": "sport",
+      "clue": "Chinese basketball player, 2.29m tall, who became the face of the NBA in Asia."
+    },
+    {
+      "name": "Jonah Lomu",
+      "category": "sport",
+      "clue": "New Zealand rugby winger whose power at the 1995 World Cup changed how the game was played."
+    },
+    {
+      "name": "Albert Einstein",
+      "category": "science",
+      "clue": "German-born physicist who published the theory of relativity and won a Nobel Prize for the photoelectric effect."
+    },
+    {
+      "name": "Marie Curie",
+      "category": "science",
+      "clue": "Polish-French physicist and chemist, the only person to win Nobel Prizes in two different sciences, for work on radioactivity."
+    },
+    {
+      "name": "Isaac Newton",
+      "category": "science",
+      "clue": "English mathematician who formulated the laws of motion and universal gravitation, and co-invented calculus."
+    },
+    {
+      "name": "Charles Darwin",
+      "category": "science",
+      "clue": "English naturalist who sailed on the Beagle and published On the Origin of Species."
+    },
+    {
+      "name": "Stephen Hawking",
+      "category": "science",
+      "clue": "English physicist who studied black holes and wrote A Brief History of Time while living with motor neurone disease."
+    },
+    {
+      "name": "Nikola Tesla",
+      "category": "science",
+      "clue": "Serbian-American inventor who championed alternating current against Edison's direct current."
+    },
+    {
+      "name": "Ada Lovelace",
+      "category": "science",
+      "clue": "English mathematician who wrote what is considered the first computer algorithm, for Babbage's Analytical Engine."
+    },
+    {
+      "name": "Alan Turing",
+      "category": "science",
+      "clue": "English mathematician who helped break the Enigma cipher and devised a famous test for machine intelligence."
+    },
+    {
+      "name": "Galileo Galilei",
+      "category": "science",
+      "clue": "Italian astronomer who improved the telescope, found Jupiter's four largest moons, and was tried for heresy."
+    },
+    {
+      "name": "Rosalind Franklin",
+      "category": "science",
+      "clue": "English chemist whose X-ray image, Photo 51, was critical to working out the structure of DNA."
+    },
+    {
+      "name": "Louis Pasteur",
+      "category": "science",
+      "clue": "French chemist who developed germ theory, a rabies vaccine, and the heat treatment named after him."
+    },
+    {
+      "name": "Niels Bohr",
+      "category": "science",
+      "clue": "Danish physicist who modelled the atom with electrons in fixed orbits and shaped quantum theory."
+    },
+    {
+      "name": "Gregor Mendel",
+      "category": "science",
+      "clue": "Moravian friar whose experiments with pea plants founded the study of genetics."
+    },
+    {
+      "name": "Dmitri Mendeleev",
+      "category": "science",
+      "clue": "Russian chemist who arranged the periodic table and left gaps for elements not yet discovered."
+    },
+    {
+      "name": "Jane Goodall",
+      "category": "science",
+      "clue": "English primatologist whose decades of work at Gombe showed that chimpanzees make and use tools."
+    },
+    {
+      "name": "Katherine Johnson",
+      "category": "science",
+      "clue": "American mathematician whose orbital calculations sent astronauts to the Moon, later portrayed in Hidden Figures."
+    },
+    {
+      "name": "Carl Linnaeus",
+      "category": "science",
+      "clue": "Swedish botanist who invented the two-part Latin naming system for living things."
+    },
+    {
+      "name": "Tim Berners-Lee",
+      "category": "science",
+      "clue": "English computer scientist who invented the World Wide Web at CERN and gave it away for free."
+    },
+    {
+      "name": "Srinivasa Ramanujan",
+      "accept": [
+        "Ramanujan"
+      ],
+      "category": "science",
+      "clue": "Self-taught Indian mathematician whose notebooks of unproved results still occupy researchers."
+    },
+    {
+      "name": "Chien-Shiung Wu",
+      "accept": [
+        "Wu"
+      ],
+      "category": "science",
+      "clue": "Chinese-American physicist whose experiment disproved the conservation of parity."
+    },
+    {
+      "name": "Tu Youyou",
+      "category": "science",
+      "clue": "Chinese chemist who found the antimalarial artemisinin in traditional texts and won a Nobel Prize."
+    },
+    {
+      "name": "Hedy Lamarr",
+      "category": "science",
+      "clue": "Austrian-American film star who co-invented a frequency-hopping system behind modern wireless."
+    },
+    {
+      "name": "Ibn al-Haytham",
+      "accept": [
+        "Alhazen"
+      ],
+      "category": "science",
+      "clue": "Arab scholar who worked out how vision actually operates and pioneered the experimental method."
+    },
+    {
+      "name": "Wangari Maathai",
+      "category": "science",
+      "clue": "Kenyan environmentalist whose tree-planting Green Belt Movement won her the Nobel Peace Prize."
+    },
+    {
+      "name": "Nelson Mandela",
+      "category": "history",
+      "clue": "Spent 27 years in prison before becoming the first Black president of South Africa."
+    },
+    {
+      "name": "Cleopatra",
+      "category": "history",
+      "clue": "The last active pharaoh of Egypt, allied with Julius Caesar and Mark Antony."
+    },
+    {
+      "name": "Julius Caesar",
+      "category": "history",
+      "clue": "Roman general who crossed the Rubicon and was assassinated on the Ides of March."
+    },
+    {
+      "name": "Mahatma Gandhi",
+      "category": "history",
+      "clue": "Led India to independence through nonviolent resistance, including the Salt March."
+    },
+    {
+      "name": "Winston Churchill",
+      "category": "history",
+      "clue": "British prime minister through most of the Second World War, who promised blood, toil, tears and sweat."
+    },
+    {
+      "name": "Napoleon Bonaparte",
+      "category": "history",
+      "clue": "French general who crowned himself emperor and was finally defeated at Waterloo."
+    },
+    {
+      "name": "Martin Luther King Jr.",
+      "category": "history",
+      "accept": [
+        "Martin Luther King",
+        "MLK"
+      ],
+      "clue": "American civil rights leader who delivered the I Have a Dream speech in Washington in 1963."
+    },
+    {
+      "name": "Abraham Lincoln",
+      "category": "history",
+      "clue": "US president during the Civil War who issued the Emancipation Proclamation and was assassinated in a theatre."
+    },
+    {
+      "name": "Queen Elizabeth II",
+      "category": "history",
+      "accept": [
+        "Elizabeth II",
+        "Queen Elizabeth"
+      ],
+      "clue": "The longest-reigning British monarch, on the throne for seventy years."
+    },
+    {
+      "name": "Genghis Khan",
+      "category": "history",
+      "clue": "Founded the Mongol Empire, which became the largest contiguous land empire in history."
+    },
+    {
+      "name": "Joan of Arc",
+      "category": "history",
+      "accept": [
+        "Jeanne d'Arc"
+      ],
+      "clue": "French teenager who led armies during the Hundred Years War and was burned at the stake in 1431."
+    },
+    {
+      "name": "Leonardo da Vinci",
+      "category": "history",
+      "accept": [
+        "da Vinci",
+        "Da Vinci",
+        "Vinci"
+      ],
+      "clue": "Italian Renaissance polymath who painted the Mona Lisa and filled notebooks with flying machines."
+    },
+    {
+      "name": "Rosa Parks",
+      "category": "history",
+      "clue": "American woman whose refusal to give up a bus seat in Montgomery sparked a year-long boycott."
+    },
+    {
+      "name": "Alexander the Great",
+      "category": "history",
+      "accept": [
+        "Alexander"
+      ],
+      "clue": "Macedonian king who conquered from Greece to India before dying at 32."
+    },
+    {
+      "name": "Catherine the Great",
+      "category": "history",
+      "accept": [
+        "Catherine II"
+      ],
+      "clue": "Longest-ruling female leader of Russia, who expanded the empire and corresponded with Enlightenment thinkers."
+    },
+    {
+      "name": "Christopher Columbus",
+      "category": "history",
+      "clue": "Italian navigator whose 1492 voyage for Spain reached the Americas."
+    },
+    {
+      "name": "Anne Frank",
+      "category": "history",
+      "clue": "Teenager who hid in an Amsterdam annexe during the Second World War and left behind a diary."
+    },
+    {
+      "name": "Malala Yousafzai",
+      "category": "history",
+      "accept": [
+        "Malala"
+      ],
+      "clue": "Pakistani activist shot for campaigning for girls' education, and the youngest Nobel Peace Prize laureate."
+    },
+    {
+      "name": "Vladimir Putin",
+      "category": "history",
+      "clue": "Former KGB officer who has led Russia as president or prime minister since 1999."
+    },
+    {
+      "name": "Angela Merkel",
+      "category": "history",
+      "clue": "Quantum chemist who became Germany's first female chancellor and led it for sixteen years."
+    },
+    {
+      "name": "Simón Bolívar",
+      "accept": [
+        "Simon Bolivar",
+        "Bolivar"
+      ],
+      "category": "history",
+      "clue": "Venezuelan general who led six South American countries to independence from Spain."
+    },
+    {
+      "name": "Mustafa Kemal Atatürk",
+      "accept": [
+        "Ataturk",
+        "Kemal Ataturk",
+        "Mustafa Kemal"
+      ],
+      "category": "history",
+      "clue": "Founder and first president of the Turkish Republic, who replaced the Arabic script with a Latin alphabet."
+    },
+    {
+      "name": "Sun Tzu",
+      "category": "history",
+      "clue": "Chinese general credited with writing The Art of War."
+    },
+    {
+      "name": "Mansa Musa",
+      "category": "history",
+      "clue": "Emperor of Mali whose pilgrimage to Mecca gave away so much gold it unsettled Egypt's economy."
+    },
+    {
+      "name": "Ho Chi Minh",
+      "category": "history",
+      "clue": "Vietnamese revolutionary who led the struggle against French and then American forces."
+    },
+    {
+      "name": "Haile Selassie",
+      "category": "history",
+      "clue": "Last emperor of Ethiopia, revered as a messianic figure in Rastafari."
+    },
+    {
+      "name": "Golda Meir",
+      "category": "history",
+      "clue": "Israel's first and so far only female prime minister, in office during the Yom Kippur War."
+    },
+    {
+      "name": "Eva Perón",
+      "accept": [
+        "Eva Peron",
+        "Evita",
+        "Peron"
+      ],
+      "category": "history",
+      "clue": "Argentine first lady who championed labour rights and women's suffrage before dying at 33."
+    },
+    {
+      "name": "Toussaint Louverture",
+      "accept": [
+        "Toussaint",
+        "Louverture",
+        "L'Ouverture"
+      ],
+      "category": "history",
+      "clue": "Former slave who led the Haitian Revolution, the only slave revolt to found a nation."
+    }
+  ]
+}

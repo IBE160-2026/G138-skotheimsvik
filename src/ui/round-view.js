@@ -525,6 +525,9 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     render(
       promptBody,
       figure,
+      prompt.topicLabel
+        ? el('p', { class: 'topic-chip' }, [el('span', { class: 'badge', text: prompt.topicLabel })])
+        : null,
       el('p', { class: 'prompt-prefix', text: prompt.prefix ?? 'Who is this?' }),
       el('p', { class: 'question question-long', text: prompt.question }),
       prompt.formatHint ? el('p', { class: 'format-hint', text: prompt.formatHint }) : null,

@@ -66,3 +66,6 @@ Thumbs.db
 
 # Generated preview from tools/preview-outlines.mjs
 outline-preview.html
+
+# Wikidata answers cached by tools/build-people.js — regenerable, just slow
+tools/data/people-candidates.json

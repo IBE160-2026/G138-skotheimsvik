@@ -421,6 +421,10 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | FR-168 | Portraits are bundled in the repository and served from the application's own origin; no image is fetched from a third party at runtime | M | S9 |
 | FR-169 | Only images that are public domain or under a licence permitting reuse with attribution may be bundled. Anything else is excluded and the person stays clue-only | M | S23 |
 | FR-170 | A person without a portrait is still fully playable — the clue carries the prompt on its own | M | S23 |
+| FR-171 | The subject a prompt belongs to is shown beside the clue, so the player knows whether they are being asked about music or history | M | S13 |
+| FR-172 | Hand-written entries live in a separate file and always take precedence over generated ones | M | S22 |
+| FR-173 | A generated clue is rejected unless every form of the person's name has been removed from it and it still reads as a whole sentence | M | S22 |
+| FR-174 | A person is filed under the subject their article describes, not the occupation record that found them | M | S13 |
 
 ### 4.19 Presentation, theming and accessibility
 
@@ -463,7 +467,7 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | NFR-20 | The README documents purpose, local run, tests, the hierarchy, the band and board-size rules, daily attempts, practice mode, the archive and the repository structure | Review | S11 |
 | NFR-21 | The app is published automatically from `main` to a public URL, with no install step, no build step and no environment variables | Deployment from a clean commit | S11 |
 | NFR-22 | The provenance and processing of the Natural Earth outline data are documented in the repository | Review | FR-146 |
-| NFR-23 | Every bundled portrait records its photographer, licence and source file, and the set stays under 5 MB | Automated test over the credits file | FR-167 to FR-169 |
+| NFR-23 | Every bundled portrait records its photographer, licence and source file, and the set stays under 15 MB | Automated test over the credits file | FR-167 to FR-169 |
 
 ---
 
@@ -876,7 +880,7 @@ Format: *As a learner, I want … so that …* Acceptance criteria are Given/Whe
 | S19 — Figure Pairs completion and scoring | FR-18, FR-125–131, FR-83 | US-2.4, US-6.8, US-6.9, US-6.10, US-6.11 |
 | S20 — outline hints are correct | FR-145, FR-148–152 | US-7.7, US-7.9, US-7.10, US-7.11 |
 | S21 — trainers reachable, engine untouched | FR-2, FR-6, FR-7 | US-1.3, US-7.15 |
-| S22 — Famous People rounds are 15 distinct, fairly clued people | FR-156 to FR-166 | US-12.1 |
+| S22 — Famous People rounds are 15 distinct, fairly clued people | FR-156 to FR-166, FR-171 to FR-174 | US-12.1 |
 | S23 — every bundled portrait is freely licensed and attributed | FR-167 to FR-170, NFR-23 | US-12.2 |
 
 Every success criterion is covered by at least one requirement and one story. No requirement exists without a traceable origin in the brief.
@@ -926,4 +930,5 @@ Chosen in the absence of a stated preference, and flagged so they can be overrul
 | v4.1 | 2026-11-02 | **Starting a daily round now commits the attempt** (FR-10, FR-10a to FR-10d). Quitting records the round as `abandoned` and spends it; switching variant mid-round does the same to the round being left, so it is never a free restart. Practice is exempt. This reverses the previous no-penalty rule, which would otherwise have made the switching rule trivially avoidable. Pattern Memory's fixed board confirmed as intended design rather than an assumption |
 | v4.2 | 2026-11-02 | Reconciled with the built application. **FR-148 rewritten**: the Outline Guesser shows each country up to three times, because a distance hint is worthless if a wrong answer moves straight on to the next shape. Added **FR-10e**, so header navigation cannot be used to walk out of a round for free, and **FR-44a**, documenting that a mid-round reload escapes the commitment rule — the same class of limitation as the soft daily limit || v4.3 | 2026-11-02 | Added the **People** category and the **Famous People** trainer (FR-156 to FR-166, S22): fifteen clues a day, three lives, and a subject chosen before play. This introduced a third variant axis, **pool**, alongside bands and board sizes — the engine already treated a variant as an opaque list of keys, so it needed only the new kind registering. Pattern Memory's limits were re-grounded in the **Corsi block-tapping test**: starting tiles 3 → 2 and the fill ceiling 55 % → 67 %, because Corsi reports an average span of five to six on nine blocks and the old cap stopped a 3×3 board at four tiles, below where an average player would fail. Text matching is now accent-insensitive as FR-64 always required |
 | v4.4 | 2026-11-02 | **Portraits added to Famous People** (FR-167 to FR-170, NFR-23, S23). 133 of 134 people now show a picture, bundled in the repository and served from our own origin. Only public-domain or reuse-permitting licences are included; the one exception, a GFDL image, was excluded because that licence would require shipping its full text. The people list was broadened from 90 to 134 with international coverage. Added **NFR-8a**, admitting that portraits are fetched per prompt and so are not available offline before they have been seen |
+| v4.5 | 2026-11-02 | **Famous People grows from 134 people to 1134** (FR-171 to FR-174). Hand-writing a thousand clues is not realistic, so the bulk is generated: Wikidata ranks people by how many Wikipedias carry an article about them, which is a fame measure that does not favour any one country's press, and the Wikipedia intro becomes the clue once every form of the name is redacted. The 134 hand-written entries move to `people.curated.json` and keep precedence. A person is filed by what their article says rather than by the occupation that found them, because Wikidata has Shakespeare as an actor and Nietzsche as a composer — accurate, but not where a player would look. Portraits are capped at **400**, since picturing all 1134 would add roughly 29 MB to the repository for a game that shows fifteen a day; the cap follows the fame ordering, and FR-170 already covers the rest. **NFR-23** raised from 5 MB to 15 MB to match. Two clue faults found and fixed in the hand-written set and the generator alike: a clue that said "lightning-bolt pose" about Usain Bolt, and pronunciation guides surviving because their parentheses were nested |
 **Status:** implemented and deployed. The application at <https://g138-skotheimsvik.vercel.app/> reflects this document.
