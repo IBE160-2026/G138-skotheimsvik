@@ -34,8 +34,36 @@ Bygge om hele v1 etter fem produktbeslutninger: spilleren velger selv vanskeligh
 **Commits.** `cb37e18` motor, `cbec61e` trenere, `ae2820b` UI. Pushet; Vercel har deployet og den nye versjonen er verifisert live.
 
 ### Åpne punkter
-- PRD §4.17 beskriver ikke at omriss-treneren gir tre gjett per form. Kravet (FR-148) bør oppdateres til å si det eksplisitt, ellers spriker dokument og kode.
-- En sideoppdatering midt i en runde omgår regelen om at start forbruker forsøket. Samme klasse som den dokumenterte myke dagsgrensen, men det er ikke skrevet ned noe sted.
-- README beskriver fortsatt v3.2-designet: tre trenere, datostyrt vanskelighetsgrad, ingen practice mode. Må skrives om.
 - Manuell testmatrise (US-11.1) er ikke kjørt for alle seks trenere på alle varianter; bare et utvalg er spilt gjennom i nettleser.
 - Tilgjengelighetsrevisjon (Lighthouse, NFR-19) er ikke kjørt på det nye UI-et.
+
+## 2026-11-02 kl. 20:05 — S3lDan1PS
+
+### Oppgave
+Rette opp dokumentasjonen som lå etter implementasjonen, og gjøre UI/UX vesentlig bedre.
+
+### Plan
+- Skrive om stilarket som én sammenhengende designsystem i stedet for lag på lag.
+- Oppdatere markup der designet krevde det (målere, nivåstriper, tidslinje).
+- Skrive om README for gjeldende design og tette de to PRD-hullene.
+
+### Resultat
+
+**Årsaken til at UI-et så flatt ut var en reell feil**: v2-tilleggene i stilarket refererte `--line` og `--muted`, som aldri har vært definert. Halvparten av den nye markupen hadde dermed ingen styling i det hele tatt.
+
+Stilarket er skrevet helt om: fullt token-sett for begge temaer, typeskala, elevasjon, klebrig gjennomsiktig header, kort som løfter seg med aksenthairline, gradient-knapper, fremdriftsmålere på kategori- og trenerkort, nivåstriper på variantkort, tidslinje som tømmes under tidsrunder, animerte tilbakemeldingspiller, vendeanimasjon på parkort og glow på tænte ruter. All bevegelse slås av under `prefers-reduced-motion`.
+
+**Tre feil funnet ved å teste i nettleser:**
+1. Toppnavigasjonen lot deg gå ut av en pågående runde og beholde forsøket — det satte hele forbruksregelen ut av spill. Går nå gjennom samme bekreftelse og samme tap som Leave-knappen (FR-10e).
+2. Parkortene gjenbrukte `.card` og arvet styling for innholdskort.
+3. Et bom i Figure Pairs meldte «Wrong. undefined», fordi en partur ikke har ett fasitsvar.
+
+Også rettet: en `stat-headline`-selektor som aldri traff, og toppnavigasjon som fløt over ved 390 px. Verifisert ingen horisontal overflyt ved 360, 390, 768 og 1280 px.
+
+**Dokumentasjon.** README skrevet om for gjeldende design. PRD v4.2: FR-148 omskrevet til å dokumentere tre gjett per omriss, FR-10e lagt til for navigasjon, FR-44a lagt til for at en sideoppdatering midt i en runde unnslipper forbruksregelen.
+
+**Commit.** `fa9214f`, pushet og verifisert live.
+
+### Åpne punkter
+- Manuell testmatrise (US-11.1) er fortsatt ikke kjørt for alle seks trenere på alle varianter.
+- Tilgjengelighetsrevisjon (Lighthouse, NFR-19) er fortsatt ikke kjørt.

@@ -1,8 +1,8 @@
 # Åpne punkter
 
-- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — README beskriver fortsatt v3.2-designet (tre trenere, datostyrt vanskelighetsgrad, ingen practice mode)
-- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — PRD FR-148 nevner ikke at omriss-treneren gir tre gjett per form; dokument og kode spriker
-- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — sideoppdatering midt i en runde omgår regelen om at start forbruker forsøket; ikke dokumentert
+- [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — README beskriver fortsatt v3.2-designet (tre trenere, datostyrt vanskelighetsgrad, ingen practice mode) (løst 2026-11-02: README skrevet om)
+- [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — PRD FR-148 nevner ikke at omriss-treneren gir tre gjett per form; dokument og kode spriker (løst 2026-11-02: PRD v4.2)
+- [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — sideoppdatering midt i en runde omgår regelen om at start forbruker forsøket; ikke dokumentert (løst 2026-11-02: FR-44a)
 - [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — manuell testmatrise (US-11.1) ikke kjørt for alle seks trenere på alle varianter
 - [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — Lighthouse-tilgjengelighetsrevisjon (NFR-19) ikke kjørt på nytt UI
 
