@@ -36,7 +36,7 @@ function meter(done, total) {
 }
 
 /** Home: the three categories and what is left in each today (FR-1). */
-export function categoriesView({ today, categories, registry, progress, onCategory, onArchive, onProgress }) {
+export function categoriesView({ today, categories, registry, progress, onCategory }) {
   let allTotal = 0;
   let allSpent = 0;
 
@@ -52,7 +52,7 @@ export function categoriesView({ today, categories, registry, progress, onCatego
 
     return el('article', { class: 'card category-card' }, [
       el('div', { class: 'category-icon', 'aria-hidden': 'true', text: category.icon }),
-      el('h3', { text: category.name }),
+      el('h2', { text: category.name }),
       el('p', { class: 'muted', text: category.tagline }),
       el('p', {
         class: 'remaining',
@@ -85,10 +85,6 @@ export function categoriesView({ today, categories, registry, progress, onCatego
       ]),
     ]),
     el('div', { class: 'grid' }, cards),
-    el('div', { class: 'row-actions' }, [
-      el('button', { type: 'button', class: 'ghost', text: 'Archive', onClick: onArchive }),
-      el('button', { type: 'button', class: 'ghost', text: 'Progress', onClick: onProgress }),
-    ]),
   ]);
 }
 
@@ -105,7 +101,7 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
         const variants = variantsFor(trainer);
         const spent = progress.spentVariants(trainer.id, today);
         return el('article', { class: 'card' }, [
-          el('h3', { text: trainer.name }),
+          el('h2', { text: trainer.name }),
           el('p', { class: 'muted', text: trainer.description }),
           el('p', { class: 'mode-label', text: ROUND_MODE_LABEL[trainer.roundMode] }),
           el('p', {
@@ -333,7 +329,7 @@ export function archiveView({ entries, onPlay, onBack }) {
             { class: 'archive-trainers' },
             entry.trainers.map((trainerState) =>
               el('div', { class: 'archive-trainer' }, [
-                el('h4', { text: trainerState.name }),
+                el('h2', { text: trainerState.name }),
                 el(
                   'div',
                   { class: 'archive-variants' },

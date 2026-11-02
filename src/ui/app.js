@@ -115,8 +115,6 @@ function goHome() {
       registry,
       progress,
       onCategory: goCategory,
-      onArchive: goArchive,
-      onProgress: () => goProgress(),
     }),
   );
 }

@@ -570,6 +570,9 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
       render(
         container,
+        // Every screen needs a top-level heading; in a round the trainer name
+        // is it, but on screen the sticky header already says so.
+        el('h1', { class: 'visually-hidden', text: `${activeTrainer.name} — round in progress` }),
         el('div', { class: 'round-header' }, [
           statusBar,
           el('div', { class: 'round-meta' }, [

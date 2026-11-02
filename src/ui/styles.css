@@ -16,7 +16,7 @@
 
   --text: #eef1f7;
   --text-muted: #96a1b8;
-  --text-faint: #6b7792;
+  --text-faint: #8491ab;
 
   --accent: #6c8cff;
   --accent-2: #39d3bb;
@@ -66,8 +66,8 @@
   --border-strong: #c4cdde;
 
   --text: #121722;
-  --text-muted: #5a6478;
-  --text-faint: #8690a4;
+  --text-muted: #49536a;
+  --text-faint: #566075;
 
   --accent: #3a5de0;
   --accent-2: #0fae98;
@@ -295,7 +295,7 @@ select:hover { border-color: var(--border-strong); }
   transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
 }
 .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-3); border-color: var(--border-strong); }
-.card h3 { margin: 0; }
+.card h2, .card h3 { margin: 0; }
 .card p { margin: 0; }
 .card > button { margin-top: auto; }
 
@@ -657,7 +657,9 @@ select:hover { border-color: var(--border-strong); }
 .archive-day summary:hover { background: var(--surface-2); }
 .archive-day[open] summary { border-bottom: 1px solid var(--border); }
 .archive-trainers { display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-4); }
-.archive-trainer h4 { margin: 0 0 var(--sp-2); font-size: 0.9rem; color: var(--text-muted); }
+.card { font-size: 1rem; }
+.card h2 { font-size: 1.15rem; }
+.archive-trainer h2 { margin: 0 0 var(--sp-2); font-size: 0.9rem; color: var(--text-muted); font-weight: 650; }
 .archive-variants { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 
 /* ============================================================== 12. Progress */
