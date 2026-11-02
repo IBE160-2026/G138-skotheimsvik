@@ -48,5 +48,14 @@ Flaggløsningen avklarer lisensspørsmålet helt: det finnes ingen tredjepartsre
 
 Ingen kodeendringer var nødvendige — begge beslutningene bekrefter det som allerede er implementert.
 
+**Publisert og verifisert.** Appen er live på <https://g138-skotheimsvik.vercel.app/>. Adressen er lagt inn i README. Verifisert mot den publiserte siden, ikke bare lokalt:
+
+- `200 OK`, og alle fem sikkerhetsheadere fra `vercel.json` kommer gjennom (CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS).
+- JS, CSS og `countries.json` leveres med riktige MIME-typer — ES-modulene laster som `application/javascript`.
+- Dagens vanskelighetsgrad ble tildelt automatisk til *Beginner*, og Hoderegning viste 45 sekunder, som er riktig verdi for det båndet.
+- Briefingskærmen har ingen valg for vanskelighetsgrad (FR-4).
+- Rutenettet i Hukommelse rendres som 4×4. CSP-en blokkerte ikke `grid-template-columns`, som settes som style-attributt — beregnet verdi ble `98px 98px 98px 98px`.
+- Å avbryte en runde brukte ikke opp dagens forsøk (FR-6).
+
 ### Åpne punkter
-- Vercel-prosjektet er ikke opprettet. Det krever innlogging med egen GitHub-konto, og kun én i gruppen skal gjøre det. Når det er gjort må adressen fylles inn i README-seksjonen «Publisering», som nå står med plassholder.
+Ingen.
