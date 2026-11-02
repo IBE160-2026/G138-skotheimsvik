@@ -93,5 +93,31 @@ Kjøre de to gjenstående verifiseringspunktene — manuell testmatrise og tilgj
 **Commit.** `df4635b`, pushet og deployet.
 
 ### Åpne punkter
-- Pattern Memory på 3×3 gir bare 2 nivåer før mønsteret når takgrensen på 55 % fyll. Teknisk riktig, men tynt som spill — bør enten droppes som brettstørrelse eller starte på færre ruter. Produktbeslutning, ikke avklart.
 - Tilgjengelighetsrevisjonen er skrevet selv, ikke kjørt med Lighthouse. Den dækker kontrast, tilgjengelige navn, overskriftshierarki og landemerker, men ikke alt Lighthouse måler.
+
+## 2026-11-02 kl. 21:15 — S3lDan1PS
+
+### Oppgave
+Undersøke 3×3-problemet i Pattern Memory og velge løsning, og legge til en ny trener: gjett den berømte personen, med emnevalg, 3 liv og 15 personer per dag.
+
+### Plan
+- Finne ut hva etablerte hukommelsestester faktisk gjør, i stedet for å gjette på tall.
+- Legge til en tredje variantakse for emnevalg.
+- Skrive innhold og tester, og oppdatere dokumentasjonen.
+
+### Resultat
+
+**Research avgjorde 3×3-spørsmålet.** Corsi block-tapping-testen — standardtesten for visuospatial hukommelse siden 1972 — bruker **nøyaktig ni ruter**, starter på **to**, og rapporterer et snittspenn på **fem til seks**. Et 3×3-brett er altså ikke for lite; taket på 55 % stoppet det på fire ruter, *under* der et gjennomsnittsmenneske i det hele tatt ville feile. Taket var feil, ikke brettet. Startruter 3 → 2 og tak 55 % → 67 % gir nå 3×3 fem nivåer opp til seks ruter, 4×4 ni, 5×5 femten og 6×6 tjuetre.
+
+**Ny kategori People med treneren Famous People.** Emnet velges før start — alt, musikk, film, sport, vitenskap eller historie — og hvert emne er sin egen dagsoppgave med egen rekord. Dette krevde en tredje variantakse, `pool`. Motoren behandlet allerede en variant som en ugjennomsiktig liste nøkler, så bånd, brettstørrelser og emner fungerer likt; bare den nye typen måtte registreres. Ingen endringer i runde-, poeng- eller progresjonslogikk.
+
+Svar skrives inn i stedet for å velges blant fire: et så spesifikt hint ville røpt seg selv, og poenget med å få se navnet etter et feil gjett er at du ikke allerede hadde det foran deg. Etternavn alene godtas, bortsett fra der navnet har et lite partikkel — «Great» er ikke et navn noen oppgir for Alexander the Great. Innholdet er 90 personer fordelt på fem emner, og et hint som inneholder sitt eget svar avvises ved innlasting.
+
+**Sidefunn:** tekstsammenligning var aldri aksent-ufølsom, noe FR-64 har krevd hele tiden. Nå implementert, så *Pele* godtas for *Pelé*.
+
+**Commit.** `86d1f24`, pushet og deployet. 84 tester passerer.
+
+### Åpne punkter
+- Tilgjengelighetsrevisjonen er egenskrevet, ikke Lighthouse; dækker ikke alt Lighthouse måler.
+- Personlista er vestlig-tung. Den fungerer for norske spillere, men bør utvides hvis appen skal brukes bredere.
+- Famous People er ikke med i den automatiske tilgjengelighetsrevisjonen — den ble kjørt før treneren fantes.
