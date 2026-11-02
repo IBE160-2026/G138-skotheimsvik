@@ -1,360 +1,591 @@
 /**
- * The active round view.
+ * The in-round view.
  *
- * Owns prompt rendering, input handling and the per-mode indicator. All grading
- * is delegated to the engine; this file only displays what it is told.
+ * Owns every prompt renderer and the keyboard handling that goes with them.
+ * All game logic lives in src/core/ — this file only draws and collects input
+ * (NFR-15).
  *
- * Covers FR-14, FR-18..FR-22, FR-45..FR-48, FR-53, FR-105..FR-108, FR-120, FR-123.
+ * Covers FR-15 to FR-22, FR-59 to FR-67, FR-113 to FR-134, FR-157 to FR-163.
  */
 
-import { el, render, stat, formatClock, bandBadge } from './dom.js';
-import { bandLabel } from '../core/difficulty.js';
+import { el, render, stat, formatClock } from './dom.js';
+import { checkAnswer } from '../core/answer.js';
 
-const FEEDBACK_MS = 650; // bounded, auto-dismissing (FR-21)
+const FEEDBACK_MS = 700;
+const PAIR_REVEAL_MS = 850;
 
-export function createRoundView({ container, announce, onFinish, onAbandon }) {
+/**
+ * @param {object} options
+ * @param {HTMLElement} options.container
+ * @param {(message: string) => void} options.announce ARIA live region (FR-162)
+ * @param {(round: object) => void} options.onFinish
+ * @param {() => void} options.onLeave
+ */
+export function createRoundView({ container, announce, onFinish, onLeave }) {
   let round = null;
   let trainer = null;
-  let tickHandle = null;
-  let feedbackHandle = null;
-  let patternHandle = null;
-  let selection = new Set();
-  let cursor = 0;
-  let acceptingInput = false;
+  let hintFor = null;
+  let timer = null;
+  let promptBody = null;
+  let feedbackBar = null;
+  let statusBar = null;
+  /** Wrong guesses so far on the current outline prompt (FR-148). */
+  let hints = [];
+  let guessesUsed = 0;
+  let busy = false;
 
-  const statusBar = el('div', { class: 'round-bar' });
-  const promptArea = el('div', { class: 'prompt-area' });
-  const feedbackArea = el('div', { class: 'feedback', role: 'status', 'aria-live': 'polite' });
-
-  function clearTimers() {
-    clearInterval(tickHandle);
-    clearTimeout(feedbackHandle);
-    clearTimeout(patternHandle);
-    tickHandle = feedbackHandle = patternHandle = null;
+  function stopTimer() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    document.removeEventListener('keydown', choiceKeys);
   }
 
-  /** Mode indicator plus live score, accuracy and streak (FR-22). */
-  function drawStatusBar() {
+  function modeIndicator() {
+    if (round.roundMode === 'timed') {
+      return stat('Time', formatClock(round.remainingMs()), 'stat-time');
+    }
+    if (round.roundMode === 'lives') {
+      const lives = Math.max(0, round.livesRemaining);
+      return stat(
+        'Lives',
+        el('span', {
+          'aria-label': `${lives} lives remaining`,
+          text: '♥'.repeat(lives) || '—',
+        }),
+        'stat-lives',
+      );
+    }
+    return stat('Pairs left', String(round.pairsRemaining ?? 0), 'stat-pairs');
+  }
+
+  function renderStatus() {
     const stats = round.stats();
-    const modeStat =
-      round.roundMode === 'timed'
-        ? stat('Time', formatClock(round.remainingMs()), round.remainingMs() <= 10000 ? 'timer-low' : '')
-        : el('div', { class: 'stat' }, [
-            el('span', { class: 'stat-label', text: 'Lives' }),
-            el('span', {
-              class: 'stat-value lives',
-              // Hearts are decorative; the count is given as text for screen readers.
-              html: `<span aria-hidden="true">${'♥'.repeat(Math.max(0, round.livesRemaining))}</span>`,
-              'aria-label': `${round.livesRemaining} lives remaining`,
-            }),
-          ]);
-
-    const headline =
-      trainer.headlineScore === 'maxLevel'
-        ? stat('Level', stats.correctCount + 1)
-        : stat('Correct', stats.correctCount);
-
     render(
       statusBar,
-      el('div', { class: 'stat-group' }, [
-        modeStat,
-        headline,
-        stat('Accuracy', `${stats.accuracy}%`),
-        stat('Streak', stats.currentStreak),
-      ]),
-      el('div', { class: 'badge-row' }, [
-        bandBadge(round.difficulty, bandLabel(round.difficulty)),
-        el('button', { type: 'button', onclick: handleAbandon, text: 'Quit round' }),
-      ]),
+      modeIndicator(),
+      stat(trainer.scoreLabel ?? 'Score', String(round.score())),
+      stat('Accuracy', `${stats.accuracy}%`),
+      stat('Streak', String(stats.currentStreak)),
     );
   }
 
-  function handleAbandon() {
-    clearTimers();
-    round.abandon();
-    onAbandon();
-  }
+  /** Submit, show feedback, then move on. */
+  function handleSubmit(value) {
+    if (busy || round.state !== 'running') return;
 
-  function showFeedback(outcome) {
-    const isCorrect = outcome.status === 'correct';
-    // Text and an icon, never colour alone (FR-123).
-    const icon = isCorrect ? '✓' : '✗';
-    const text = isCorrect
-      ? `${icon} Correct`
-      : `${icon} Wrong — the answer was ${outcome.expected}${outcome.lifeLost ? ' · life lost' : ''}`;
+    // Outline prompts allow several guesses at the same shape, which is the
+    // only way a "you were 400 km north-east" hint can help. Intermediate
+    // guesses are judged here and never reach the engine, so the round still
+    // sees exactly one graded answer per country.
+    const prompt = round.prompt;
+    const maxGuesses = prompt?.maxGuesses ?? 1;
+    if (prompt?.hintable && maxGuesses > 1 && guessesUsed < maxGuesses - 1) {
+      const status = checkAnswer(prompt, value);
+      if (status === 'ignored') return;
+      if (status === 'incorrect') {
+        guessesUsed += 1;
+        const hint = hintFor?.(value, prompt.answer);
+        if (hint) hints.push(hint);
+        renderHints();
+        announce(
+          hint
+            ? `Not quite. ${hint.guess} is ${hint.distanceKm} kilometres away, to the ${hint.direction}.`
+            : 'Not a country I know. Try again.',
+        );
+        return;
+      }
+    }
 
-    render(feedbackArea, el('span', { class: isCorrect ? 'feedback-correct' : 'feedback-incorrect', text }));
-    announce(text);
-
-    feedbackHandle = setTimeout(() => render(feedbackArea), FEEDBACK_MS);
-  }
-
-  function submit(value) {
-    if (!acceptingInput || round.state !== 'running') return;
-
-    const outcome = round.submit(value);
-    if (outcome.status === 'ignored' || outcome.status === 'rejected') return;
-
-    showFeedback(outcome);
-    drawStatusBar();
-
-    if (round.state !== 'running') {
-      finish();
+    const feedback = round.submit(value);
+    if (feedback.status === 'ignored' || feedback.status === 'rejected') {
+      if (feedback.status === 'rejected') finish();
       return;
     }
-    drawPrompt();
+
+    renderStatus();
+    showFeedback(feedback);
+
+    if (feedback.ended) {
+      busy = true;
+      setTimeout(finish, FEEDBACK_MS);
+      return;
+    }
+
+    busy = true;
+    setTimeout(() => {
+      busy = false;
+      hints = [];
+      guessesUsed = 0;
+      drawPrompt();
+    }, FEEDBACK_MS);
   }
 
-  function finish() {
-    clearTimers();
-    acceptingInput = false;
-    onFinish(round.result());
+  /** Redraw just the hint list, leaving the input and its focus alone. */
+  function renderHints() {
+    const existing = promptBody?.querySelector('.hints');
+    const fresh = hintList();
+    if (existing && fresh) existing.replaceWith(fresh);
+    else if (existing) existing.remove();
+    else if (fresh) promptBody?.append(fresh);
+
+    const guessCounter = promptBody?.querySelector('.guess-counter');
+    if (guessCounter) {
+      const left = (round.prompt?.maxGuesses ?? 1) - guessesUsed;
+      guessCounter.textContent = `${left} guess${left === 1 ? '' : 'es'} left on this shape`;
+    }
+    promptBody?.querySelector('.answer-input')?.focus();
   }
 
-  /* ------------------------------------------------------------- renderers */
+  function showFeedback(feedback) {
+    const correct = feedback.status === 'correct';
+    const prompt = feedback.prompt;
 
-  function drawNumericPrompt(prompt) {
+    // Outline rounds trade the plain "wrong" for a distance hint (FR-148).
+    if (!correct && prompt?.hintable && hintFor) {
+      const hint = hintFor(lastValue, prompt.answer);
+      if (hint) hints.push(hint);
+    }
+
+    render(
+      feedbackBar,
+      el('p', {
+        class: `feedback ${correct ? 'feedback-correct' : 'feedback-wrong'}`,
+        text: correct ? '✓ Correct' : `✗ Wrong — ${feedback.expected}`,
+      }),
+      feedback.lifeLost ? el('p', { class: 'feedback-life', text: '♥ You lost a life' }) : null,
+    );
+    announce(correct ? 'Correct' : `Wrong. ${feedback.expected}`);
+  }
+
+  // --- renderers ------------------------------------------------------------
+
+  /** Free-entry answer box, used by numeric and text prompts. */
+  function answerInput(prompt) {
     const input = el('input', {
       class: 'answer-input',
-      type: 'text',
-      inputmode: 'decimal',
+      type: prompt.kind === 'numeric' ? 'text' : 'text',
+      inputmode: prompt.kind === 'numeric' ? 'decimal' : 'text',
       autocomplete: 'off',
       autocapitalize: 'off',
       spellcheck: 'false',
       'aria-label': 'Your answer',
-    });
-
-    const form = el('form', {
-      onsubmit: (event) => {
-        event.preventDefault();
-        const value = input.value;
-        input.value = ''; // cleared and refocused after each answer (FR-53)
-        submit(value);
-        input.focus();
-      },
-    }, [input]);
-
-    render(
-      promptArea,
-      el('p', { class: 'prompt-question', text: prompt.question }),
-      prompt.formatHint ? el('p', { class: 'prompt-hint', text: prompt.formatHint }) : null,
-      form,
-      feedbackArea,
-    );
-
-    input.focus(); // focus lands on the input when the prompt appears (FR-120)
-  }
-
-  function drawChoicePrompt(prompt) {
-    const buttons = prompt.choices.map((choice, index) =>
-      el('button', {
-        type: 'button',
-        class: 'choice',
-        onclick: () => submit(choice),
-      }, [
-        el('span', { class: 'choice-key', text: String(index + 1), 'aria-hidden': 'true' }),
-        el('span', { text: choice }),
-      ]),
-    );
-
-    render(
-      promptArea,
-      prompt.flag ? el('div', { class: 'prompt-flag', text: prompt.flag, role: 'img', 'aria-label': 'Flag' }) : null,
-      el('p', { class: 'prompt-question', text: prompt.question }),
-      el('p', { class: 'prompt-hint', text: 'Click an option, or press 1 to 4.' }),
-      el('div', { class: 'choice-grid' }, buttons),
-      feedbackArea,
-    );
-
-    buttons[0]?.focus();
-  }
-
-  function drawTextPrompt(prompt) {
-    const input = el('input', {
-      class: 'answer-input', type: 'text', autocomplete: 'off',
-      autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Your answer',
-    });
-
-    const form = el('form', {
-      onsubmit: (event) => {
+      onKeydown: (event) => {
+        if (event.key !== 'Enter') return;
         event.preventDefault();
         const value = input.value;
         input.value = '';
-        submit(value);
-        input.focus();
+        lastValue = value;
+        handleSubmit(value);
       },
-    }, [input]);
+    });
+    return input;
+  }
+
+  /** Remembered so an outline hint knows what was guessed. */
+  let lastValue = null;
+
+  function choiceButtons(prompt) {
+    return el(
+      'div',
+      { class: 'choices', role: 'group', 'aria-label': 'Answer options' },
+      prompt.options.map((option, index) =>
+        el('button', {
+          type: 'button',
+          class: 'choice',
+          dataset: { choiceIndex: String(index + 1) },
+          onClick: () => {
+            lastValue = option;
+            handleSubmit(option);
+          },
+          html: `<kbd>${index + 1}</kbd> <span>${option}</span>`,
+        }),
+      ),
+    );
+  }
+
+  /** Number keys pick an option without reaching for the mouse (FR-61). */
+  function choiceKeys(event) {
+    if (busy || !/^[1-4]$/.test(event.key)) return;
+    const target = event.target;
+    if (target instanceof HTMLInputElement) return;
+    const button = promptBody?.querySelector(`.choice[data-choice-index="${event.key}"]`);
+    if (button) {
+      event.preventDefault();
+      button.click();
+    }
+  }
+
+  function answerArea(prompt) {
+    if (prompt.kind === 'choice') return choiceButtons(prompt);
+    const input = answerInput(prompt);
+    queueMicrotask(() => input.focus());
+    return el('div', { class: 'answer-row' }, [
+      input,
+      el('button', {
+        type: 'button',
+        class: 'primary',
+        text: 'Submit',
+        onClick: () => {
+          const value = input.value;
+          input.value = '';
+          lastValue = value;
+          input.focus();
+          handleSubmit(value);
+        },
+      }),
+    ]);
+  }
+
+  function hintList() {
+    if (hints.length === 0) return null;
+    return el(
+      'ul',
+      { class: 'hints', 'aria-label': 'Previous guesses' },
+      hints.map((hint) =>
+        el('li', { class: 'hint' }, [
+          el('span', { class: 'hint-guess', text: hint.guess }),
+          el('span', { class: 'hint-distance', text: `${hint.distanceKm.toLocaleString()} km` }),
+          el('span', { class: 'hint-arrow', 'aria-label': hint.direction, text: hint.arrow }),
+          el('span', { class: 'hint-proximity', text: `${hint.proximity}%` }),
+        ]),
+      ),
+    );
+  }
+
+  /** Mental Math, Capitals — a question and an answer box or options. */
+  function renderPrompt(prompt) {
+    render(
+      promptBody,
+      el('p', { class: 'question', text: prompt.question }),
+      prompt.formatHint ? el('p', { class: 'format-hint', text: prompt.formatHint }) : null,
+      answerArea(prompt),
+    );
+  }
+
+  function renderFlag(prompt) {
+    render(
+      promptBody,
+      el('div', { class: 'flag-display', role: 'img', 'aria-label': 'Flag to identify', text: prompt.flag }),
+      el('p', { class: 'question', text: prompt.question }),
+      answerArea(prompt),
+    );
+  }
+
+  function renderOutline(prompt) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', prompt.viewBox);
+    svg.setAttribute('class', 'outline-svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Country outline to identify');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', prompt.outline);
+    path.setAttribute('fill-rule', 'evenodd');
+    svg.append(path);
 
     render(
-      promptArea,
-      prompt.flag ? el('div', { class: 'prompt-flag', text: prompt.flag, role: 'img', 'aria-label': 'Flag' }) : null,
-      el('p', { class: 'prompt-question', text: prompt.question }),
-      el('p', { class: 'prompt-hint', text: 'Type your answer and press Enter.' }),
-      form,
-      feedbackArea,
+      promptBody,
+      el('div', { class: 'outline-display' }, [svg]),
+      el('p', { class: 'question', text: prompt.question }),
+      prompt.maxGuesses > 1
+        ? el('p', {
+            class: 'format-hint guess-counter',
+            text: `${prompt.maxGuesses} guesses left on this shape`,
+          })
+        : null,
+      answerArea(prompt),
+      hintList(),
     );
-
-    input.focus();
   }
 
   /**
-   * The Memory grid.
+   * Pattern Memory.
    *
-   * The lit tiles are written to the DOM only while they are meant to be
-   * visible; once hidden, the markup carries no trace of them (FR-106).
+   * The pattern is shown, then hidden, and only then does the grid accept
+   * input. Hidden tiles carry no marker in the DOM (FR-122).
    */
-  function drawGridPrompt(prompt) {
-    selection = new Set();
-    cursor = 0;
+  function renderGrid(prompt) {
+    const selected = new Set();
+    let locked = true;
 
-    const grid = el('div', {
-      class: 'memory-grid',
-      role: 'group',
-      'aria-label': `Level ${prompt.level}, ${prompt.tileCount} tiles to reproduce`,
-      style: `grid-template-columns: repeat(${prompt.gridSize}, 1fr);`,
-    });
-
-    const cellCount = prompt.gridSize ** 2;
-    const tiles = [];
-
-    for (let index = 0; index < cellCount; index += 1) {
-      const tile = el('button', {
+    const tiles = Array.from({ length: prompt.cellCount }, (_, index) =>
+      el('button', {
         type: 'button',
         class: 'tile',
-        'aria-pressed': 'false',
-        'aria-label': `Tile ${index + 1}`,
-        tabindex: index === 0 ? '0' : '-1',
         disabled: true,
-        onclick: () => toggleTile(index),
-      });
-      tiles.push(tile);
-      grid.append(tile);
+        'aria-label': `Tile ${index + 1}`,
+        'aria-pressed': 'false',
+        onClick: () => toggle(index),
+      }),
+    );
+
+    function toggle(index) {
+      if (locked) return;
+      if (selected.has(index)) selected.delete(index);
+      else selected.add(index);
+      const tile = tiles[index];
+      tile.classList.toggle('tile-selected', selected.has(index));
+      tile.setAttribute('aria-pressed', String(selected.has(index)));
+      submitButton.disabled = selected.size === 0;
     }
 
     const submitButton = el('button', {
       type: 'button',
-      class: 'button-primary',
-      disabled: true,
+      class: 'primary',
       text: 'Submit pattern',
-      onclick: () => submit([...selection]),
+      disabled: true,
+      onClick: () => {
+        if (locked) return;
+        locked = true;
+        lastValue = [...selected];
+        handleSubmit([...selected]);
+      },
     });
 
-    function toggleTile(index) {
-      if (!acceptingInput) return;
-      if (selection.has(index)) selection.delete(index);
-      else selection.add(index);
-
-      tiles[index].setAttribute('aria-pressed', selection.has(index) ? 'true' : 'false');
-      submitButton.textContent = `Submit pattern (${selection.size}/${prompt.tileCount})`;
-    }
-
-    function focusTile(index) {
-      const clamped = Math.max(0, Math.min(cellCount - 1, index));
-      tiles[cursor].tabIndex = -1;
-      cursor = clamped;
-      tiles[cursor].tabIndex = 0;
-      tiles[cursor].focus();
-    }
-
-    // Arrows move, Space/Enter select, Enter on the grid submits (FR-107).
-    grid.addEventListener('keydown', (event) => {
-      if (!acceptingInput) return;
-      const size = prompt.gridSize;
-      const moves = {
-        ArrowRight: 1, ArrowLeft: -1, ArrowDown: size, ArrowUp: -size,
-      };
-
-      if (event.key in moves) {
-        event.preventDefault();
-        focusTile(cursor + moves[event.key]);
-      } else if (event.key === ' ') {
-        event.preventDefault();
-        toggleTile(cursor);
-      } else if (event.key === 'Enter') {
-        event.preventDefault();
-        submit([...selection]);
-      }
-    });
-
-    render(
-      promptArea,
-      el('p', { class: 'prompt-question', text: `Level ${prompt.level}` }),
-      el('p', { class: 'prompt-hint', id: 'grid-hint', text: 'Watch the pattern, then reproduce it. Arrow keys move, Space selects, Enter submits.' }),
-      grid,
-      submitButton,
-      feedbackArea,
+    const grid = el(
+      'div',
+      {
+        class: 'tile-grid',
+        role: 'group',
+        'aria-label': `Level ${prompt.level}, ${prompt.tileCount} tiles to reproduce`,
+        style: `grid-template-columns: repeat(${prompt.columns}, 1fr);`,
+        onKeydown: (event) => gridKeys(event, tiles, prompt.columns, toggle, submitButton),
+      },
+      tiles,
     );
 
-    // Show the pattern, then wipe every trace of it before accepting input.
-    acceptingInput = false;
-    for (const index of prompt.answer) tiles[index].dataset.lit = 'true';
+    render(
+      promptBody,
+      el('p', { class: 'level-label', text: `Level ${prompt.level}` }),
+      el('p', {
+        class: 'format-hint',
+        text: 'Watch the pattern, then reproduce it. Arrow keys move, Space selects, Enter submits.',
+      }),
+      grid,
+      submitButton,
+    );
+
+    // Show the pattern, then take it away.
+    for (const index of prompt.answer) tiles[index].classList.add('tile-lit');
     announce(`Level ${prompt.level}. Memorise ${prompt.tileCount} tiles.`);
 
-    patternHandle = setTimeout(() => {
-      for (const tile of tiles) delete tile.dataset.lit;
+    setTimeout(() => {
+      for (const index of prompt.answer) tiles[index].classList.remove('tile-lit');
+      locked = false;
       for (const tile of tiles) tile.disabled = false;
-      submitButton.disabled = false;
-      acceptingInput = true;
-      focusTile(0);
+      tiles[0]?.focus();
       announce('Now reproduce the pattern.');
     }, prompt.displayMs);
   }
 
-  function drawPrompt() {
-    const prompt = round.prompt;
-    if (!prompt) return;
+  /** Arrow-key navigation shared by both boards (FR-123, FR-133). */
+  function gridKeys(event, tiles, columns, toggle, submitButton) {
+    const current = tiles.indexOf(document.activeElement);
+    if (current < 0) return;
 
-    acceptingInput = true;
+    const moves = {
+      ArrowRight: 1,
+      ArrowLeft: -1,
+      ArrowDown: columns,
+      ArrowUp: -columns,
+    };
 
-    switch (prompt.kind) {
-      case 'grid': drawGridPrompt(prompt); break;
-      case 'choice': drawChoicePrompt(prompt); break;
-      case 'text': drawTextPrompt(prompt); break;
-      default: drawNumericPrompt(prompt);
+    if (event.key in moves) {
+      event.preventDefault();
+      const next = current + moves[event.key];
+      if (next >= 0 && next < tiles.length) tiles[next].focus();
+      return;
+    }
+    if (event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault();
+      toggle(current);
+      return;
+    }
+    if (event.key === 'Enter' && submitButton && !submitButton.disabled) {
+      event.preventDefault();
+      submitButton.click();
     }
   }
 
-  /** Number keys answer multiple-choice prompts (FR-47). */
-  function handleGlobalKeys(event) {
-    if (!acceptingInput || round?.state !== 'running') return;
-    const prompt = round.prompt;
-    if (prompt?.kind !== 'choice') return;
+  /**
+   * Figure Pairs.
+   *
+   * Face-down cards render empty, so their figures cannot be read out of the
+   * DOM (FR-134).
+   */
+  function renderPairs(prompt) {
+    const matched = new Set(prompt.matched);
+    const turned = [];
+    let locked = false;
 
-    const index = Number(event.key) - 1;
-    if (Number.isInteger(index) && index >= 0 && index < prompt.choices.length) {
-      event.preventDefault();
-      submit(prompt.choices[index]);
+    const cards = Array.from({ length: prompt.cellCount }, (_, index) => {
+      const isMatched = matched.has(index);
+      return el('button', {
+        type: 'button',
+        class: `card${isMatched ? ' card-matched' : ''}`,
+        disabled: isMatched,
+        'aria-label': isMatched ? `Card ${index + 1}, matched` : `Card ${index + 1}, face down`,
+        text: isMatched ? prompt.faces[index] : '',
+        onClick: () => turn(index),
+      });
+    });
+
+    function reveal(index) {
+      cards[index].textContent = prompt.faces[index];
+      cards[index].classList.add('card-face-up');
+      cards[index].setAttribute('aria-label', `Card ${index + 1}, ${prompt.faces[index]}`);
     }
+
+    function hide(index) {
+      cards[index].textContent = '';
+      cards[index].classList.remove('card-face-up');
+      cards[index].setAttribute('aria-label', `Card ${index + 1}, face down`);
+    }
+
+    function turn(index) {
+      if (locked || matched.has(index) || turned.includes(index)) return;
+      reveal(index);
+      turned.push(index);
+      if (turned.length < 2) return;
+
+      locked = true;
+      const pair = [...turned];
+      // Both faces stay visible long enough to be remembered, whether or not
+      // they matched — that is the whole game.
+      setTimeout(() => {
+        lastValue = pair;
+        handleSubmit(pair);
+        turned.length = 0;
+      }, PAIR_REVEAL_MS);
+    }
+
+    const board = el(
+      'div',
+      {
+        class: 'pair-board',
+        role: 'group',
+        'aria-label': `${prompt.pairsTotal - prompt.pairsMatched} pairs left`,
+        style: `grid-template-columns: repeat(${prompt.columns}, 1fr);`,
+        onKeydown: (event) => gridKeys(event, cards, prompt.columns, turn, null),
+      },
+      cards,
+    );
+
+    render(
+      promptBody,
+      el('p', {
+        class: 'level-label',
+        text: `${prompt.pairsMatched} of ${prompt.pairsTotal} pairs matched`,
+      }),
+      el('p', {
+        class: 'format-hint',
+        text: 'Turn two cards. Arrow keys move, Space turns a card.',
+      }),
+      board,
+    );
+
+    queueMicrotask(() => cards.find((card) => !card.disabled)?.focus());
+  }
+
+  const RENDERERS = {
+    prompt: renderPrompt,
+    flag: renderFlag,
+    outline: renderOutline,
+    grid: renderGrid,
+    pairs: renderPairs,
+  };
+
+  function drawPrompt() {
+    const prompt = round.prompt;
+    if (!prompt) {
+      finish();
+      return;
+    }
+    render(feedbackBar);
+    (RENDERERS[trainer.renderer] ?? renderPrompt)(prompt);
+    renderStatus();
+  }
+
+  function finish() {
+    stopTimer();
+    if (round.state === 'running') round.abandon();
+    onFinish(round);
+  }
+
+  /** Leaving a daily round spends the attempt, so it asks first (FR-10a). */
+  function leave() {
+    if (round.state !== 'running') {
+      stopTimer();
+      onLeave();
+      return;
+    }
+    const confirmed =
+      round.isPractice ||
+      globalThis.confirm(
+        'Leaving now ends this round and uses up today’s attempt. Your score so far will be recorded. Leave anyway?',
+      );
+    if (!confirmed) return;
+    stopTimer();
+    round.abandon();
+    if (round.isPractice) onLeave();
+    else onFinish(round);
   }
 
   return {
-    /** Begin a round and take over the container. */
-    start(activeRound, activeTrainer) {
+    /**
+     * @param {object} options
+     * @param {object} options.round
+     * @param {object} options.trainer
+     * @param {Function} [options.hintFor]
+     */
+    start({ round: activeRound, trainer: activeTrainer, hintFor: hintResolver }) {
       round = activeRound;
       trainer = activeTrainer;
-      clearTimers();
+      hintFor = hintResolver ?? null;
+      hints = [];
+      guessesUsed = 0;
+      busy = false;
+      lastValue = null;
 
-      render(container, statusBar, promptArea);
-      document.addEventListener('keydown', handleGlobalKeys);
+      statusBar = el('div', { class: 'round-status' });
+      feedbackBar = el('div', { class: 'round-feedback', role: 'status' });
+      promptBody = el('div', { class: 'round-body' });
+
+      render(
+        container,
+        el('div', { class: 'round-header' }, [
+          statusBar,
+          el('div', { class: 'round-meta' }, [
+            el('span', { class: 'badge', text: activeTrainer.name }),
+            round.isPractice ? el('span', { class: 'badge badge-practice', text: 'Practice' }) : null,
+            el('button', { type: 'button', class: 'ghost', text: 'Leave round', onClick: leave }),
+          ]),
+        ]),
+        promptBody,
+        feedbackBar,
+      );
 
       round.start();
-      drawStatusBar();
       drawPrompt();
+      document.addEventListener('keydown', choiceKeys);
 
-      // Timed rounds must expire even if the player stops answering (FR-12).
       if (round.roundMode === 'timed') {
-        tickHandle = setInterval(() => {
-          drawStatusBar();
-          if (round.tick() !== 'running') finish();
-        }, 100);
+        timer = setInterval(() => {
+          if (round.tick() !== 'running') {
+            finish();
+            return;
+          }
+          renderStatus();
+        }, 200);
       }
     },
 
-    /** Tear down listeners and timers when leaving the view. */
-    destroy() {
-      clearTimers();
-      acceptingInput = false;
-      document.removeEventListener('keydown', handleGlobalKeys);
+    stop: stopTimer,
+
+    /** The value last submitted, so outline hints know what was guessed. */
+    get lastValue() {
+      return lastValue;
     },
   };
 }

@@ -16,12 +16,14 @@ import { parseBoardSize } from '../../core/variants.js';
 export const BOARD_SIZES = Object.freeze(['4x3', '4x4', '6x4', '6x6']);
 
 /**
- * Figures are shapes rather than colours, so the board stays playable for
- * colour-blind players and in monochrome (FR-132).
+ * Figures are picked so that no two share a silhouette, which keeps the board
+ * playable for colour-blind players and in monochrome (FR-132).
  */
 export const FIGURES = Object.freeze([
-  '★', '●', '▲', '■', '◆', '✚', '✦', '❤', '☀',
-  '☂', '⚑', '⚓', '✈', '☘', '♪', '⚡', '✿', '☾',
+  '🍎', '🍌', '🍇', '🍓', '🍒', '🥕',
+  '🐶', '🐱', '🐧', '🐸', '🐢', '🦊',
+  '🚗', '🚀', '⚽', '🏀', '🎸', '🎲',
+  '🎁', '🔑', '🌞', '🌙', '⭐', '🍕',
 ]);
 
 export function pairsFor(boardSize) {

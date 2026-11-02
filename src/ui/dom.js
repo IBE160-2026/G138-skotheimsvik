@@ -42,11 +42,15 @@ export function render(container, ...nodes) {
   container.replaceChildren(...nodes.filter(Boolean));
 }
 
-/** A labelled statistic block. */
+/** A labelled statistic block. The value may be a string or a node. */
 export function stat(label, value, extraClass = '') {
+  const valueNode = el('span', { class: `stat-value ${extraClass}`.trim() });
+  if (value instanceof Node) valueNode.append(value);
+  else valueNode.textContent = String(value);
+
   return el('div', { class: 'stat' }, [
     el('span', { class: 'stat-label', text: label }),
-    el('span', { class: `stat-value ${extraClass}`.trim(), text: String(value) }),
+    valueNode,
   ]);
 }
 

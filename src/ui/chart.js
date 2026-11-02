@@ -1,14 +1,15 @@
 /**
  * A hand-rolled SVG line chart.
  *
- * FR-75 forbids a third-party charting library, and NFR-9 forbids runtime
+ * FR-91 forbids a third-party charting library and NFR-9 forbids runtime
  * dependencies generally, so this draws the axes and polyline directly.
- * Difficulty is encoded in the point colour *and* exposed in each point's
- * accessible title, so it is not conveyed by colour alone (FR-72, FR-123).
+ *
+ * Each chart now shows one trainer at one variant (FR-88), so there is no
+ * difficulty to encode — every point on a chart is directly comparable, which
+ * is the whole reason the variant picker exists.
  */
 
 import { el, formatDate } from './dom.js';
-import { bandLabel } from '../core/difficulty.js';
 
 const WIDTH = 720;
 const HEIGHT = 260;
@@ -24,7 +25,7 @@ function svgEl(tag, attrs = {}) {
 
 /**
  * @param {object} options
- * @param {Array<{puzzleDate: string, value: number, difficulty: string}>} options.points
+ * @param {Array<{x: string, y: number}>} options.points x is an ISO date
  * @param {string} options.label
  * @param {string} [options.suffix]
  */
@@ -36,7 +37,7 @@ export function lineChart({ points, label, suffix = '' }) {
   const plotWidth = WIDTH - PADDING.left - PADDING.right;
   const plotHeight = HEIGHT - PADDING.top - PADDING.bottom;
 
-  const values = points.map((p) => p.value);
+  const values = points.map((point) => point.y);
   const maxValue = Math.max(...values, 1);
   const minValue = Math.min(...values, 0);
   const span = maxValue - minValue || 1;
@@ -46,73 +47,61 @@ export function lineChart({ points, label, suffix = '' }) {
   const yFor = (value) => PADDING.top + plotHeight - ((value - minValue) / span) * plotHeight;
 
   const svg = svgEl('svg', {
-    class: 'chart',
     viewBox: `0 0 ${WIDTH} ${HEIGHT}`,
+    class: 'chart',
     role: 'img',
-    'aria-label': `${label} over time, ${points.length} puzzles, best ${maxValue}${suffix}`,
+    'aria-label': `${label} over time, ${points.length} rounds`,
   });
 
   // Horizontal gridlines with value labels.
-  for (let i = 0; i <= 4; i += 1) {
-    const value = minValue + (span * i) / 4;
+  for (let step = 0; step <= 4; step += 1) {
+    const value = minValue + (span * step) / 4;
     const y = yFor(value);
     svg.append(
-      svgEl('line', {
-        x1: PADDING.left, x2: WIDTH - PADDING.right, y1: y, y2: y,
-        stroke: 'currentColor', 'stroke-opacity': 0.12,
-      }),
-      svgEl('text', {
-        x: PADDING.left - 8, y: y + 4, 'text-anchor': 'end',
-        fill: 'currentColor', 'fill-opacity': 0.55, 'font-size': 11,
-      }),
+      svgEl('line', { x1: PADDING.left, x2: WIDTH - PADDING.right, y1: y, y2: y, class: 'chart-grid' }),
     );
-    svg.lastChild.textContent = Math.round(value * 10) / 10;
+    const text = svgEl('text', { x: PADDING.left - 8, y: y + 4, class: 'chart-axis', 'text-anchor': 'end' });
+    text.textContent = `${Math.round(value)}${suffix}`;
+    svg.append(text);
   }
 
-  // The series itself.
-  const path = points.map((point, index) => `${xFor(index)},${yFor(point.value)}`).join(' ');
   svg.append(
     svgEl('polyline', {
-      points: path, fill: 'none',
-      stroke: 'var(--accent)', 'stroke-width': 2,
-      'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+      class: 'chart-line',
+      points: points.map((point, index) => `${xFor(index)},${yFor(point.y)}`).join(' '),
     }),
   );
 
-  // One marker per puzzle, coloured by that day's band.
   points.forEach((point, index) => {
-    const circle = svgEl('circle', {
-      cx: xFor(index), cy: yFor(point.value), r: 5,
-      fill: `var(--band-${point.difficulty})`,
-      stroke: 'var(--surface)', 'stroke-width': 2,
-    });
+    const circle = svgEl('circle', { cx: xFor(index), cy: yFor(point.y), r: 4, class: 'chart-point' });
     const title = svgEl('title');
-    title.textContent =
-      `${formatDate(point.puzzleDate)} — ${point.value}${suffix}, ${bandLabel(point.difficulty)} day`;
+    title.textContent = `${formatDate(point.x)}: ${point.y}${suffix}`;
     circle.append(title);
     svg.append(circle);
   });
 
-  // First and last date labels only, to avoid a crowded axis.
-  const edges = points.length === 1 ? [0] : [0, points.length - 1];
-  for (const index of edges) {
-    const text = svgEl('text', {
-      x: xFor(index), y: HEIGHT - 14,
-      'text-anchor': index === 0 ? 'start' : 'end',
-      fill: 'currentColor', 'fill-opacity': 0.55, 'font-size': 11,
+  // Only the ends are labelled; more than that is unreadable at this width.
+  const first = svgEl('text', { x: PADDING.left, y: HEIGHT - 12, class: 'chart-axis' });
+  first.textContent = formatDate(points[0].x);
+  svg.append(first);
+
+  if (points.length > 1) {
+    const last = svgEl('text', {
+      x: WIDTH - PADDING.right,
+      y: HEIGHT - 12,
+      class: 'chart-axis',
+      'text-anchor': 'end',
     });
-    text.textContent = points[index].puzzleDate;
-    svg.append(text);
+    last.textContent = formatDate(points[points.length - 1].x);
+    svg.append(last);
   }
 
-  return svg;
+  return el('div', { class: 'chart-wrap' }, [svg]);
 }
 
-/** A legend explaining the point colours. */
+/** Kept so the progress view can explain the chart without a colour key. */
 export function chartLegend() {
-  return el('div', { class: 'badge-row' },
-    ['beginner', 'intermediate', 'advanced', 'expert'].map((band) =>
-      el('span', { class: `badge badge-band band-${band}`, text: bandLabel(band) }),
-    ),
-  );
+  return el('p', { class: 'muted small' }, [
+    'Each point is one round at this level, in puzzle-date order. Hover a point for the exact value.',
+  ]);
 }

@@ -163,8 +163,10 @@ export function createOutlineTrainer(countries, outlines) {
             answer: subject.name,
             alternatives: subject.alternatives,
             options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
-            // Hints only make sense where the player types a country name (FR-152).
+            // Hints only make sense where the player types a country name (FR-152),
+            // and only help if there is another guess left to spend on them.
             hintable: !choices,
+            maxGuesses: choices ? 1 : 3,
           };
         },
       };
