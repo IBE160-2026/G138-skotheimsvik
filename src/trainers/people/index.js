@@ -87,9 +87,12 @@ export function poolFor(people, variantKey) {
 
 /**
  * @param {{people: Array, categories: Record<string, string>}} content
+ * @param {{portraits: Record<string, object>}} [portraits] credits file
+ * @param {string} [portraitBase] URL prefix for the image files
  */
-export function createFamousPeopleTrainer({ people, categories }) {
+export function createFamousPeopleTrainer({ people, categories }, portraits = null, portraitBase = '') {
   const categoryKeys = Object.keys(categories);
+  const credits = portraits?.portraits ?? {};
 
   return {
     id: 'famous-people',
@@ -102,7 +105,7 @@ export function createFamousPeopleTrainer({ people, categories }) {
     variants: ['all', ...categoryKeys],
     scoreDirection: 'higher',
     headlineScore: 'correct',
-    renderer: 'prompt',
+    renderer: 'portrait',
     scoreLabel: 'Correct answers',
     modeParam: LIVES,
     topics: categoryKeys.map((id) => ({ id, label: categories[id] })),
@@ -143,6 +146,7 @@ export function createFamousPeopleTrainer({ people, categories }) {
           if (index >= order.length) return null;
           const subject = order[index];
           index += 1;
+          const credit = credits[subject.name] ?? null;
 
           return {
             kind: 'text',
@@ -151,6 +155,12 @@ export function createFamousPeopleTrainer({ people, categories }) {
             topicLabel: subject.categoryLabel,
             question: subject.clue,
             prefix: 'Who is this?',
+            // A handful of people have no freely licensed portrait, so the clue
+            // has to carry the round on its own.
+            image: credit ? `${portraitBase}${credit.file}` : null,
+            imageCredit: credit
+              ? { artist: credit.artist, licence: credit.licence, source: credit.source }
+              : null,
             answer: subject.name,
             alternatives: subject.alternatives,
             formatHint: 'Type the name. A surname on its own is usually enough.',

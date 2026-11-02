@@ -370,13 +370,22 @@ function watchForNewDay() {
 
 async function boot() {
   try {
-    const [countries, outlines, people] = await Promise.all([
+    const [countries, outlines, people, portraits] = await Promise.all([
       fetch(new URL('../trainers/geography/countries.json', import.meta.url)).then((r) => r.json()),
       fetch(new URL('../trainers/geography/outlines.json', import.meta.url)).then((r) => r.json()),
       fetch(new URL('../trainers/people/people.json', import.meta.url)).then((r) => r.json()),
+      fetch(new URL('../trainers/people/portraits.json', import.meta.url))
+        .then((r) => r.json())
+        .catch(() => null),
     ]);
 
-    registry = buildRegistry({ countries, outlines, people });
+    registry = buildRegistry({
+      countries,
+      outlines,
+      people,
+      portraits,
+      portraitBase: new URL('../trainers/people/portraits/', import.meta.url).href,
+    });
     practiceFilters = storage.read(STORAGE_KEYS.practice, {});
 
     setupChrome();

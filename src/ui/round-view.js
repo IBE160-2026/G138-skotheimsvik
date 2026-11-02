@@ -502,8 +502,39 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     queueMicrotask(() => cards.find((card) => !card.disabled)?.focus());
   }
 
+  /** Famous People — a portrait where one exists, plus the clue. */
+  function renderPortrait(prompt) {
+    const figure = prompt.image
+      ? el('figure', { class: 'portrait' }, [
+          el('img', {
+            class: 'portrait-image',
+            src: prompt.image,
+            alt: 'Portrait of the person to identify',
+            loading: 'eager',
+            decoding: 'async',
+          }),
+          prompt.imageCredit
+            ? el('figcaption', {
+                class: 'portrait-credit',
+                text: `${prompt.imageCredit.artist} · ${prompt.imageCredit.licence}`,
+              })
+            : null,
+        ])
+      : null;
+
+    render(
+      promptBody,
+      figure,
+      el('p', { class: 'prompt-prefix', text: prompt.prefix ?? 'Who is this?' }),
+      el('p', { class: 'question question-long', text: prompt.question }),
+      prompt.formatHint ? el('p', { class: 'format-hint', text: prompt.formatHint }) : null,
+      answerArea(prompt),
+    );
+  }
+
   const RENDERERS = {
     prompt: renderPrompt,
+    portrait: renderPortrait,
     flag: renderFlag,
     outline: renderOutline,
     grid: renderGrid,

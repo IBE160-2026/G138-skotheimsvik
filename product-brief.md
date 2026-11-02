@@ -218,6 +218,10 @@ The Outline Guesser's hint system is lifted, openly, from Worldle: after a wrong
 
 This is the one trainer where the thing you choose is a **subject**, not a difficulty: Everything, Music, Film and TV, Sport, Science and invention, or History and leadership. Each is a separate daily puzzle with a separate record.
 
+Most people come with a **portrait** as well as a clue — 133 of the 134 in the set. Every picture is public domain or under a licence that permits reuse, bundled in the repository and credited to its photographer on screen. The one person without a picture is still perfectly playable; the clue carries the prompt on its own.
+
+The cast is deliberately international: Fela Kuti and Ravi Shankar alongside Mick Jagger and Willie Nelson, Mansa Musa and Toussaint Louverture alongside Churchill and Lincoln, Tu Youyou and Ibn al-Haytham alongside Newton and Curie.
+
 Answers are typed rather than picked from a list. Four options would give a clue this specific away, and the point of seeing the name after a wrong guess is that you did not already have it in front of you. A surname on its own is accepted, and spelling is forgiving about accents — *Pele* passes for *Pelé*.
 
 ### 6.5 Later phases
@@ -333,6 +337,7 @@ Answers are typed rather than picked from a list. Four options would give a clue
 | Passwords | — | Hashed with `crypto.scrypt`, per-user salt |
 | Content | JSON files in the repository | Same |
 | Country outlines | Simplified SVG paths derived from **Natural Earth** public-domain data, bundled in the repository | Same |
+| Portraits | Public-domain and Creative Commons images from Wikimedia, bundled in the repository with photographer and licence recorded | Same |
 | Testing | Node's built-in `node --test` | Same |
 
 **On the map data.** Country outlines are the one piece of content the project cannot author by hand. They come from Natural Earth, which is explicitly public domain, are simplified and converted to SVG paths at authoring time, and are committed to the repository. There is no runtime dependency, no API and no key — the "no strings attached" principle survives intact, and the provenance is documented.

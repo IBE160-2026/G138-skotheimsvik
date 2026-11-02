@@ -726,3 +726,17 @@ select:hover { border-color: var(--border-strong); }
   max-width: 32rem;
   margin-inline: auto;
 }
+
+/* Famous People portraits */
+.portrait { margin: 0 auto var(--sp-3); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); }
+.portrait-image {
+  width: clamp(130px, 34vw, 190px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-2);
+}
+.portrait-credit { font-size: 0.7rem; color: var(--text-faint); max-width: 22rem; }

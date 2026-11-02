@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -34,9 +34,12 @@ const outlines = JSON.parse(
   readFileSync(join(root, 'src/trainers/geography/outlines.json'), 'utf8'),
 );
 const peopleRaw = JSON.parse(readFileSync(join(root, 'src/trainers/people/people.json'), 'utf8'));
+const portraitsRaw = JSON.parse(
+  readFileSync(join(root, 'src/trainers/people/portraits.json'), 'utf8'),
+);
 const countries = validateCountries(countriesRaw, { warn: () => {} });
 const registry = buildRegistry(
-  { countries: countriesRaw, outlines, people: peopleRaw },
+  { countries: countriesRaw, outlines, people: peopleRaw, portraits: portraitsRaw },
   { warn: () => {} },
 );
 
@@ -442,4 +445,40 @@ test('a malformed person is skipped, and a clue naming its answer is rejected', 
   );
   assert.equal(result.people.length, 1);
   assert.equal(warnings.length, 2);
+});
+
+/**
+ * Portraits come from Wikimedia, so the licence is the part with real
+ * consequences. A non-free image in a public coursework repository is a
+ * copyright problem, not a cosmetic one.
+ */
+test('every bundled portrait is freely licensed, attributed, and present on disk', () => {
+  const credits = JSON.parse(
+    readFileSync(join(root, 'src/trainers/people/portraits.json'), 'utf8'),
+  ).portraits;
+
+  const allowed = /^(public domain|pd[- ]?|cc0|cc[- ]by(?!.*(nc|nd))|no restrictions|attribution|ogl)/i;
+  const entries = Object.entries(credits);
+  assert.ok(entries.length > 100, `only ${entries.length} portraits`);
+
+  for (const [name, credit] of entries) {
+    assert.ok(allowed.test(credit.licence), `${name} has a non-free licence: ${credit.licence}`);
+    assert.ok(credit.artist && credit.artist.length > 0, `${name} has no attribution`);
+    assert.match(credit.source, /^https:\/\/(commons\.wikimedia|en\.wikipedia)\.org\//, name);
+    assert.ok(
+      existsSync(join(root, 'src/trainers/people/portraits', credit.file)),
+      `${name}: missing file ${credit.file}`,
+    );
+  }
+});
+
+test('a person without a portrait still produces a playable prompt (FR-167)', () => {
+  const trainer = registry.getTrainer('famous-people');
+  for (const prompt of pull(trainer, 'all', 15)) {
+    assert.ok(prompt.question.length > 20, 'the clue must carry the prompt on its own');
+    if (prompt.image) {
+      assert.ok(prompt.imageCredit?.artist, `${prompt.answer} has an image but no credit`);
+      assert.ok(prompt.imageCredit?.licence, `${prompt.answer} has an image but no licence`);
+    }
+  }
 });

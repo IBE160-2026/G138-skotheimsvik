@@ -33,7 +33,7 @@ Innenfor én grad er oppgaven **den samme for alle i hele verden den dagen**. De
 
 Hukommelse er unntaket: et tilfeldig mønster kan ikke meningsfullt forfattes som «intermediate», så der velger du **brettstørrelse** i stedet. Hver størrelse er sin egen dagsoppgave med sin egen rekord.
 
-Famous People er det andre unntaket: der velger du **emne** — alt, musikk, film, sport, vitenskap eller historie. Hvert emne er sin egen dagsoppgave, så å være god på musikk telles for seg.
+Famous People er det andre unntaket: der velger du **emne** — alt, musikk, film, sport, vitenskap eller historie. Hvert emne er sin egen dagsoppgave, så å være god på musikk telles for seg. De fleste personene vises med **portrett** i tillegg til hintet.
 
 ### Rundene slutter på tre måter
 
@@ -95,7 +95,7 @@ npm run serve
 npm test
 ```
 
-84 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `each level adds exactly one tile (FR-117, S15)`. Testmatrisen i `tests/matrix.test.js` spiller alle trener- og variantkombinasjoner til en naturlig slutt.
+86 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `each level adds exactly one tile (FR-117, S15)`. Testmatrisen i `tests/matrix.test.js` spiller alle trener- og variantkombinasjoner til en naturlig slutt.
 
 ## Publisering
 
@@ -136,10 +136,11 @@ src/trainers/           En mappe per kategori
   math/                 Mental Math Sprint
   memory/               Pattern Memory og Figure Pairs
   geography/            Delt innhold, geo-matematikk og de tre trenerne
-  people/               Famous People og personlista
+  people/               Famous People, personlista og portrettene
 src/ui/                 DOM, visninger, rundevisning og stilark
 tests/                  Testsuite
 tools/build-outlines.js Forfatterverktøy: TopoJSON → SVG-omriss
+tools/build-people-images.js  Forfatterverktøy: fritt lisensierte portretter
 tools/serve.js          Lokal statisk server
 vercel.json             Publiseringsoppsett
 ```
@@ -157,7 +158,7 @@ Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å t
 | Implementasjon | v1 implementert — motor, sju trenere, arkiv, practice mode, progresjon og UI |
 | Publisering | Publisert — <https://g138-skotheimsvik.vercel.app/> |
 
-PRD-en inneholder 166 funksjonelle krav, 22 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 22 suksesskriteriene i briefen.
+PRD-en inneholder 170 funksjonelle krav, 23 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 23 suksesskriteriene i briefen.
 
 ### Arkitekturvalg (PRD §9)
 
@@ -176,9 +177,13 @@ PRD-en inneholder 166 funksjonelle krav, 22 ikke-funksjonelle krav, 11 epics og 
 | 11 | Lisens for geografiinnhold og flagg | Land og hovedsteder er faktaopplysninger vi har skrevet selv. Flagg utledes fra ISO-koden som Unicode-tegn. Omriss kommer fra Natural Earth, som er public domain |
 | 12 | Endelig produktnavn | **LearningHub** |
 
-### Om kartdataene
+### Om kartdataene og portrettene
 
-Landomrissene i Outline Guesser er det eneste innholdet prosjektet ikke kunne forfatte selv. De er avledet fra **Natural Earth**, som er public domain, konvertert til rene SVG-baner av `tools/build-outlines.js` og committet til repoet. Verktøyet kjøres for hånd; applikasjonen leser aldri TopoJSON og gjør aldri et nettverkskall. 166 av 195 land har omriss — de 29 uten er mikrostater og småøystater som ikke finnes i datasettet, og de er med i flagg- og hovedstadstrenerne i stedet.
+Landomrissene i Outline Guesser er avledet fra **Natural Earth**, som er public domain, konvertert til rene SVG-baner av `tools/build-outlines.js` og committet til repoet. 166 av 195 land har omriss — de 29 uten er mikrostater og småøystater som ikke finnes i datasettet.
+
+Portrettene i Famous People hentes fra Wikimedia av `tools/build-people-images.js`, som **bare laster ned bilder med lisens som tillater gjenbruk** — public domain, CC0, CC BY, CC BY-SA, OGL. Alt annet hoppes over, og personen blir hintebasert i stedet. Fotograf, lisens og kildefil lagres i `portraits.json` og vises ved siden av bildet. 133 av 134 personer har portrett; den ene som mangler har bare et GFDL-bilde, en lisens som ville krevd at vi distribuerte hele lisensteksten.
+
+Begge verktøyene kjøres for hånd. Applikasjonen leser aldri TopoJSON og gjør aldri et nettverkskall til Wikimedia — alt innhold serveres fra vårt eget opphav.
 
 ## KI i utviklingsprosessen
 

@@ -54,7 +54,7 @@ export const CATEGORIES = [
  * @param {unknown} content.people parsed people.json
  * @param {{warn: Function}} [logger]
  */
-export function buildRegistry({ countries, outlines, people }, logger = console) {
+export function buildRegistry({ countries, outlines, people, portraits, portraitBase = '' }, logger = console) {
   const registry = createRegistry();
   for (const category of CATEGORIES) registry.registerCategory(category);
 
@@ -70,7 +70,9 @@ export function buildRegistry({ countries, outlines, people }, logger = console)
   registry.registerTrainer(createOutlineTrainer(validated, outlines));
   registry.registerTrainer(createCapitalTrainer(validated));
 
-  registry.registerTrainer(createFamousPeopleTrainer(validatePeople(people, logger)));
+  registry.registerTrainer(
+    createFamousPeopleTrainer(validatePeople(people, logger), portraits, portraitBase),
+  );
 
   return registry;
 }
