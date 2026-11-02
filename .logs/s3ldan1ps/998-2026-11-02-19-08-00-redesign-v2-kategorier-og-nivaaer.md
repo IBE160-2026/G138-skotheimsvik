@@ -117,7 +117,35 @@ Svar skrives inn i stedet for å velges blant fire: et så spesifikt hint ville 
 
 **Commit.** `86d1f24`, pushet og deployet. 84 tester passerer.
 
+## 2026-11-02 kl. 21:55 — S3lDan1PS
+
+### Oppgave
+Legge til bilder i Famous People, og utvide personlista internasjonalt med blant andre Willie Nelson, Putin, Mick Jagger, Keith Richards og Slash.
+
+### Plan
+- Sjekke om det i det hele tatt er mulig å skaffe lovlig gjenbrukbare bilder før jeg lover noe.
+- Utvide lista først, siden bildene følger av den.
+- Bygge et forfatterverktøy etter samme mønster som kartdataene.
+
+### Resultat
+
+**Lista utvidet fra 90 til 134 personer**, bevisst internasjonal: Fela Kuti og Ravi Shankar ved siden av Mick Jagger, Keith Richards, Slash og Willie Nelson; Mansa Musa og Toussaint Louverture ved siden av Churchill og Lincoln; Tu Youyou og Ibn al-Haytham ved siden av Newton og Curie. Putin, Merkel og Atatürk lagt til under historie.
+
+**133 av 134 har portrett.** `tools/build-people-images.js` henter fra Wikimedia og laster **bare ned det som lovlig kan videredistribueres**: public domain, CC0, CC BY, CC BY-SA, OGL. Ett GFDL-bilde ble utelatt, fordi den lisensen krever at hele lisensteksten følger med; den personen er hintebasert i stedet, noe treneren støtter fra design. Fotograf, lisens og kildefil lagres per bilde og vises ved siden av portrettet.
+
+**Fire feil måtte løses, alle funnet ved å lese det faktiske svaret i stedet for å gjette:**
+1. Summary-API-et legger på utm-parametere som ødelegger filnavnet.
+2. `thumb.wikimedia.org` avviser forespørslene; `upload.wikimedia.org` serverer dem.
+3. Bare et fast sett bredder er tillatt — 400px gir 400-feil, 250px virker.
+4. For store originaler er «originalimage» selv en miniatyr, så siste ledd i stien er `3840px-Foo.jpg` og ikke filnavnet.
+
+Verktøyet ber nå API-et generere miniatyren, noe som også håndterer TIFF→JPEG. Det venter ved rate-limiting og kan kjøres på nytt uten å laste ned det samme igjen.
+
+**En test sikrer lisensene**: hvert portrett må være fritt lisensiert, kreditert, hentet fra Wikimedia og finnes på disk. Lisens er den delen med reelle konsekvenser i et offentlig repo.
+
+**Commit.** `2123a7d`, pushet og deployet. 86 tester passerer.
+
 ### Åpne punkter
-- Tilgjengelighetsrevisjonen er egenskrevet, ikke Lighthouse; dækker ikke alt Lighthouse måler.
-- Personlista er vestlig-tung. Den fungerer for norske spillere, men bør utvides hvis appen skal brukes bredere.
-- Famous People er ikke med i den automatiske tilgjengelighetsrevisjonen — den ble kjørt før treneren fantes.
+- Bildene er 3,9 MB og lastes per oppgave. Et portrett du ikke har sett før er ikke tilgjengelig offline; runden faller tilbake til bare hint. Dokumentert som NFR-8a.
+- Tilgjengelighetsrevisjonen er egenskrevet, ikke Lighthouse, og Famous People er ikke med i den.
+- Portrettene er ikke beskåret rundt ansiktet. De vises med `object-position: center top`, som stort sett treffer, men noen bilder kan bli uheldig beskåret.
