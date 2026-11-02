@@ -63,3 +63,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Generated preview from tools/preview-outlines.mjs
+outline-preview.html

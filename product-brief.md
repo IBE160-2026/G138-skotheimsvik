@@ -136,6 +136,8 @@ Difficulty means different things in different categories, and that is intention
 
 **One scored attempt per trainer, per band, per calendar day.** Once spent, that particular puzzle is done until tomorrow.
 
+**Starting a round commits you.** The attempt is spent the moment you begin, not when you finish. Quit early and the round is recorded as it stood; switch to a different band or board size mid-round and the one you were playing ends the same way. There is no free restart, no peeking at today's questions and backing out. This is what makes a daily score worth anything — and practice mode is exempt, because that is the whole point of it.
+
 The **archive** holds every previous day's puzzles. Any past day and band you have not yet played can still be played, and counts towards your history on equal terms.
 
 **Practice mode** is the pressure valve. It is unlimited, available at any time, and fully configurable — this is the only place filters live. You can pick topics, board sizes, country regions and round length. Practice rounds show you full statistics at the end but are **not recorded in your history and never affect a personal best**, because a configurable round is not comparable to anyone else's.
@@ -147,6 +149,8 @@ The **archive** holds every previous day's puzzles. Any past day and band you ha
 A memory pattern is random. A 4×4 grid with five tiles is not meaningfully "intermediate" — it is just a 4×4 grid with five tiles, and whether you remember it depends on you, not on how cleverly the puzzle was authored. Bolting four bands onto it would be decoration.
 
 So Memory replaces bands with **board size**. Each board size is its own daily attempt and its own personal best, exactly as bands are elsewhere. A 3×3 board and a 6×6 board are different challenges with different records, which is honest, where "Beginner 4×4" versus "Expert 4×4" would not be.
+
+The board you pick is the board you keep. It never grows mid-round — you chose that size, and overriding your choice halfway through would be rude. A Pattern Memory round therefore ends naturally as the pattern approaches the board's capacity.
 
 ### 5.6 Your real opponent is yesterday
 
@@ -356,6 +360,8 @@ Phase 1 is the only committed scope for this course.
 | Difficulty | Player chooses the band; each band is an independent daily puzzle with its own record |
 | Filters | Daily puzzles have none; all filtering lives in practice mode |
 | Memory difficulty | Replaced by board size — see §5.5 |
+| Memory board size | Fixed for the whole round; it never grows mid-round |
+| Leaving a round | Starting a daily round commits the attempt — quitting or switching variant spends it. Practice mode is exempt |
 | Country outlines | Natural Earth public-domain data, simplified and bundled in the repository |
 | Vanilla JavaScript or a framework | Vanilla JavaScript, native ES modules, zero runtime dependencies |
 | Test runner | Node's built-in `node --test` |

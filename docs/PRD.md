@@ -81,7 +81,7 @@ RoundResult
   score           number      headline number; interpreted per scoreDirection
   playedAt        number      epoch ms, when the round was actually played
   endedBy         string      "time-expired" | "lives-exhausted" | "board-complete"
-                              | "prompts-exhausted"
+                              | "prompts-exhausted" | "abandoned"
   elapsedMs       number
   totalAnswered   number      >= 0
   correctCount    number      0..totalAnswered
@@ -159,8 +159,12 @@ The key version moves from `v1` to `v2` because the shape has changed incompatib
 | FR-6 | A trainer is registered by declaring its category, round mode, variant kind, variant list, score direction, topic list, a generator and a renderer | M | S21 |
 | FR-7 | Adding a trainer or a category requires no modification to engine files or to existing trainers | M | S21 |
 | FR-8 | The user can navigate between home, category, trainer, briefing, round, results, archive, practice and progress views without a page reload | M | — |
-| FR-9 | The user can abandon a round in progress and return to the trainer screen | M | — |
-| FR-10 | Abandoning a daily round does not consume the attempt and writes no result | M | S13 |
+| FR-9 | The user can leave a round in progress and return to the trainer screen | M | S13 |
+| FR-10 | **Starting a daily or archive round commits the attempt.** Leaving it early ends the round, records the result achieved so far with `endedBy` of `abandoned`, and consumes the attempt for that trainer, variant and date | M | S13 |
+| FR-10a | Leaving a daily round requires an explicit confirmation stating that the attempt will be spent | M | S13 |
+| FR-10b | Switching to a different variant while a round is in progress ends the current round under FR-10 and starts the new one; it is never a free restart | M | S13 |
+| FR-10c | Leaving a **practice** round costs nothing, writes no result and requires no confirmation | M | S17 |
+| FR-10d | The briefing screen states that starting will spend the attempt, so the commitment is known before it is made | M | — |
 
 ### 4.2 Drill Engine — loop and round modes
 
@@ -509,8 +513,14 @@ Format: *As a learner, I want … so that …* Acceptance criteria are Given/Whe
 **US-2.10** — Lazy prompt supply
 *Given* a trainer with no fixed list, *when* the round runs, *then* prompts are generated on demand. · FR-23 · *Verifies:* S15
 
-**US-2.11** — Abandon without penalty
-*Given* a daily round in progress, *when* I quit, *then* no result is written and the attempt remains available. · FR-9, FR-10 · *Verifies:* S13
+**US-2.11** — Leaving a round spends it
+*Given* a daily round in progress, *when* I choose to leave and confirm, *then* the round ends, the result so far is recorded as `abandoned`, and the attempt is no longer available; *given* I decline the confirmation, *then* the round continues. · FR-9, FR-10, FR-10a · *Verifies:* S13
+
+**US-2.11b** — Switching variant is not a free restart
+*Given* a round in progress at 4×4, *when* I switch to 5×5, *then* the 4×4 round is recorded as abandoned and its attempt is spent, and a 5×5 round begins. · FR-10b · *Verifies:* S13
+
+**US-2.11c** — Leaving practice is free
+*Given* a practice round in progress, *when* I leave, *then* no confirmation appears, no result is written and nothing is spent. · FR-10c · *Verifies:* S17
 
 **US-2.12** — Multiple choice by keyboard
 *Given* four options, *when* I press 2, *then* the second is submitted, identically to clicking it. · FR-61
@@ -830,7 +840,7 @@ Format: *As a learner, I want … so that …* Acceptance criteria are Given/Whe
 | S10 — keyboard-only and accessible | FR-61, FR-62, FR-123, FR-133, FR-157–163, NFR-19 | US-6.7, US-10.4, US-10.5, US-11.3 |
 | S11 — runs from README, no keys | NFR-13, NFR-18, NFR-20, NFR-21 | US-11.5, US-11.6 |
 | S12 — deterministic puzzles | FR-29–33, NFR-4 | US-3.3, US-3.4, US-3.5, US-3.6 |
-| S13 — one attempt per trainer, variant and day | FR-10, FR-27, FR-35–38, FR-41, FR-85 | US-2.11, US-3.1, US-3.7, US-3.8, US-8.8 |
+| S13 — one attempt per trainer, variant and day | FR-10, FR-10a, FR-10b, FR-27, FR-35–38, FR-41, FR-85 | US-2.11, US-2.11b, US-3.1, US-3.7, US-3.8, US-8.8 |
 | S14 — archive recorded against its own date | FR-39, FR-40, FR-43, FR-87 | US-3.10, US-3.11, US-8.11 |
 | S15 — Pattern Memory is endless | FR-23, FR-117, FR-118, NFR-5 | US-2.10, US-6.4, US-6.5 |
 | S16 — comparison against previous and best | FR-80, FR-81, FR-82 | US-8.4, US-8.5, US-8.6 |
@@ -853,6 +863,8 @@ Every success criterion is covered by at least one requirement and one story. No
 | Difficulty | Player chooses; each band is an independent daily puzzle with its own record |
 | Filters | Daily puzzles have none; all filtering lives in practice mode |
 | Memory difficulty | Replaced by board size |
+| Pattern Memory board | Fixed for the whole round — it never grows mid-round |
+| Leaving a round | **Starting a daily round commits the attempt.** Quitting or switching variant ends it and spends it; practice is exempt |
 | Outline data | Natural Earth public-domain data, bundled |
 | Scope | v1 redesigned now — brief and PRD first, then the code rebuilt to match |
 | Product name | LearningHub |
@@ -864,7 +876,6 @@ Chosen in the absence of a stated preference, and flagged so they can be overrul
 | Assumption | Why it matters | Cost of reversing |
 |---|---|---|
 | Pattern Memory board sizes 3×3 to 6×6; Figure Pairs 4×3 to 6×6 | Defines how many daily attempts Memory offers | Low — a list |
-| Pattern Memory keeps a fixed board per round rather than growing it | Board size is now the player's choice, so growing it mid-round would override that choice | Medium — changes FR-119 and the end condition |
 | Figure Pairs scores mistakes, with time only as a tie-break | Rewards memory rather than fast clicking | Medium — score direction and comparison logic |
 | Practice rounds are discarded entirely rather than stored separately | Keeps the data model simple and history honest | Medium — adds a second history store |
 | Trigonometry is exact values only — no decimal answers | Keeps answers unambiguous and checkable | Low — a generator constraint |
@@ -883,5 +894,6 @@ Chosen in the absence of a stated preference, and flagged so they can be overrul
 | v3.1 | 2026-11-02 | §9 reconciled with the implementation; NFR added for publication |
 | v3.2 | 2026-11-02 | Product name and the set-based Memory rule confirmed |
 | v4 | 2026-11-02 | Rewritten against brief v5. **Difficulty selection restored** in a stronger form — four bands per trainer, each an independent daily puzzle with its own record (FR-26 to FR-37). Introduced the **category / trainer / topic hierarchy**, renaming the old weak-area "category" to **topic**. Added **practice mode** as the sole home of filters (FR-45 to FR-58). Added **completion** as a third round mode and **score direction** so a lower score can be better. Catalogue grows from three trainers to six, adding **Figure Pairs**, **Flag Guesser**, **Outline Guesser** and **Capital Guesser**, with Worldle-style distance, direction and proximity hints (FR-148 to FR-152) and bundled Natural Earth outline data. Storage keys move to `v2`. FRs 125 → 163, NFRs 20 → 22, epics 10 → 11, stories 75 → 93, success criteria 17 → 21 |
+| v4.1 | 2026-11-02 | **Starting a daily round now commits the attempt** (FR-10, FR-10a to FR-10d). Quitting records the round as `abandoned` and spends it; switching variant mid-round does the same to the round being left, so it is never a free restart. Practice is exempt. This reverses the previous no-penalty rule, which would otherwise have made the switching rule trivially avoidable. Pattern Memory's fixed board confirmed as intended design rather than an assumption |
 
 **Status:** this PRD describes the redesigned v1. The implementation is being rebuilt against it; until that is complete, the deployed application reflects PRD v3.2.
