@@ -10,11 +10,31 @@
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { existsSync, readFileSync } from 'node:fs';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import githubAuthHandler from '../api/github-auth.js';
+import githubConfigHandler from '../api/github-config.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT ?? 8080);
+
+// Load local .env if present (Node standard library only)
+const envPath = join(ROOT, '.env');
+if (existsSync(envPath)) {
+  const lines = readFileSync(envPath, 'utf8').split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const val = trimmed.slice(eq + 1).trim().replace(/^['"]|['"]$/g, '');
+    if (!process.env[key]) {
+      process.env[key] = val;
+    }
+  }
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -27,8 +47,38 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 
+function wrapRes(response) {
+  let statusCode = 200;
+  return {
+    status(code) {
+      statusCode = code;
+      return this;
+    },
+    json(payload) {
+      response.writeHead(statusCode, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store',
+      });
+      response.end(JSON.stringify(payload));
+    },
+  };
+}
+
 const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://localhost:${PORT}`);
+
+  if (url.pathname === '/api/github-config') {
+    const reqObj = { method: request.method, query: Object.fromEntries(url.searchParams) };
+    await githubConfigHandler(reqObj, wrapRes(response));
+    return;
+  }
+
+  if (url.pathname === '/api/github-auth') {
+    const reqObj = { method: request.method, query: Object.fromEntries(url.searchParams) };
+    await githubAuthHandler(reqObj, wrapRes(response));
+    return;
+  }
+
   const requested = url.pathname === '/' ? '/index.html' : url.pathname;
 
   // Resolve inside ROOT only, so a crafted path cannot escape the project.

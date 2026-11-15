@@ -24,7 +24,7 @@ import {
 import { createRng } from '../src/core/rng.js';
 import { checkAnswer, matchSuggestions, resolveClosestMatch } from '../src/core/answer.js';
 import { BANDS, modeParamFor } from '../src/core/variants.js';
-import { createAuthStore } from '../src/core/auth.js';
+import { buildGitHubAuthorizeUrl, createAuthStore } from '../src/core/auth.js';
 import { createLeaderboardStore } from '../src/core/leaderboard.js';
 import { createStorage, createMemoryBackend } from '../src/core/storage.js';
 
@@ -545,18 +545,31 @@ test('GitHub auth and daily/all-time leaderboards record only real players with 
   const auth = createAuthStore({ storage });
   const lb = createLeaderboardStore({ storage });
 
+  // Step 2: Authorize URL points to real github.com/login/oauth/authorize
+  const authUrl = buildGitHubAuthorizeUrl({
+    clientId: 'Iv1.testclientid',
+    redirectUri: 'http://localhost:8080/',
+    state: 'category:word-rush',
+  });
+  assert.ok(authUrl.startsWith('https://github.com/login/oauth/authorize?'));
+  assert.ok(authUrl.includes('client_id=Iv1.testclientid'));
+  assert.ok(authUrl.includes('scope=read%3Auser'));
+
   // Before any player plays, leaderboards must be completely empty (no fake players).
   assert.equal(lb.dailyLeaderboard('2026-10-15', { trainerId: 'word-rush' }).length, 0);
   assert.equal(lb.allTimeLeaderboard({ trainerId: 'word-rush' }).length, 0);
 
-  const user = await auth.loginWithGitHub('octocat', async () => ({
+  // Step 3 & 4: Exchange OAuth ?code=... for verified user via /api/github-auth
+  const user = await auth.completeOAuthCallback('oauth_code_123', async () => ({
     ok: true,
     status: 200,
     json: async () => ({
-      login: 'octocat',
-      id: 583231,
-      name: 'The Octocat',
-      avatar_url: 'https://avatars.githubusercontent.com/u/583231?v=4',
+      user: {
+        login: 'octocat',
+        id: 583231,
+        name: 'The Octocat',
+        avatarUrl: 'https://avatars.githubusercontent.com/u/583231?v=4',
+      },
     }),
   }));
 

@@ -9,7 +9,7 @@
 import { createStorage, STORAGE_KEYS } from '../core/storage.js';
 import { createClock } from '../core/clock.js';
 import { createProgressStore } from '../core/progress.js';
-import { createAuthStore } from '../core/auth.js';
+import { buildGitHubAuthorizeUrl, createAuthStore } from '../core/auth.js';
 import { createLeaderboardStore } from '../core/leaderboard.js';
 import { createRound } from '../core/round.js';
 import { listArchive, isValidPuzzleDate } from '../core/archive.js';
@@ -47,6 +47,7 @@ let activeTrainer = null;
 let progressSelection = { trainerId: null, variantKey: null };
 let leaderboardState = { tab: 'daily', selectedDate: null };
 let practiceFilters = {};
+let githubClientId = null;
 
 function announce(message) {
   if (liveRegion) liveRegion.textContent = message;
@@ -115,11 +116,19 @@ function show(node) {
 }
 
 function redirectToGitHubLogin(nextTarget = '') {
-  const oauthUrl = new URL('./github-oauth.html', globalThis.location.href);
-  if (nextTarget) {
-    oauthUrl.searchParams.set('next', nextTarget);
+  if (!githubClientId) {
+    showNotice(
+      'GitHub OAuth is not configured yet. Add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to .env (or Vercel environment variables).',
+    );
+    return;
   }
-  globalThis.location.assign(oauthUrl.href);
+  const redirectUri = `${globalThis.location.origin}${globalThis.location.pathname}`;
+  const githubAuthUrl = buildGitHubAuthorizeUrl({
+    clientId: githubClientId,
+    redirectUri,
+    state: nextTarget,
+  });
+  globalThis.location.assign(githubAuthUrl);
 }
 
 function renderUserBadge() {
@@ -505,14 +514,19 @@ function watchForNewDay() {
 
 async function boot() {
   try {
-    const [countries, outlines, people, portraits] = await Promise.all([
+    const [countries, outlines, people, portraits, oauthConfig] = await Promise.all([
       fetch(new URL('../trainers/geography/countries.json', import.meta.url)).then((r) => r.json()),
       fetch(new URL('../trainers/geography/outlines.json', import.meta.url)).then((r) => r.json()),
       fetch(new URL('../trainers/people/people.json', import.meta.url)).then((r) => r.json()),
       fetch(new URL('../trainers/people/portraits.json', import.meta.url))
         .then((r) => r.json())
         .catch(() => null),
+      fetch('/api/github-config')
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
     ]);
+
+    githubClientId = oauthConfig?.clientId ?? null;
 
     registry = buildRegistry({
       countries,
@@ -523,11 +537,23 @@ async function boot() {
     });
     practiceFilters = storage.read(STORAGE_KEYS.practice, {});
 
+    // Step 3: Handle GitHub OAuth redirect with ?code=<AUTH_CODE>
+    const params = new URLSearchParams(globalThis.location.search);
+    const oauthCode = params.get('code');
+    const nextRoute = params.get('state') || params.get('next');
+
+    if (oauthCode) {
+      globalThis.history?.replaceState?.({}, '', globalThis.location.pathname);
+      try {
+        await auth.completeOAuthCallback(oauthCode);
+      } catch (err) {
+        showNotice(err.message || 'Could not complete GitHub sign-in.');
+      }
+    }
+
     setupChrome();
     watchForNewDay();
 
-    const params = new URLSearchParams(globalThis.location.search);
-    const nextRoute = params.get('next');
     if (nextRoute && auth.isAuthenticated()) {
       globalThis.history?.replaceState?.({}, '', globalThis.location.pathname);
       if (nextRoute === 'leaderboard') {

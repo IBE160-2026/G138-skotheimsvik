@@ -1,19 +1,64 @@
 /**
- * GitHub Authentication & User Profile Store.
+ * GitHub OAuth Authentication & User Profile Store.
  *
- * Connects to the public GitHub REST API (`https://api.github.com/users/<username>`)
- * to verify and fetch real GitHub developer profiles (avatar, display name, handle,
- * bio, public repos, followers) without requiring private OAuth client secrets.
- *
- * A logged-in GitHub user is required before playing rounds, allowing scores and
- * Word Rush results to be tracked per user on the Daily and All-Time Leaderboards.
+ * Implements the standard 4-step GitHub OAuth Web Application Flow:
+ *   1. Registered GitHub OAuth App provides `GITHUB_CLIENT_ID` & `GITHUB_CLIENT_SECRET`.
+ *   2. Frontend redirects user to `https://github.com/login/oauth/authorize?client_id=...&redirect_uri=...&scope=read:user`.
+ *   3. GitHub authenticates the user (username + password / 2FA) and redirects back with `?code=<AUTH_CODE>`.
+ *   4. Backend (`/api/github-auth`) exchanges `code` for an `access_token` at `https://github.com/login/oauth/access_token`
+ *      and fetches the authenticated user from `https://api.github.com/user`.
  */
 
 import { STORAGE_KEYS } from './storage.js';
 
 /**
- * Fetch a GitHub user profile from the public GitHub API.
- * Falls back gracefully if offline or rate-limited when a valid handle is given.
+ * Build the real GitHub OAuth authorization URL (Step 2).
+ *
+ * @param {{ clientId: string, redirectUri: string, state?: string }} options
+ */
+export function buildGitHubAuthorizeUrl({ clientId, redirectUri, state = '' }) {
+  if (!clientId) {
+    throw new Error('GitHub OAuth Client ID is not configured.');
+  }
+  const url = new URL('https://github.com/login/oauth/authorize');
+  url.searchParams.set('client_id', clientId);
+  if (redirectUri) {
+    url.searchParams.set('redirect_uri', redirectUri);
+  }
+  url.searchParams.set('scope', 'read:user');
+  if (state) {
+    url.searchParams.set('state', state);
+  }
+  return url.toString();
+}
+
+/**
+ * Exchange a GitHub OAuth `?code=...` via our backend `/api/github-auth` endpoint (Steps 3 & 4).
+ *
+ * @param {string} code
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function exchangeGitHubCode(code, fetchImpl = globalThis.fetch) {
+  const cleanCode = String(code ?? '').trim();
+  if (!cleanCode) {
+    throw new Error('Missing GitHub OAuth authorization code.');
+  }
+
+  const response = await fetchImpl(`/api/github-auth?code=${encodeURIComponent(cleanCode)}`, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.user) {
+    throw new Error(payload.error || 'GitHub OAuth authentication failed.');
+  }
+
+  return payload.user;
+}
+
+/**
+ * Fetch a GitHub user profile from the public GitHub API (used by unit tests or profile lookup).
  *
  * @param {string} username
  * @param {typeof fetch} [fetchImpl]
@@ -24,45 +69,28 @@ export async function fetchGitHubUser(username, fetchImpl = globalThis.fetch) {
     throw new Error('Enter a valid GitHub username (letters, numbers, and single hyphens).');
   }
 
-  try {
-    const response = await fetchImpl(`https://api.github.com/users/${encodeURIComponent(clean)}`, {
-      headers: { Accept: 'application/vnd.github+json' },
-    });
+  const response = await fetchImpl(`https://api.github.com/users/${encodeURIComponent(clean)}`, {
+    headers: { Accept: 'application/vnd.github+json' },
+  });
 
-    if (response.status === 404) {
-      throw new Error(`GitHub user "@${clean}" was not found.`);
-    }
-
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        login: data.login,
-        id: data.id,
-        name: data.name || data.login,
-        avatarUrl: data.avatar_url || `https://github.com/${data.login}.png?size=160`,
-        htmlUrl: data.html_url || `https://github.com/${data.login}`,
-        bio: data.bio || 'GitHub Player',
-        publicRepos: data.public_repos ?? 0,
-        followers: data.followers ?? 0,
-        verifiedAt: Date.now(),
-      };
-    }
-  } catch (error) {
-    if (error.message?.includes('not found') || error.message?.includes('valid GitHub')) {
-      throw error;
-    }
+  if (response.status === 404) {
+    throw new Error(`GitHub user "@${clean}" was not found.`);
   }
 
-  // Fallback if API rate limit is reached
+  if (!response.ok) {
+    throw new Error('Failed to verify GitHub user.');
+  }
+
+  const data = await response.json();
   return {
-    login: clean,
-    id: clean.toLowerCase(),
-    name: clean,
-    avatarUrl: `https://github.com/${encodeURIComponent(clean)}.png?size=160`,
-    htmlUrl: `https://github.com/${encodeURIComponent(clean)}`,
-    bio: 'GitHub Player',
-    publicRepos: 0,
-    followers: 0,
+    login: data.login,
+    id: data.id,
+    name: data.name || data.login,
+    avatarUrl: data.avatar_url || `https://github.com/${data.login}.png?size=160`,
+    htmlUrl: data.html_url || `https://github.com/${data.login}`,
+    bio: data.bio || 'GitHub Player',
+    publicRepos: data.public_repos ?? 0,
+    followers: data.followers ?? 0,
     verifiedAt: Date.now(),
   };
 }
@@ -85,6 +113,13 @@ export function createAuthStore({ storage }) {
   return {
     getUser: () => currentUser,
     isAuthenticated: () => Boolean(currentUser?.login),
+
+    async completeOAuthCallback(code, fetchImpl) {
+      const profile = await exchangeGitHubCode(code, fetchImpl);
+      currentUser = profile;
+      persist();
+      return profile;
+    },
 
     async loginWithGitHub(username, fetchImpl) {
       const profile = await fetchGitHubUser(username, fetchImpl);
