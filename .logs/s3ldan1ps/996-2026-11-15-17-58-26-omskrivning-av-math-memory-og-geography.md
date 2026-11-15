@@ -32,8 +32,12 @@ Brukeren ba om en fullstendig omskrivning av de opprinnelige kategoriene (`Math`
   - `src/trainers/geography/index.js` og `src/trainers/index.js`: Alle 4 er nå egne toppnivå-kategorier med 1 daglig forsøk, daglig varierende vanskelighetsgrad (`Easy`, `Medium`, `Hard`, `Very Hard`) og ingen treningsmodus.
   - `src/core/round.js` og `src/ui/round-view.js`: Støtter `prompt.stayOnWrongGuess` og `prompt.hideExpectedOnWrong` slik at enkelt-oppgave-spill blir stående på dagens flagg/land/hovedstad/rute når man gjetter feil og ikke avslører fasiten før runden er over.
   - `src/trainers/geography/capitals-data.js` + `renderCapital`: Samtlige 195 hovedsteder har nå nærmeste/største andre by i samme land (Hint 1), en egen fun fact om hovedstaden uten å røpe navnet (Hint 2), og landets navn (Hint 3), samt bybilde fra Wikipedia REST API.
-  - `renderBorderHop`: Viser nå SVG-omriss og navn for både **Starting Country** og **Destination Country** side om side over rutesporingen.
-- **Verifisering**: Alle 78 tester i `npm test` (`tests/engine.test.js`, `tests/matrix.test.js`, `tests/trainers.test.js`, inkl. `node --check` på alle filer) passerer, og alle nye spillmoduser og leaderboards er verifisert i nettleseren.
+  - `renderBorderHop`: Viser et dynamisk Travle-inspirert regionskart (`worldPath`, `bbox`, `mapViewBox`, `mapCountries`) der startlandet og mållandet vises i sine faktiske geografiske posisjoner og hvert gjettede land tegnes inn på kartet underveis i ruten.
+- **Oppfølgingsforbedringer (samme økt)**:
+  - **Favoritter og Likes/Dislikes (`src/core/preferences.js`, `src/core/storage.js`, `src/ui/views.js`, `src/ui/app.js`, `src/ui/styles.css`)**: Spillere kan stjernemerke favorittmoduser (`★`/`☆`) slik at de festes øverst i selvvalgt rekkefølge (`↑`/`↓`), samt gi 👍 Like eller 👎 Dislike (maks 1 stemme per bruker per spillmodus).
+  - **Admin-tilgang for `@bipa` (`src/core/auth.js`)**: Lagt til `'bipa'` i `ADMIN_LOGINS` slik at `@bipa` får Admin ON/OFF-knappen i toppmenyen.
+  - **Timdle-inspirert drag-and-drop tidslinje i Timeline Sort (`src/ui/round-view.js`, `src/ui/styles.css`)**: Byttet ut de flate knappene med en visuell tidslinje med årstall-noder og drag-and-drop av hendelseskortet (både HTML5 Drag & Drop og touch/pointer-drag) inn på riktig kronologisk plass på tidslinjen.
+- **Verifisering**: Alle 79 tester i `npm test` (`tests/engine.test.js`, `tests/matrix.test.js`, `tests/trainers.test.js`, inkl. `node --check` på alle filer) passerer, og alle nye funksjoner er verifisert i nettleseren.
 
 ### Åpne punkter
 Ingen.

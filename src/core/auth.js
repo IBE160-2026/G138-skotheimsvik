@@ -12,7 +12,7 @@
 import { STORAGE_KEYS } from './storage.js';
 
 /** GitHub logins with Admin Mode access (unlimited playthroughs & replay). */
-export const ADMIN_LOGINS = new Set(['s3ldan1ps', 'danthebanan']);
+export const ADMIN_LOGINS = new Set(['s3ldan1ps', 'danthebanan', 'bipa']);
 
 export function isAdminUser(user) {
   const login = String(user?.login ?? '').trim().toLowerCase();

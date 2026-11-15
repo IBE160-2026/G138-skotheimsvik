@@ -129,6 +129,10 @@ test('a cleared Figure Pairs board scores zero mistakes (S19)', () => {
     const { result } = playRound(pairs, variantKey);
     assert.equal(result.endedBy, 'board-complete');
     assert.equal(result.score, 0, 'a perfect board has no mistakes');
-    assert.equal(result.totalAnswered, modeParamFor(pairs, variantKey), 'one turn per pair');
+    assert.equal(
+      result.totalAnswered,
+      modeParamFor(pairs, variantKey, '2026-11-02'),
+      'one turn per pair',
+    );
   }
 });

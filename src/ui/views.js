@@ -23,7 +23,7 @@ const END_REASON_LABEL = {
   'time-expired': 'Time ran out',
   'lives-exhausted': 'You ran out of lives',
   'board-complete': 'You cleared the board',
-  'prompts-exhausted': 'You ran out of questions',
+  'prompts-exhausted': 'Daily challenge completed!',
   abandoned: 'You left the round early',
 };
 
@@ -53,16 +53,34 @@ const CATEGORY_LOGO_SVG = {
   math: `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
     <path d="M9 12h18M9 24h18M14 7l-3 22M25 7l-3 22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
   </svg>`,
-  memory: `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
+  'pattern-memory': `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
     <rect x="6" y="6" width="10" height="10" rx="2.5" fill="currentColor"/>
     <rect x="20" y="6" width="10" height="10" rx="2.5" stroke="currentColor" stroke-width="2"/>
     <rect x="6" y="20" width="10" height="10" rx="2.5" stroke="currentColor" stroke-width="2"/>
     <rect x="20" y="20" width="10" height="10" rx="2.5" fill="currentColor" fill-opacity="0.35" stroke="currentColor" stroke-width="2"/>
   </svg>`,
-  geography: `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
+  'figure-pairs': `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
+    <rect x="6" y="8" width="14" height="20" rx="3" stroke="currentColor" stroke-width="2"/>
+    <rect x="16" y="6" width="14" height="20" rx="3" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="2"/>
+    <circle cx="23" cy="16" r="3" fill="currentColor"/>
+  </svg>`,
+  'flag-guesser': `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
+    <path d="M9 6v24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M9 8h18l-3 5.5 3 5.5H9" fill="currentColor" fill-opacity="0.2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+  </svg>`,
+  'outline-guesser': `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
     <circle cx="18" cy="18" r="12" stroke="currentColor" stroke-width="2"/>
     <ellipse cx="18" cy="18" rx="5.5" ry="12" stroke="currentColor" stroke-width="1.8"/>
     <path d="M6.5 14.5h23M6.5 21.5h23" stroke="currentColor" stroke-width="1.8"/>
+  </svg>`,
+  'capital-guesser': `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
+    <path d="M6 28h24M8 28V16h20v12M18 7l12 7H6l12-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M13 28v-8M18 28v-8M23 28v-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+  'border-hop': `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
+    <circle cx="9" cy="25" r="3.5" fill="currentColor"/>
+    <circle cx="27" cy="11" r="3.5" stroke="currentColor" stroke-width="2"/>
+    <path d="M12.5 24c4.5-1 4.5-11 11-12" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round"/>
   </svg>`,
   people: `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
     <circle cx="18" cy="13" r="5" stroke="currentColor" stroke-width="2"/>
@@ -101,12 +119,21 @@ export function categoriesView({
   registry,
   progress,
   user,
+  preferences = null,
   onCategory,
+  onToggleFavorite = null,
+  onMoveFavorite = null,
+  onVote = null,
 }) {
   let allTotal = 0;
   let allSpent = 0;
 
-  const cards = categories.map((category) => {
+  const orderedCategories = preferences
+    ? preferences.sortCategories(categories, user)
+    : categories;
+  const favoritesList = preferences ? preferences.getFavorites(user) : [];
+
+  const cards = orderedCategories.map((category) => {
     const isWordRush = category.id === 'word-rush';
     const trainers = registry.trainersIn(category.id);
     const total = trainers.reduce((sum, trainer) => sum + variantsFor(trainer).length, 0);
@@ -120,10 +147,16 @@ export function categoriesView({
     allTotal += total;
     allSpent += spent;
 
+    const favIndex = favoritesList.indexOf(category.id);
+    const isFav = favIndex >= 0;
+    const reaction = preferences
+      ? preferences.getReaction(category.id, user)
+      : { likes: 0, dislikes: 0, userVote: null };
+
     return el(
       'article',
       {
-        class: `card category-card${isWordRush ? ' category-card-word-rush' : ''}`,
+        class: `card category-card${isWordRush ? ' category-card-word-rush' : ''}${isFav ? ' category-card-favorite' : ''}`,
       },
       [
         el('div', { class: 'category-card-top' }, [
@@ -132,24 +165,108 @@ export function categoriesView({
             'aria-hidden': 'true',
             html: CATEGORY_LOGO_SVG[category.id] ?? category.icon,
           }),
-          el('span', {
-            class: 'remaining-pill',
-            text: isCompleted
-              ? 'Completed'
-              : total === 1
-                ? `${spent} / 1 attempt`
-                : `${total - spent} / ${total} open`,
-          }),
+          el('div', { class: 'category-card-actions' }, [
+            isFav && favoritesList.length > 1 && onMoveFavorite
+              ? el('div', { class: 'fav-order-controls', role: 'group', 'aria-label': `Reorder ${category.name} favorite position` }, [
+                  el('button', {
+                    type: 'button',
+                    class: 'fav-order-btn',
+                    disabled: favIndex === 0,
+                    title: 'Move earlier in favorites',
+                    'aria-label': `Move ${category.name} earlier in favorites`,
+                    text: '↑',
+                    onClick: () => onMoveFavorite(category.id, -1),
+                  }),
+                  el('span', { class: 'fav-rank-badge', text: `#${favIndex + 1}` }),
+                  el('button', {
+                    type: 'button',
+                    class: 'fav-order-btn',
+                    disabled: favIndex === favoritesList.length - 1,
+                    title: 'Move later in favorites',
+                    'aria-label': `Move ${category.name} later in favorites`,
+                    text: '↓',
+                    onClick: () => onMoveFavorite(category.id, 1),
+                  }),
+                ])
+              : isFav
+                ? el('span', { class: 'fav-rank-badge', text: '#1' })
+                : null,
+            onToggleFavorite
+              ? el('button', {
+                  type: 'button',
+                  class: `fav-toggle-btn${isFav ? ' is-favorited' : ''}`,
+                  'aria-pressed': String(isFav),
+                  title: isFav ? 'Remove from favorites' : 'Favorite gamemode (pins to top)',
+                  'aria-label': isFav
+                    ? `Remove ${category.name} from favorites`
+                    : `Favorite ${category.name}`,
+                  text: isFav ? '★' : '☆',
+                  onClick: () => onToggleFavorite(category.id),
+                })
+              : null,
+            el('span', {
+              class: 'remaining-pill',
+              text: isCompleted
+                ? 'Completed'
+                : total === 1
+                  ? `${spent} / 1 attempt`
+                  : `${total - spent} / ${total} open`,
+            }),
+          ]),
         ]),
         el('h2', { text: category.name }),
         el('p', { class: 'muted', text: category.tagline }),
         el('div', { class: 'card-bottom' }, [
-          hasPractice
-            ? el('p', {
-                class: 'muted small practice-status',
-                text: 'Practice mode available',
-              })
-            : null,
+          el('div', { class: 'card-meta-row' }, [
+            onVote
+              ? el(
+                  'div',
+                  {
+                    class: 'reaction-bar',
+                    role: 'group',
+                    'aria-label': `Rate ${category.name}`,
+                  },
+                  [
+                    el(
+                      'button',
+                      {
+                        type: 'button',
+                        class: `reaction-btn reaction-like${reaction.userVote === 'like' ? ' is-active' : ''}`,
+                        'aria-pressed': String(reaction.userVote === 'like'),
+                        title: 'Like this gamemode (1 vote per user)',
+                        'aria-label': `Like ${category.name} (${reaction.likes})`,
+                        onClick: () => onVote(category.id, 'like'),
+                      },
+                      [
+                        el('span', { 'aria-hidden': 'true', text: '👍' }),
+                        el('span', { class: 'reaction-count', text: String(reaction.likes) }),
+                      ],
+                    ),
+                    el(
+                      'button',
+                      {
+                        type: 'button',
+                        class: `reaction-btn reaction-dislike${reaction.userVote === 'dislike' ? ' is-active' : ''}`,
+                        'aria-pressed': String(reaction.userVote === 'dislike'),
+                        title: 'Dislike this gamemode (1 vote per user)',
+                        'aria-label': `Dislike ${category.name} (${reaction.dislikes})`,
+                        onClick: () => onVote(category.id, 'dislike'),
+                      },
+                      [
+                        el('span', { 'aria-hidden': 'true', text: '👎' }),
+                        el('span', { class: 'reaction-count', text: String(reaction.dislikes) }),
+                      ],
+                    ),
+                  ],
+                )
+              : null,
+            hasPractice
+              ? el('p', {
+                  class: 'muted small practice-status',
+                  text: 'Practice mode available',
+                })
+              : null,
+          ]),
           meter(spent, total),
           el('button', {
             type: 'button',
@@ -258,7 +375,7 @@ export function trainerView({
         ? el('span', { class: `band-stripe band-${key}`, 'aria-hidden': 'true' })
         : null,
       el('h3', { text: labelFor(trainer, key) }),
-      el('p', { class: 'muted', text: describeRound(trainer, key) }),
+      el('p', { class: 'muted', text: describeRound(trainer, key, today) }),
       el('p', {
         class: 'muted small',
         text: best === null ? 'No personal best yet' : `Best: ${best}`,
@@ -369,7 +486,7 @@ export function briefingView({ trainer, variantKey, puzzleDate, isArchive, onSta
       ),
       stat('Round ends', ROUND_MODE_LABEL[trainer.roundMode]),
     ]),
-    el('p', { class: 'brief-mode', text: describeRound(trainer, variantKey) }),
+    el('p', { class: 'brief-mode', text: describeRound(trainer, variantKey, puzzleDate) }),
     el('p', { class: 'warning' }, [
       'Starting spends this attempt. If you leave early the round still counts, with whatever you scored.',
     ]),
@@ -557,9 +674,13 @@ export function resultsView({
         ])
     : null;
 
-  const isPeopleGuesser = (result.trainerId ?? trainer?.id) === 'famous-people';
-  const hasLeaderboard = (wr && !isWordChain) || isPeopleGuesser;
-  const leaderboardTrainerId = isPeopleGuesser ? 'famous-people' : (result.trainerId ?? 'word-rush');
+  const activeTrainerId = result.trainerId ?? trainer?.id ?? 'word-rush';
+  const isPeopleGuesser = activeTrainerId === 'famous-people';
+  const isPatternMemory = activeTrainerId === 'pattern-memory';
+  const isFigurePairs = activeTrainerId === 'figure-pairs';
+  const hasLeaderboard =
+    (wr && !isWordChain) || isPeopleGuesser || isPatternMemory || isFigurePairs;
+  const leaderboardTrainerId = activeTrainerId;
 
   const dailyBoard =
     hasLeaderboard && leaderboard
@@ -570,8 +691,8 @@ export function resultsView({
       : null;
 
   const allTimeBoard =
-    isPeopleGuesser && leaderboard
-      ? leaderboard.allTimeLeaderboard({ trainerId: 'famous-people' })
+    (isPeopleGuesser || isPatternMemory || isFigurePairs) && leaderboard
+      ? leaderboard.allTimeLeaderboard({ trainerId: leaderboardTrainerId })
       : null;
 
   const miniLeaderboardSection = dailyBoard
@@ -581,7 +702,11 @@ export function resultsView({
             class: 'section-label',
             text: isPeopleGuesser
               ? `Most Guesses Today (${formatDate(result.puzzleDate)})`
-              : `Today’s Leaderboard (${formatDate(result.puzzleDate)})`,
+              : isFigurePairs
+                ? `Fewest Tries Today (${formatDate(result.puzzleDate)})`
+                : isPatternMemory
+                  ? `Highest Level Today (${formatDate(result.puzzleDate)})`
+                  : `Today’s Leaderboard (${formatDate(result.puzzleDate)})`,
           }),
           onLeaderboard
             ? el('button', {
@@ -596,9 +721,16 @@ export function resultsView({
         allTimeBoard
           ? el('div', { style: 'margin-top: 1.25rem;' }, [
               el('div', { class: 'word-rush-reveal-header' }, [
-                el('h2', { class: 'section-label', text: 'All-Time Most Guesses (People Guesser)' }),
+                el('h2', {
+                  class: 'section-label',
+                  text: isPeopleGuesser
+                    ? 'All-Time Most Guesses (People Guesser)'
+                    : isFigurePairs
+                      ? 'All-Time Fewest Tries (Figure Pairs)'
+                      : 'All-Time Levels Cleared (Pattern Memory)',
+                }),
               ]),
-              renderLeaderboardTable(allTimeBoard.slice(0, 8), currentUser, 'all-time', 'famous-people'),
+              renderLeaderboardTable(allTimeBoard.slice(0, 8), currentUser, 'all-time', leaderboardTrainerId),
             ])
           : null,
       ])
@@ -612,14 +744,20 @@ export function resultsView({
     el('p', { class: 'end-reason', text: END_REASON_LABEL[result.endedBy] ?? 'Round over' }),
 
     el('div', { class: 'result-stats' }, [
-      stat(trainer.scoreLabel ?? 'Score', String(result.score), 'stat-headline'),
       stat(
-        isWordChain ? 'Starter word' : wr ? 'Pool Coverage' : 'Correct',
+        isFigurePairs ? 'Total Tries' : (trainer.scoreLabel ?? 'Score'),
+        String(isFigurePairs ? result.totalAnswered : result.score),
+        'stat-headline',
+      ),
+      stat(
+        isWordChain ? 'Starter word' : wr ? 'Pool Coverage' : isFigurePairs ? 'Mistakes' : 'Correct',
         isWordChain
           ? String(wr?.starterWord ?? chainWords[0] ?? '—')
           : wr
             ? `${wr.foundWords.length} of ${wr.validWords.length}`
-            : `${result.correctCount} of ${result.totalAnswered}`,
+            : isFigurePairs
+              ? String(result.mistakes ?? 0)
+              : `${result.correctCount} of ${result.totalAnswered}`,
       ),
       stat('Accuracy', `${result.accuracy}%`),
       stat('Average time', `${(result.avgAnswerTimeMs / 1000).toFixed(1)}s`),
@@ -656,17 +794,72 @@ export function resultsView({
   ]);
 }
 
+const LEADERBOARD_MODES = {
+  'word-rush': {
+    title: 'Word Rush',
+    heading: 'Word Rush Leaderboards',
+    subtitle: 'Ranked by the most words guessed in the 2-Minute Daily Word Rush.',
+    playButton: 'Play Today’s Word Rush',
+    variantKey: 'daily',
+    dailyTab: 'Daily Leaderboard',
+    allTimeTab: 'All-Time Most Words',
+    dailyCol: 'Words Found',
+    allTimeCol: 'Total Words',
+    allTimeCaption:
+      'Cumulative words discovered and single-round personal bests across all daily Word Rush challenges.',
+  },
+  'famous-people': {
+    title: 'People Guesser',
+    heading: 'People Guesser Leaderboards',
+    subtitle: 'Ranked by most people guessed today and all-time in People Guesser.',
+    playButton: 'Play Today’s People Guesser',
+    variantKey: 'all',
+    dailyTab: 'Most Guesses Today',
+    allTimeTab: 'All-Time Most Guesses',
+    dailyCol: 'People Guessed',
+    allTimeCol: 'Total Guesses',
+    allTimeCaption:
+      'Cumulative people guessed and single-run personal bests across all daily People Guesser challenges.',
+  },
+  'pattern-memory': {
+    title: 'Pattern Memory',
+    heading: 'Pattern Memory Leaderboards',
+    subtitle: 'Ranked by highest pattern level memorized with zero mistakes allowed.',
+    playButton: 'Play Today’s Pattern Memory',
+    variantKey: 'daily',
+    dailyTab: 'Highest Level Today',
+    allTimeTab: 'All-Time Levels Cleared',
+    dailyCol: 'Levels Reached',
+    allTimeCol: 'Total Levels',
+    allTimeCaption:
+      'Cumulative levels cleared and single-run personal bests across all daily Pattern Memory challenges.',
+  },
+  'figure-pairs': {
+    title: 'Figure Pairs',
+    heading: 'Figure Pairs Leaderboards',
+    subtitle: 'Ranked by fewest attempts used before connecting all figures on today’s board.',
+    playButton: 'Play Today’s Figure Pairs',
+    variantKey: 'daily',
+    dailyTab: 'Fewest Tries Today',
+    allTimeTab: 'All-Time Fewest Tries',
+    dailyCol: 'Attempts (Tries)',
+    allTimeCol: 'Best Run (Tries)',
+    allTimeCaption:
+      'Ranked by fewest attempts used in a completed daily board and total rounds completed.',
+  },
+};
+
 function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = 'word-rush') {
-  const isPeople = trainerId === 'famous-people';
-  const gameTitle = isPeople ? 'People Guesser' : 'Word Rush';
+  const meta = LEADERBOARD_MODES[trainerId] ?? LEADERBOARD_MODES['word-rush'];
+  const isFigurePairs = trainerId === 'figure-pairs';
   if (!rows || rows.length === 0) {
     return el('div', { class: 'empty-state leaderboard-empty' }, [
       el('p', {
         class: 'muted',
         text:
           mode === 'all-time'
-            ? `No players on the All-Time leaderboard yet. Play a round of ${gameTitle} to claim #1!`
-            : `No scores recorded for this day yet. Play ${gameTitle} to be first on the board!`,
+            ? `No players on the All-Time leaderboard yet. Play a round of ${meta.title} to claim #1!`
+            : `No scores recorded for this day yet. Play ${meta.title} to be first on the board!`,
       }),
     ]);
   }
@@ -678,16 +871,16 @@ function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = '
           el('th', { text: 'Rank' }),
           el('th', { text: 'GitHub Player' }),
           el('th', {
+            text: mode === 'all-time' ? meta.allTimeCol : meta.dailyCol,
+          }),
+          el('th', {
             text:
               mode === 'all-time'
-                ? isPeople
-                  ? 'Total Guesses'
-                  : 'Total Words'
-                : isPeople
-                  ? 'People Guessed'
-                  : 'Words Found',
+                ? isFigurePairs
+                  ? 'Avg Tries / Rounds'
+                  : 'Personal Best'
+                : 'Time',
           }),
-          el('th', { text: mode === 'all-time' ? 'Personal Best' : 'Time' }),
         ]),
       ]),
       el(
@@ -695,6 +888,8 @@ function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = '
         {},
         rows.map((row) => {
           const isMe = currentLogin && row.login.toLowerCase() === currentLogin;
+          const avgTries =
+            row.roundsPlayed > 0 ? Math.round((row.totalWords / row.roundsPlayed) * 10) / 10 : row.bestScore;
           return el('tr', { class: isMe ? 'leaderboard-row-me' : '' }, [
             el('td', { class: 'rank-cell' }, [
               el('span', {
@@ -716,13 +911,23 @@ function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = '
             ]),
             el('td', {
               class: 'score-cell',
-              text: String(mode === 'all-time' ? row.totalWords : row.score),
+              text: String(
+                mode === 'all-time'
+                  ? isFigurePairs
+                    ? `${row.bestScore} tries`
+                    : row.totalWords
+                  : isFigurePairs
+                    ? `${row.score} tries`
+                    : row.score,
+              ),
             }),
             el('td', {
               class: 'meta-cell',
               text:
                 mode === 'all-time'
-                  ? `${row.bestScore} best · ${row.roundsPlayed}d`
+                  ? isFigurePairs
+                    ? `${avgTries} avg · ${row.roundsPlayed}d`
+                    : `${row.bestScore} best · ${row.roundsPlayed}d`
                   : formatDuration(row.elapsedMs ?? 120000),
             }),
           ]);
@@ -748,11 +953,12 @@ export function leaderboardView({
   onPlayToday,
   onBack,
 }) {
-  const isPeople = trainerId === 'famous-people';
+  const meta = LEADERBOARD_MODES[trainerId] ?? LEADERBOARD_MODES['word-rush'];
+  const isWordRush = trainerId === 'word-rush';
   const activeDate = selectedDate || today;
-  const challenge = !isPeople ? (wordRushTrainer?.getChallenge?.(activeDate, 'daily') ?? null) : null;
+  const challenge = isWordRush ? (wordRushTrainer?.getChallenge?.(activeDate, 'daily') ?? null) : null;
   const hasPlayedActiveDate = Boolean(
-    progress?.hasAttempt?.(trainerId, isPeople ? 'all' : 'daily', activeDate),
+    progress?.hasAttempt?.(trainerId, meta.variantKey, activeDate),
   );
   const dailyRows = leaderboard.dailyLeaderboard(activeDate, {
     trainerId,
@@ -771,51 +977,45 @@ export function leaderboardView({
     el('button', { type: 'button', class: 'ghost back', text: '← Back', onClick: onBack }),
     el('div', { class: 'leaderboard-hero' }, [
       el('div', {}, [
-        el('h1', { text: isPeople ? 'People Guesser Leaderboards' : 'Word Rush Leaderboards' }),
-        el('p', { class: 'muted' }, [
-          isPeople
-            ? 'Ranked by most people guessed today and all-time in People Guesser.'
-            : 'Ranked by the most words guessed in the 2-Minute Daily Word Rush.',
-        ]),
+        el('h1', { text: meta.heading }),
+        el('p', { class: 'muted' }, [meta.subtitle]),
       ]),
       onPlayToday
         ? el('button', {
             type: 'button',
             class: 'primary',
-            text: isPeople ? 'Play Today’s People Guesser' : 'Play Today’s Word Rush',
+            text: meta.playButton,
             onClick: () => onPlayToday(trainerId),
           })
         : null,
     ]),
 
     onSelectTrainer
-      ? el('div', { class: 'leaderboard-tabs', style: 'margin-bottom: 0.5rem;' }, [
-          el('button', {
-            type: 'button',
-            class: `tab-btn${!isPeople ? ' is-active' : ''}`,
-            text: 'Word Rush',
-            onClick: () => onSelectTrainer('word-rush'),
-          }),
-          el('button', {
-            type: 'button',
-            class: `tab-btn${isPeople ? ' is-active' : ''}`,
-            text: 'People Guesser',
-            onClick: () => onSelectTrainer('famous-people'),
-          }),
-        ])
+      ? el(
+          'div',
+          { class: 'leaderboard-tabs', style: 'margin-bottom: 0.5rem; flex-wrap: wrap;' },
+          Object.entries(LEADERBOARD_MODES).map(([id, modeMeta]) =>
+            el('button', {
+              type: 'button',
+              class: `tab-btn${trainerId === id ? ' is-active' : ''}`,
+              text: modeMeta.title,
+              onClick: () => onSelectTrainer(id),
+            }),
+          ),
+        )
       : null,
 
     el('div', { class: 'leaderboard-tabs' }, [
       el('button', {
         type: 'button',
         class: `tab-btn${tab === 'daily' ? ' is-active' : ''}`,
-        text: isPeople ? 'Most Guesses Today' : 'Daily Leaderboard',
+        text: meta.dailyTab,
         onClick: () => onSelectTab('daily'),
       }),
       el('button', {
         type: 'button',
         class: `tab-btn${tab === 'all-time' ? ' is-active' : ''}`,
-        text: isPeople ? 'All-Time Most Guesses' : 'All-Time Most Words',
+        text: meta.allTimeTab,
         onClick: () => onSelectTab('all-time'),
       }),
     ]),
@@ -851,9 +1051,7 @@ export function leaderboardView({
       : el('div', {}, [
           el('p', {
             class: 'muted leaderboard-caption',
-            text: isPeople
-              ? 'Cumulative people guessed and single-run personal bests across all daily People Guesser challenges.'
-              : 'Cumulative words discovered and single-round personal bests across all daily Word Rush challenges.',
+            text: meta.allTimeCaption,
           }),
           renderLeaderboardTable(allTimeRows, currentUser, 'all-time', trainerId),
         ]),

@@ -35,6 +35,13 @@ export function createLeaderboardStore({ storage }) {
         e.variantKey === result.variantKey,
     );
 
+    const isFigurePairs = result.trainerId === 'figure-pairs';
+    // For Figure Pairs, the user's leaderboard score is total tries (totalAnswered),
+    // or mistakes + pairs matched if totalAnswered is absent. Fewer tries = better!
+    const recordedScore = isFigurePairs
+      ? result.totalAnswered || (result.mistakes ?? 0) + (result.correctCount ?? 0)
+      : result.score;
+
     const record = {
       login: user.login,
       name: user.name || user.login,
@@ -42,7 +49,9 @@ export function createLeaderboardStore({ storage }) {
       puzzleDate: result.puzzleDate,
       trainerId: result.trainerId,
       variantKey: result.variantKey,
-      score: result.score,
+      score: recordedScore,
+      mistakes: result.mistakes ?? 0,
+      totalAnswered: result.totalAnswered ?? recordedScore,
       elapsedMs: result.elapsedMs,
       categoryLabel: result.wordRush?.categoryLabel ?? null,
       letter: result.wordRush?.letter ?? null,
@@ -50,7 +59,11 @@ export function createLeaderboardStore({ storage }) {
     };
 
     if (existingIdx >= 0) {
-      if (result.score >= state.entries[existingIdx].score) {
+      const prevScore = state.entries[existingIdx].score;
+      const isBetterOrEqual = isFigurePairs
+        ? recordedScore <= prevScore
+        : recordedScore >= prevScore;
+      if (isBetterOrEqual) {
         state.entries[existingIdx] = record;
       }
     } else {
@@ -64,6 +77,7 @@ export function createLeaderboardStore({ storage }) {
    * Get the daily leaderboard for a specific puzzleDate (defaults to Word Rush).
    */
   function dailyLeaderboard(puzzleDate, { trainerId = 'word-rush' } = {}) {
+    const isLowerBetter = trainerId === 'figure-pairs';
     const userEntries = state.entries.filter(
       (e) => e.puzzleDate === puzzleDate && e.trainerId === trainerId,
     );
@@ -72,20 +86,27 @@ export function createLeaderboardStore({ storage }) {
     for (const entry of userEntries) {
       const key = entry.login.toLowerCase();
       const prev = byLogin.get(key);
-      if (!prev || entry.score > prev.score) {
+      if (!prev) {
+        byLogin.set(key, { ...entry });
+      } else if (isLowerBetter ? entry.score < prev.score : entry.score > prev.score) {
         byLogin.set(key, { ...entry });
       }
     }
 
     return [...byLogin.values()]
-      .sort((a, b) => b.score - a.score || (a.elapsedMs ?? 120000) - (b.elapsedMs ?? 120000))
+      .sort((a, b) => {
+        const scoreDiff = isLowerBetter ? a.score - b.score : b.score - a.score;
+        if (scoreDiff !== 0) return scoreDiff;
+        return (a.elapsedMs ?? 120000) - (b.elapsedMs ?? 120000);
+      })
       .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
   }
 
   /**
-   * Get the all-time leaderboard (ranked by total words found and personal best).
+   * Get the all-time leaderboard.
    */
   function allTimeLeaderboard({ trainerId = 'word-rush' } = {}) {
+    const isLowerBetter = trainerId === 'figure-pairs';
     const userEntries = state.entries.filter((e) => e.trainerId === trainerId);
     const aggregatedUsers = new Map();
 
@@ -96,17 +117,25 @@ export function createLeaderboardStore({ storage }) {
         name: entry.name,
         avatarUrl: entry.avatarUrl,
         totalWords: 0,
-        bestScore: 0,
+        bestScore: isLowerBetter ? Infinity : 0,
         roundsPlayed: 0,
       };
       current.totalWords += entry.score;
-      current.bestScore = Math.max(current.bestScore, entry.score);
+      current.bestScore = isLowerBetter
+        ? Math.min(current.bestScore, entry.score)
+        : Math.max(current.bestScore, entry.score);
       current.roundsPlayed += 1;
       aggregatedUsers.set(key, current);
     }
 
     return [...aggregatedUsers.values()]
-      .sort((a, b) => b.totalWords - a.totalWords || b.bestScore - a.bestScore)
+      .sort((a, b) => {
+        if (isLowerBetter) {
+          // For Figure Pairs all-time: fewest best-run tries first, then most rounds completed
+          return a.bestScore - b.bestScore || b.roundsPlayed - a.roundsPlayed;
+        }
+        return b.totalWords - a.totalWords || b.bestScore - a.bestScore;
+      })
       .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
   }
 

@@ -321,6 +321,49 @@ function toPath(rings, centroidLat) {
   return parts.join('');
 }
 
+/**
+ * Convert a country's main cluster rings into a world-space SVG path in
+ * degrees (`x = lon`, `y = -lat`) and compute its geographic bounding box
+ * (`[minLon, minLat, maxLon, maxLat]`). Used by Border Hop's Travle-style
+ * interactive regional map so neighbouring countries share exact borders.
+ */
+function toWorldPath(rings) {
+  const unwrapped = rings.map((ring) => ring.map(([lon, lat]) => [lon, lat]));
+  const allLon = unwrapped.flat().map(([lon]) => lon);
+  if (Math.max(...allLon) - Math.min(...allLon) > 180) {
+    for (const ring of unwrapped) {
+      for (const point of ring) {
+        if (point[0] < 0) point[0] += 360;
+      }
+    }
+  }
+
+  const lons = unwrapped.flat().map(([lon]) => lon);
+  const lats = unwrapped.flat().map(([, lat]) => lat);
+  const minLon = Number(Math.min(...lons).toFixed(2));
+  const maxLon = Number(Math.max(...lons).toFixed(2));
+  const minLat = Number(Math.min(...lats).toFixed(2));
+  const maxLat = Number(Math.max(...lats).toFixed(2));
+
+  const areas = unwrapped.map((ring) => Math.abs(signedArea(ring)));
+  const biggest = Math.max(...areas, 1e-9);
+
+  const parts = [];
+  unwrapped.forEach((ring, index) => {
+    if (areas[index] / biggest < MIN_RING_AREA_RATIO) return;
+    const projected = ring.map(([lon, lat]) => [lon, -lat]);
+    const reduced = simplify(projected, 0.03);
+    if (reduced.length < 3) return;
+    const coords = reduced.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
+    parts.push(`M${coords.join('L')}Z`);
+  });
+
+  return {
+    worldPath: parts.join(''),
+    bbox: [minLon, minLat, maxLon, maxLat],
+  };
+}
+
 // --- Main ------------------------------------------------------------------
 
 function loadTopo(path) {
@@ -410,7 +453,8 @@ for (const country of countries) {
     missing.push(country.name);
     continue;
   }
-  outlines[country.name] = { d, centroid };
+  const { worldPath, bbox } = toWorldPath(rings);
+  outlines[country.name] = { d, centroid, worldPath, bbox };
 }
 
 const output = {

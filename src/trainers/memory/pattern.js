@@ -54,6 +54,15 @@ export function maxLevelFor(boardSize) {
 }
 
 /**
+ * Deterministically pick today's starting board size from the daily seed so the
+ * grid size varies each day (3×3, 4×4, 5×5 or 6×6).
+ */
+export function dailyBoardSizeFor(puzzleDate = '2026-11-15') {
+  const rng = createRng(seedFor('pattern-memory-board', 'daily', puzzleDate));
+  return rng.pick(BOARD_SIZES);
+}
+
+/**
  * Build one level.
  *
  * Pure in seed and level number (NFR-5), so level 50 can be asserted without
@@ -72,10 +81,11 @@ export function buildLevel(rng, boardSize, level) {
   return {
     kind: 'grid',
     key: `level-${level}`,
-    question: `Level ${level}`,
+    question: `Level ${level} (${board.columns}×${board.rows})`,
     answer: indices.slice().sort((a, b) => a - b),
     level,
     tileCount,
+    boardSize,
     columns: board.columns,
     rows: board.rows,
     cellCount: board.cells,
@@ -85,13 +95,17 @@ export function buildLevel(rng, boardSize, level) {
 
 export const patternMemoryTrainer = {
   id: 'pattern-memory',
-  categoryId: 'memory',
+  categoryId: 'pattern-memory',
   name: 'Pattern Memory',
   description:
-    'A pattern lights up on a grid. Reproduce it. Every level adds one tile, and it never stops.',
+    'One daily run with zero mistakes allowed. The grid size varies each day (3×3 to 6×6) — memorize the lit pattern and reproduce as many levels as possible!',
   roundMode: 'lives',
-  variantKind: 'boardSize',
-  variants: [...BOARD_SIZES],
+  variantKind: 'pool',
+  variants: ['daily'],
+  variantLabels: {
+    daily: 'Daily Pattern Memory',
+  },
+  noPractice: true,
   scoreDirection: 'higher',
   headlineScore: 'maxLevel',
   renderer: 'grid',
@@ -99,27 +113,10 @@ export const patternMemoryTrainer = {
   modeParam: 1,
   topics: [],
 
-  practiceFilters: {
-    boardSize: {
-      label: 'Board size',
-      kind: 'single',
-      options: BOARD_SIZES.map((id) => ({ id, label: id.replace('x', '×') })),
-      default: '4x4',
-    },
-    displayMs: {
-      label: 'Display time',
-      kind: 'single',
-      options: [
-        { id: 1200, label: 'Fast — 1.2 s' },
-        { id: 2200, label: 'Normal — 2.2 s' },
-        { id: 3500, label: 'Slow — 3.5 s' },
-      ],
-      default: 2200,
-    },
-  },
-
-  createGenerator({ puzzleDate, variantKey, practice = false, filters = null }) {
-    const boardSize = practice ? (filters?.boardSize ?? variantKey) : variantKey;
+  createGenerator({ puzzleDate, variantKey = 'daily', practice = false, filters = null }) {
+    const explicitBoard = parseBoardSize(variantKey) ? variantKey : null;
+    const baseBoardSize = explicitBoard ?? (practice ? (filters?.boardSize ?? '4x4') : dailyBoardSizeFor(puzzleDate));
+    const boardStartIndex = Math.max(0, BOARD_SIZES.indexOf(baseBoardSize));
     const rng = createRng(
       practice ? practiceSeed() : seedFor(this.id, variantKey, puzzleDate),
     );
@@ -128,10 +125,45 @@ export const patternMemoryTrainer = {
     return {
       next() {
         level += 1;
-        const prompt = buildLevel(rng, boardSize, level);
-        if (!prompt) return null;
-        if (practice && filters?.displayMs) prompt.displayMs = filters.displayMs;
-        return prompt;
+        // If the round uses an explicit board size (e.g. unit tests for '3x3'), respect its capacity cap.
+        if (explicitBoard) {
+          const prompt = buildLevel(rng, explicitBoard, level);
+          if (!prompt) return null;
+          if (practice && filters?.displayMs) prompt.displayMs = filters.displayMs;
+          return prompt;
+        }
+
+        // In the daily endless run, start at today's daily board size and step up if the player exceeds its capacity.
+        let activeIdx = boardStartIndex;
+        while (
+          activeIdx < BOARD_SIZES.length - 1 &&
+          level > maxLevelFor(BOARD_SIZES[activeIdx])
+        ) {
+          activeIdx += 1;
+        }
+        const activeBoard = BOARD_SIZES[activeIdx];
+        const effectiveTileCount = Math.min(
+          tilesForLevel(level),
+          Math.floor((parseBoardSize(activeBoard)?.cells ?? 36) * MAX_FILL_RATIO),
+        );
+        const board = parseBoardSize(activeBoard);
+        const indices = rng.sample(
+          Array.from({ length: board.cells }, (_, index) => index),
+          effectiveTileCount,
+        );
+        return {
+          kind: 'grid',
+          key: `level-${level}`,
+          question: `Level ${level} (${board.columns}×${board.rows} Grid)`,
+          answer: indices.slice().sort((a, b) => a - b),
+          level,
+          tileCount: effectiveTileCount,
+          boardSize: activeBoard,
+          columns: board.columns,
+          rows: board.rows,
+          cellCount: board.cells,
+          displayMs: DISPLAY_MS[activeBoard] ?? 2200,
+        };
       },
     };
   },

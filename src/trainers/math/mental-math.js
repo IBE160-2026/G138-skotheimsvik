@@ -244,36 +244,46 @@ export function topicsForBand(band) {
   return (TOPIC_WEIGHTS[band] ?? []).map(([topicId]) => topicId);
 }
 
+export const MATH_TIME_LIMIT_SECONDS = 20;
+
+/**
+ * Map how many questions the player has answered correctly so far onto an
+ * escalating difficulty band so questions get harder as the streak grows.
+ */
+export function bandForCorrectCount(correctCount = 0) {
+  if (correctCount < 4) return 'beginner';
+  if (correctCount < 9) return 'intermediate';
+  if (correctCount < 15) return 'advanced';
+  return 'expert';
+}
+
 export const mentalMathTrainer = {
   id: 'mental-math',
   categoryId: 'math',
-  name: 'Mental Math Sprint',
-  description: 'Answer as many arithmetic prompts as you can before the clock runs out.',
-  roundMode: 'timed',
-  variantKind: 'band',
+  name: 'Math Blitz',
+  description:
+    'One daily run with 3 lives and 20 seconds per question. Questions escalate from simple sums to algebra and trigonometry the further your streak goes!',
+  roundMode: 'lives',
+  modeParam: 3,
+  promptTimeLimitSeconds: MATH_TIME_LIMIT_SECONDS,
+  variantKind: 'pool',
+  variants: ['daily'],
+  variantLabels: {
+    daily: 'Daily Math Blitz',
+  },
   scoreDirection: 'higher',
   headlineScore: 'correct',
   renderer: 'prompt',
-  scoreLabel: 'Correct answers',
+  scoreLabel: 'Questions solved',
   topics: Object.entries(TOPICS).map(([id, label]) => ({ id, label })),
 
   /** Practice may switch any topic on or off (FR-52). */
   practiceFilters: {
     topics: {
-      label: 'Topics',
+      label: 'Question types to practise',
       kind: 'multi',
       options: Object.entries(TOPICS).map(([id, label]) => ({ id, label })),
-      default: topicsForBand('intermediate'),
-    },
-    durationSec: {
-      label: 'Round length',
-      kind: 'single',
-      options: [
-        { id: 30, label: '30 seconds' },
-        { id: 60, label: '60 seconds' },
-        { id: 120, label: '2 minutes' },
-      ],
-      default: 60,
+      default: Object.keys(TOPICS),
     },
   },
 
@@ -287,28 +297,47 @@ export const mentalMathTrainer = {
   },
 
   /** Lazy, seeded prompt supply (FR-23, FR-30). */
-  createGenerator({ puzzleDate, variantKey, practice = false, filters = null }) {
+  createGenerator({ puzzleDate, variantKey = 'daily', practice = false, filters = null }) {
     const rng = createRng(
       practice ? practiceSeed() : seedFor(this.id, variantKey, puzzleDate),
     );
-    const range = RANGES[variantKey] ?? RANGES.intermediate;
 
-    // Daily rounds use the band's weights untouched; practice narrows them to
-    // the chosen topics, keeping each topic's relative weight where it has one.
-    let weights = TOPIC_WEIGHTS[variantKey] ?? TOPIC_WEIGHTS.intermediate;
-    if (practice && Array.isArray(filters?.topics)) {
-      const chosen = new Set(filters.topics);
-      weights = [...chosen].map((topicId) => {
-        const banded = weights.find(([id]) => id === topicId);
-        return [topicId, banded ? banded[1] : 2];
-      });
-    }
+    const explicitBand = ['beginner', 'intermediate', 'advanced', 'expert'].includes(variantKey)
+      ? variantKey
+      : null;
 
     return {
-      next() {
+      next(context = {}) {
+        const correctCount = context?.correctCount ?? 0;
+        const activeBand = explicitBand ?? bandForCorrectCount(correctCount);
+        const range = RANGES[activeBand] ?? RANGES.intermediate;
+
+        let weights = TOPIC_WEIGHTS[activeBand] ?? TOPIC_WEIGHTS.intermediate;
+        if (practice && Array.isArray(filters?.topics)) {
+          const chosen = new Set(filters.topics);
+          weights = [...chosen]
+            .filter((topicId) => Boolean(BUILDERS[topicId]))
+            .map((topicId) => {
+              const banded = weights.find(([id]) => id === topicId);
+              return [topicId, banded ? banded[1] : 2];
+            });
+        }
+
         if (weights.length === 0) return null;
         const topicId = rng.weighted(weights);
-        return BUILDERS[topicId](rng, range, variantKey);
+        const prompt = BUILDERS[topicId](rng, range, activeBand);
+        const tierLabel =
+          activeBand === 'beginner'
+            ? 'Tier 1 · Warm-up'
+            : activeBand === 'intermediate'
+              ? 'Tier 2 · Intermediate'
+              : activeBand === 'advanced'
+                ? 'Tier 3 · Advanced'
+                : 'Tier 4 · Expert';
+        return {
+          ...prompt,
+          prefix: `${tierLabel} · ${TOPICS[topicId]}`,
+        };
       },
     };
   },

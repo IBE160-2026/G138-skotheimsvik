@@ -37,7 +37,7 @@ function createId() {
  */
 export function createRound({ trainer, variantKey, puzzleDate, generator, clock, practice = false }) {
   const roundMode = trainer.roundMode;
-  const modeParam = modeParamFor(trainer, variantKey);
+  const modeParam = modeParamFor(trainer, variantKey, puzzleDate);
   const scoreboard = createScoreboard();
 
   /** @type {RoundState} */
@@ -282,6 +282,15 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
       if (roundMode === 'lives' && livesRemaining <= 0) {
         finish('lives-exhausted');
         feedback.ended = true;
+        return feedback;
+      }
+
+      // Single-target lives puzzles (Flag Guesser, Country Guesser, Capital Guesser)
+      // keep the same mystery target after a wrong guess while lives remain.
+      if (roundMode === 'lives' && !isCorrect && prompt?.stayOnWrongGuess) {
+        feedback.ended = false;
+        feedback.next = currentPrompt;
+        promptShownAtMs = clock.now();
         return feedback;
       }
 

@@ -334,11 +334,19 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       return;
     }
 
+    const stayOnSamePrompt = Boolean(
+      feedback.status === 'incorrect' && prompt?.stayOnWrongGuess,
+    );
+
     busy = true;
     setTimeout(() => {
       busy = false;
-      hints = [];
-      guessesUsed = 0;
+      if (stayOnSamePrompt) {
+        guessesUsed += 1;
+      } else {
+        hints = [];
+        guessesUsed = 0;
+      }
       drawPrompt();
     }, FEEDBACK_MS);
   }
@@ -373,7 +381,13 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       ? '✓ Correct'
       : feedback.timedOut
         ? `⏱ Time's up! — ${feedback.expected}`
-        : `✗ Wrong — ${feedback.expected}`;
+        : prompt?.hideExpectedOnWrong && !feedback.ended
+          ? prompt?.hintable && hints.length > 0
+            ? `✗ Not "${lastValue}" — ${hints[hints.length - 1].distanceKm.toLocaleString()} km ${hints[hints.length - 1].direction} ${hints[hints.length - 1].arrow}`
+            : Array.isArray(prompt?.capitalHints)
+              ? `✗ Not "${lastValue}" — new clue unlocked below!`
+              : `✗ Not "${lastValue}" — try again!`
+          : `✗ Wrong — ${feedback.expected}`;
 
     if (prompt?.kind === 'connection-grid' && Array.isArray(lastValue)) {
       const pickNorm = new Set(lastValue.map((w) => normaliseText(w)));
@@ -692,6 +706,11 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     render(
       promptBody,
+      prompt.difficultyLabel
+        ? el('p', { class: 'topic-chip' }, [
+            el('span', { class: 'badge', text: `Today’s Difficulty: ${prompt.difficultyLabel}` }),
+          ])
+        : null,
       flagNode,
       el('p', { class: 'question', text: prompt.question }),
       answerArea(prompt),
@@ -711,6 +730,11 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     render(
       promptBody,
+      prompt.difficultyLabel
+        ? el('p', { class: 'topic-chip' }, [
+            el('span', { class: 'badge', text: `Today’s Difficulty: ${prompt.difficultyLabel}` }),
+          ])
+        : null,
       el('div', { class: 'outline-display' }, [svg]),
       el('p', { class: 'question', text: prompt.question }),
       prompt.maxGuesses > 1
@@ -721,6 +745,128 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         : null,
       answerArea(prompt),
       hintList(),
+    );
+  }
+
+  /**
+   * Build a crisp, illustrated city skyline SVG fallback so a capital city
+   * always displays a visual scene even if Wikipedia REST API is offline.
+   */
+  function buildCapitalSkylineDataUri(continent = 'World') {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0f172a"/>
+          <stop offset="65%" stop-color="#1e293b"/>
+          <stop offset="100%" stop-color="#334155"/>
+        </linearGradient>
+      </defs>
+      <rect width="640" height="360" fill="url(#sky)"/>
+      <circle cx="510" cy="82" r="34" fill="rgba(250,204,21,0.22)"/>
+      <path d="M0 290 L55 290 L55 210 L95 210 L95 290 L120 290 L120 155 L170 155 L170 290 L195 290 L195 185 L245 185 L245 290 L280 290 L280 120 L300 95 L320 120 L320 290 L350 290 L350 170 L405 170 L405 290 L435 290 L435 140 L485 140 L485 290 L520 290 L520 200 L570 200 L570 290 L640 290 L640 360 L0 360 Z" fill="#0b1120"/>
+      <text x="320" y="334" text-anchor="middle" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="15" font-weight="600" letter-spacing="2">MYSTERY CAPITAL CITY · ${String(continent).toUpperCase()}</text>
+    </svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  let capitalPhotoCache = { key: null, src: null };
+
+  /**
+   * Capital Guesser — shows a photo of the capital city at the start, and
+   * reveals up to 3 progressive hints as the player makes wrong guesses:
+   *   1st wrong guess: Closest / major other city in the same country
+   *   2nd wrong guess: Fun fact about the capital city
+   *   3rd wrong guess: Which country the capital belongs to
+   */
+  function renderCapital(prompt) {
+    const fallbackSkyline = buildCapitalSkylineDataUri(prompt.topicLabel);
+    const initialSrc =
+      capitalPhotoCache.key === prompt.key && capitalPhotoCache.src
+        ? capitalPhotoCache.src
+        : fallbackSkyline;
+
+    const imgEl = el('img', {
+      class: 'capital-photo-image',
+      src: initialSrc,
+      alt: 'Photograph of the mystery capital city',
+      loading: 'eager',
+      decoding: 'async',
+      style:
+        'width: 100%; max-width: 520px; height: 240px; object-fit: cover; border-radius: 12px; display: block; margin: 0 auto;',
+      onError: (e) => {
+        const img = e.currentTarget;
+        if (img.dataset.fallbackApplied) return;
+        img.dataset.fallbackApplied = 'true';
+        img.src = fallbackSkyline;
+      },
+    });
+
+    if (
+      capitalPhotoCache.key !== prompt.key &&
+      prompt.capitalName &&
+      typeof globalThis.fetch === 'function'
+    ) {
+      const title = encodeURIComponent(String(prompt.capitalName).replace(/\s+/g, '_'));
+      globalThis
+        .fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          const thumb = data?.originalimage?.source || data?.thumbnail?.source;
+          if (thumb) {
+            capitalPhotoCache = { key: prompt.key, src: thumb };
+            imgEl.src = thumb;
+          }
+        })
+        .catch(() => {});
+    }
+
+    const allHints = Array.isArray(prompt.capitalHints) ? prompt.capitalHints : [];
+    const unlockedCount = Math.min(guessesUsed, allHints.length);
+
+    const hintCards = allHints.map((item, idx) => {
+      const isUnlocked = idx < unlockedCount;
+      return el(
+        'div',
+        {
+          class: `card capital-hint-card${isUnlocked ? ' is-unlocked' : ' is-locked'}`,
+          style: 'padding: 0.75rem 1rem; margin-bottom: 0.5rem; text-align: left;',
+        },
+        [
+          el('div', {
+            class: 'muted small',
+            style: 'font-weight: 600; margin-bottom: 0.2rem;',
+            text: item.label,
+          }),
+          el('div', {
+            style: isUnlocked ? 'font-weight: 600;' : 'opacity: 0.65; font-style: italic;',
+            text: isUnlocked
+              ? item.text
+              : `Locked — unlocked after mistake #${idx + 1}`,
+          }),
+        ],
+      );
+    });
+
+    render(
+      promptBody,
+      prompt.difficultyLabel
+        ? el('p', { class: 'topic-chip' }, [
+            el('span', { class: 'badge', text: `Today’s Difficulty: ${prompt.difficultyLabel}` }),
+          ])
+        : null,
+      el('figure', { class: 'capital-photo-frame', style: 'margin: 0 0 1rem 0;' }, [imgEl]),
+      el('p', { class: 'question', text: prompt.question }),
+      prompt.formatHint ? el('p', { class: 'format-hint', text: prompt.formatHint }) : null,
+      answerArea(prompt),
+      el(
+        'div',
+        {
+          class: 'capital-hints-list',
+          'aria-label': 'Capital city progressive hints',
+          style: 'margin-top: 1rem;',
+        },
+        hintCards,
+      ),
     );
   }
 
@@ -782,10 +928,15 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     render(
       promptBody,
+      prompt.boardSizeLabel
+        ? el('p', { class: 'topic-chip' }, [
+            el('span', { class: 'badge', text: `Board: ${prompt.boardSizeLabel}` }),
+          ])
+        : null,
       el('p', { class: 'level-label', text: `Level ${prompt.level}` }),
       el('p', {
         class: 'format-hint',
-        text: 'Watch the pattern, then reproduce it. Arrow keys move, Space selects, Enter submits.',
+        text: 'Watch the pattern, then reproduce it. One wrong tile ends the run!',
       }),
       grid,
       submitButton,
@@ -899,13 +1050,18 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     render(
       promptBody,
+      prompt.boardSizeLabel
+        ? el('p', { class: 'topic-chip' }, [
+            el('span', { class: 'badge', text: `Today’s Board: ${prompt.boardSizeLabel}` }),
+          ])
+        : null,
       el('p', {
         class: 'level-label',
-        text: `${prompt.pairsMatched} of ${prompt.pairsTotal} pairs matched`,
+        text: `${prompt.pairsMatched} of ${prompt.pairsTotal} pairs matched · ${round.stats().totalAnswered} ${round.stats().totalAnswered === 1 ? 'try' : 'tries'}`,
       }),
       el('p', {
         class: 'format-hint',
-        text: 'Turn two cards. Arrow keys move, Space turns a card.',
+        text: 'Turn two cards. Complete all pairs in as few attempts as possible.',
       }),
       board,
     );
@@ -1106,49 +1262,119 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   }
 
   /**
-   * Border Hop — step-by-step overland route between two countries.
+   * Border Hop — Travle-style live regional map where you see the starting country
+   * and destination country in their real geographic positions, and every country
+   * you guess is added onto the map in real time to visually bridge the route.
    */
   function renderBorderHop(prompt) {
     const pathTaken = prompt.pathTaken ?? [prompt.startCountry];
+    const wrongGuesses = prompt.wrongGuesses ?? [];
+    const mapCountries = Array.isArray(prompt.mapCountries) ? prompt.mapCountries : [];
 
-    function flagBadge(code, name) {
+    function buildRegionalMapSvg() {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', prompt.mapViewBox || '-20 -60 60 50');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.setAttribute('class', 'border-hop-live-map-svg');
+      svg.setAttribute('role', 'img');
+      svg.setAttribute(
+        'aria-label',
+        `Live route map from ${prompt.startCountry} to ${prompt.targetCountry}`,
+      );
+
+      // Draw dashed connector line between start centroid, current centroid, and target centroid
+      const startEntry = mapCountries.find((c) => c.role === 'start');
+      const currentEntry =
+        mapCountries.find((c) => c.role === 'current') ?? startEntry;
+      const targetEntry = mapCountries.find((c) => c.role === 'target');
+
+      if (currentEntry?.centroid && targetEntry?.centroid) {
+        const [cLat, cLon] = currentEntry.centroid;
+        const [tLat, tLon] = targetEntry.centroid;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', String(cLon));
+        line.setAttribute('y1', String(-cLat));
+        line.setAttribute('x2', String(tLon));
+        line.setAttribute('y2', String(-tLat));
+        line.setAttribute('class', 'border-hop-map-connector');
+        line.setAttribute('vector-effect', 'non-scaling-stroke');
+        svg.append(line);
+      }
+
+      for (const country of mapCountries) {
+        if (!country.worldPath) continue;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', `border-hop-map-country is-${country.role}`);
+
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = country.name;
+        g.append(title);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', country.worldPath);
+        path.setAttribute('fill-rule', 'evenodd');
+        path.setAttribute('vector-effect', 'non-scaling-stroke');
+        g.append(path);
+        svg.append(g);
+      }
+
+      return svg;
+    }
+
+    function endpointPill(roleLabel, code, name, roleClass) {
       const lower = String(code ?? '').toLowerCase();
-      return el('span', { class: 'border-hop-country-chip' }, [
-        lower
-          ? el('img', {
-              src: `https://flagcdn.com/w40/${lower}.png`,
-              alt: '',
-              width: '22',
-              height: '15',
-              class: 'border-hop-mini-flag',
-            })
-          : null,
-        el('strong', { text: name }),
+      return el('div', { class: `border-hop-endpoint ${roleClass}` }, [
+        el('span', { class: 'word-rush-pill-label', text: roleLabel }),
+        el('span', { class: 'border-hop-country-chip' }, [
+          lower
+            ? el('img', {
+                src: `https://flagcdn.com/w40/${lower}.png`,
+                alt: '',
+                width: '22',
+                height: '15',
+                class: 'border-hop-mini-flag',
+              })
+            : null,
+          el('strong', { text: name }),
+        ]),
       ]);
     }
 
     render(
       promptBody,
+      prompt.difficultyLabel
+        ? el('p', { class: 'topic-chip' }, [
+            el('span', { class: 'badge', text: `Today’s Route: ${prompt.difficultyLabel}` }),
+          ])
+        : null,
       el('div', { class: 'border-hop-header' }, [
-        el('p', { class: 'prompt-prefix', text: 'Overland Border Route' }),
+        el('p', {
+          class: 'prompt-prefix',
+          text: `Today I’d like to travel overland from ${prompt.startCountry} to ${prompt.targetCountry}`,
+        }),
         el('div', { class: 'border-hop-endpoints' }, [
-          el('div', { class: 'border-hop-endpoint' }, [
-            el('span', { class: 'word-rush-pill-label', text: 'Start' }),
-            flagBadge(prompt.startCode, prompt.startCountry),
-          ]),
+          endpointPill('Start', prompt.startCode, prompt.startCountry, 'is-start-pill'),
           el('span', { class: 'border-hop-arrow', text: '➔' }),
-          el('div', { class: 'border-hop-endpoint' }, [
-            el('span', { class: 'word-rush-pill-label', text: 'Destination' }),
-            flagBadge(prompt.targetCode, prompt.targetCountry),
+          endpointPill('Destination', prompt.targetCode, prompt.targetCountry, 'is-target-pill'),
+        ]),
+        el('div', { class: 'border-hop-map-stage' }, [
+          buildRegionalMapSvg(),
+          el('div', { class: 'border-hop-map-legend' }, [
+            el('span', { class: 'border-hop-legend-item is-start', text: `● Start (${prompt.startCountry})` }),
+            el('span', { class: 'border-hop-legend-item is-step', text: '● Connected Route' }),
+            wrongGuesses.length > 0
+              ? el('span', { class: 'border-hop-legend-item is-wrong', text: '● Off-route Guess' })
+              : null,
+            el('span', { class: 'border-hop-legend-item is-target', text: `● Destination (${prompt.targetCountry})` }),
           ]),
         ]),
         el('p', {
           class: 'format-hint',
-          text: `Shortest route: ${prompt.optimalSteps} border crossings. Currently in ${prompt.currentCountry} — name a bordering country to move closer to ${prompt.targetCountry}!`,
+          text: `Shortest route: ${prompt.optimalSteps} border crossings. Currently at ${prompt.currentCountry} — enter a bordering country to build your path on the map!`,
         }),
       ]),
       el('div', { class: 'border-hop-trail' }, [
-        el('span', { class: 'word-rush-pill-label', text: 'Your Route So Far:' }),
+        el('span', { class: 'word-rush-pill-label', text: 'Past Guesses & Connected Route:' }),
         el(
           'div',
           { class: 'border-hop-steps' },
@@ -1156,7 +1382,13 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
             ...pathTaken.map((countryName, idx) =>
               el('span', {
                 class: `word-rush-chip is-found${idx === pathTaken.length - 1 ? ' is-current-hop' : ''}`,
-                text: `${idx === 0 ? '📍 ' : '→ '}${countryName}`,
+                text: `${idx === 0 ? '📍 ' : '✓ '}${countryName}`,
+              }),
+            ),
+            ...wrongGuesses.map((wrongName) =>
+              el('span', {
+                class: 'word-rush-chip is-wrong-hop',
+                text: `✗ ${wrongName}`,
               }),
             ),
             el('span', {
@@ -1171,66 +1403,219 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   }
 
   /**
-   * Timeline Sort — place the event card in the right chronological slot.
+   * Timeline Sort — Timdle-style interactive drag-and-drop timeline where the
+   * player drags the statement card directly onto the chronological timeline
+   * track (or drops/clicks a time slot along the timeline) to place it.
    */
   function renderTimelineSort(prompt) {
     const timeline = prompt.timeline ?? [];
     const card = prompt.card;
+    let activeDropSlot = null;
 
-    function slotButton(slotIndex, label) {
-      return el('button', {
-        type: 'button',
-        class: 'timeline-slot-btn',
-        onClick: () => {
-          lastValue = String(slotIndex);
-          handleSubmit(String(slotIndex));
-        },
-        text: label,
-      });
+    function submitSlot(slotIndex) {
+      lastValue = String(slotIndex);
+      handleSubmit(String(slotIndex));
     }
 
-    const items = [];
-    items.push(
-      slotButton(0, `Place Before ${timeline[0]?.formattedYear ?? ''}`),
+    function setHighlightSlot(slotIndex) {
+      activeDropSlot = slotIndex;
+      const allZones = promptBody?.querySelectorAll('.timeline-drop-zone') ?? [];
+      for (const z of allZones) {
+        const isMatch = Number(z.dataset.slotIndex) === slotIndex;
+        z.classList.toggle('is-drag-over', isMatch);
+      }
+    }
+
+    function makeDropZone(slotIndex, timeHintLabel) {
+      const zone = el(
+        'div',
+        {
+          class: 'timeline-drop-zone',
+          dataset: { slotIndex: String(slotIndex) },
+          role: 'button',
+          tabindex: '0',
+          'aria-label': `Drop or place card ${timeHintLabel}`,
+          onDragover: (e) => {
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            setHighlightSlot(slotIndex);
+          },
+          onDragenter: (e) => {
+            e.preventDefault();
+            setHighlightSlot(slotIndex);
+          },
+          onDragleave: (e) => {
+            if (!zone.contains(e.relatedTarget)) {
+              zone.classList.remove('is-drag-over');
+            }
+          },
+          onDrop: (e) => {
+            e.preventDefault();
+            zone.classList.remove('is-drag-over');
+            submitSlot(slotIndex);
+          },
+          onClick: () => submitSlot(slotIndex),
+          onKeydown: (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              submitSlot(slotIndex);
+            }
+          },
+        },
+        [
+          el('span', { class: 'timeline-drop-dot', 'aria-hidden': 'true' }),
+          el('span', { class: 'timeline-drop-text', text: `Drop here · ${timeHintLabel}` }),
+        ],
+      );
+      return zone;
+    }
+
+    const candidateEl = el(
+      'div',
+      {
+        class: 'timeline-candidate-card is-draggable',
+        draggable: 'true',
+        'aria-grabbed': 'false',
+        onDragstart: (e) => {
+          candidateEl.classList.add('is-dragging');
+          candidateEl.setAttribute('aria-grabbed', 'true');
+          promptBody?.querySelector('.timeline-track')?.classList.add('is-dragging-active');
+          if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', card.title);
+          }
+        },
+        onDragend: () => {
+          candidateEl.classList.remove('is-dragging');
+          candidateEl.setAttribute('aria-grabbed', 'false');
+          promptBody?.querySelector('.timeline-track')?.classList.remove('is-dragging-active');
+          setHighlightSlot(null);
+        },
+      },
+      [
+        el('div', { class: 'timeline-candidate-top' }, [
+          el('span', { class: 'badge', text: card.category }),
+          el('span', { class: 'timeline-drag-handle', text: '⠿ Drag onto timeline' }),
+        ]),
+        el('h2', { class: 'timeline-candidate-title', text: card.title }),
+        el('p', {
+          class: 'muted small timeline-candidate-sub',
+          text: 'Drag this statement card to the right point on the timeline below (or tap a time slot).',
+        }),
+      ],
+    );
+
+    // Touch / pointer drag support so mobile & mouse users can drag smoothly even without HTML5 DnD
+    let pointerDragging = false;
+    let ghostEl = null;
+
+    candidateEl.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      // Let native HTML5 drag handle desktop mouse if supported, use pointer tracking for touch/pen
+      if (e.pointerType === 'mouse') return;
+      e.preventDefault();
+      pointerDragging = true;
+      candidateEl.classList.add('is-dragging');
+      promptBody?.querySelector('.timeline-track')?.classList.add('is-dragging-active');
+
+      ghostEl = el('div', {
+        class: 'timeline-drag-ghost',
+        text: card.title,
+        style: `left: ${e.clientX}px; top: ${e.clientY}px;`,
+      });
+      document.body.append(ghostEl);
+
+      const onMove = (moveEvent) => {
+        if (!pointerDragging) return;
+        if (ghostEl) {
+          ghostEl.style.left = `${moveEvent.clientX}px`;
+          ghostEl.style.top = `${moveEvent.clientY}px`;
+        }
+        const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+        const zone = target?.closest?.('.timeline-drop-zone');
+        if (zone && zone.dataset.slotIndex !== undefined) {
+          setHighlightSlot(Number(zone.dataset.slotIndex));
+        } else {
+          setHighlightSlot(null);
+        }
+      };
+
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        if (ghostEl) {
+          ghostEl.remove();
+          ghostEl = null;
+        }
+        candidateEl.classList.remove('is-dragging');
+        promptBody?.querySelector('.timeline-track')?.classList.remove('is-dragging-active');
+        const chosen = activeDropSlot;
+        setHighlightSlot(null);
+        pointerDragging = false;
+        if (chosen !== null) {
+          submitSlot(chosen);
+        }
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+    });
+
+    const trackItems = [];
+    trackItems.push(
+      makeDropZone(0, `Earlier than ${timeline[0]?.formattedYear ?? ''}`),
     );
 
     for (let i = 0; i < timeline.length; i += 1) {
       const ev = timeline[i];
-      items.push(
-        el('div', { class: 'timeline-placed-card' }, [
-          el('span', { class: 'timeline-year-badge', text: ev.formattedYear }),
-          el('div', { class: 'timeline-placed-info' }, [
-            el('strong', { text: ev.title }),
-            el('span', { class: 'muted small', text: ev.category }),
+      trackItems.push(
+        el('div', { class: 'timeline-node' }, [
+          el('div', { class: 'timeline-node-marker' }, [
+            el('span', { class: 'timeline-year-badge', text: ev.formattedYear }),
+          ]),
+          el('div', { class: 'timeline-placed-card' }, [
+            el('div', { class: 'timeline-placed-info' }, [
+              el('strong', { text: ev.title }),
+              el('span', { class: 'muted small', text: ev.category }),
+            ]),
           ]),
         ]),
       );
 
       if (i < timeline.length - 1) {
-        items.push(
-          slotButton(
+        trackItems.push(
+          makeDropZone(
             i + 1,
-            `Place Between ${ev.formattedYear} & ${timeline[i + 1].formattedYear}`,
+            `${ev.formattedYear} — ${timeline[i + 1].formattedYear}`,
           ),
         );
       } else {
-        items.push(
-          slotButton(timeline.length, `Place After ${ev.formattedYear}`),
+        trackItems.push(
+          makeDropZone(timeline.length, `Later than ${ev.formattedYear}`),
         );
       }
     }
 
     render(
       promptBody,
-      el('div', { class: 'timeline-candidate-card' }, [
-        el('span', { class: 'badge', text: card.category }),
-        el('p', { class: 'prompt-prefix', text: 'Where on the timeline does this belong?' }),
-        el('h2', { class: 'timeline-candidate-title', text: card.title }),
-      ]),
+      candidateEl,
       el(
         'div',
-        { class: 'timeline-rail', role: 'group', 'aria-label': 'Timeline placement slots' },
-        items,
+        {
+          class: 'timeline-track',
+          role: 'group',
+          'aria-label': 'Chronological timeline',
+        },
+        [
+          el('div', { class: 'timeline-axis-header' }, [
+            el('span', { class: 'muted small', text: '← Earliest in History' }),
+            el('span', { class: 'muted small', text: `${timeline.length} ${timeline.length === 1 ? 'event' : 'events'} on timeline` }),
+            el('span', { class: 'muted small', text: 'Most Recent →' }),
+          ]),
+          el('div', { class: 'timeline-rail' }, trackItems),
+        ],
       ),
     );
   }
@@ -1339,6 +1724,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     portrait: renderPortrait,
     flag: renderFlag,
     outline: renderOutline,
+    capital: renderCapital,
     grid: renderGrid,
     pairs: renderPairs,
     'word-rush': renderWordRush,

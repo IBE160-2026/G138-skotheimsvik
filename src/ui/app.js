@@ -11,6 +11,7 @@ import { createClock } from '../core/clock.js';
 import { createProgressStore } from '../core/progress.js';
 import { buildGitHubAuthorizeUrl, createAuthStore } from '../core/auth.js';
 import { createLeaderboardStore } from '../core/leaderboard.js';
+import { createPreferencesStore } from '../core/preferences.js';
 import { createRound } from '../core/round.js';
 import { listArchive, isValidPuzzleDate } from '../core/archive.js';
 import { variantsFor } from '../core/variants.js';
@@ -39,6 +40,7 @@ const storage = createStorage();
 const progress = createProgressStore({ storage });
 const auth = createAuthStore({ storage });
 const leaderboard = createLeaderboardStore({ storage });
+const preferences = createPreferencesStore({ storage });
 
 let registry = null;
 let roundView = null;
@@ -236,7 +238,20 @@ function goHome() {
       registry,
       progress,
       user: auth.getUser(),
+      preferences,
       onCategory: goCategory,
+      onToggleFavorite: (categoryId) => {
+        preferences.toggleFavorite(auth.getUser(), categoryId);
+        goHome();
+      },
+      onMoveFavorite: (categoryId, delta) => {
+        preferences.moveFavorite(auth.getUser(), categoryId, delta);
+        goHome();
+      },
+      onVote: (categoryId, voteType) => {
+        preferences.vote(auth.getUser(), categoryId, voteType);
+        goHome();
+      },
     }),
   );
 }
@@ -262,6 +277,13 @@ function goCategory(categoryId) {
   }, `category:${categoryId}`);
 }
 
+const LEADERBOARD_TRAINER_IDS = new Set([
+  'word-rush',
+  'famous-people',
+  'pattern-memory',
+  'figure-pairs',
+]);
+
 function goTrainer(trainerId) {
   requireAuth(() => {
     const trainer = registry.getTrainer(trainerId);
@@ -275,10 +297,9 @@ function goTrainer(trainerId) {
         adminMode: isAdminMode(),
         onPlay: (variantKey) => goBriefing(trainerId, variantKey, clock.today()),
         onPractice: () => goPractice(trainerId),
-        onLeaderboard:
-          trainerId === 'famous-people' || trainerId === 'word-rush'
-            ? () => goLeaderboard({ trainerId, selectedDate: clock.today() })
-            : null,
+        onLeaderboard: LEADERBOARD_TRAINER_IDS.has(trainerId)
+          ? () => goLeaderboard({ trainerId, selectedDate: clock.today() })
+          : null,
         onBack: () => (isDirectCategory ? goHome() : goCategory(trainer.categoryId)),
       }),
     );
@@ -472,7 +493,9 @@ function finishRound(round) {
         onLeaderboard: () =>
           goLeaderboard({
             selectedDate: result.puzzleDate,
-            trainerId: activeTrainer.id === 'famous-people' ? 'famous-people' : 'word-rush',
+            trainerId: LEADERBOARD_TRAINER_IDS.has(activeTrainer.id)
+              ? activeTrainer.id
+              : 'word-rush',
           }),
       }),
     );
@@ -503,7 +526,9 @@ function finishRound(round) {
       onLeaderboard: () =>
         goLeaderboard({
           selectedDate: result.puzzleDate,
-          trainerId: activeTrainer.id === 'famous-people' ? 'famous-people' : 'word-rush',
+          trainerId: LEADERBOARD_TRAINER_IDS.has(activeTrainer.id)
+            ? activeTrainer.id
+            : 'word-rush',
         }),
     }),
   );

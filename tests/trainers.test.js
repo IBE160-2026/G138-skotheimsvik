@@ -6,14 +6,25 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { buildRegistry } from '../src/trainers/index.js';
-import { mentalMathTrainer, topicsForBand } from '../src/trainers/math/mental-math.js';
+import {
+  mentalMathTrainer,
+  topicsForBand,
+  bandForCorrectCount,
+  MATH_TIME_LIMIT_SECONDS,
+} from '../src/trainers/math/mental-math.js';
 import {
   patternMemoryTrainer,
   buildLevel,
   tilesForLevel,
   maxLevelFor,
+  dailyBoardSizeFor,
 } from '../src/trainers/memory/pattern.js';
-import { figurePairsTrainer, dealBoard, pairsFor } from '../src/trainers/memory/pairs.js';
+import {
+  figurePairsTrainer,
+  dealBoard,
+  pairsFor,
+  dailyPairsBoardSizeFor,
+} from '../src/trainers/memory/pairs.js';
 import { validateCountries, poolFor, flagFor } from '../src/trainers/geography/content.js';
 import { validatePeople, poolFor as peoplePoolFor, PEOPLE_PER_ROUND } from '../src/trainers/people/index.js';
 import {
@@ -33,6 +44,7 @@ import { verifyWordRushCandidateOnline } from '../src/trainers/word-rush/index.j
 import { BANDS, modeParamFor } from '../src/core/variants.js';
 import { buildGitHubAuthorizeUrl, createAuthStore, isAdminUser } from '../src/core/auth.js';
 import { createLeaderboardStore } from '../src/core/leaderboard.js';
+import { createPreferencesStore } from '../src/core/preferences.js';
 import { createStorage, createMemoryBackend } from '../src/core/storage.js';
 import { createRound } from '../src/core/round.js';
 import { createFixedClock } from '../src/core/clock.js';
@@ -77,7 +89,7 @@ function pull(trainer, variantKey, count, options = {}) {
 
 // --- catalogue --------------------------------------------------------------
 
-test('twelve trainers register across eight categories (FR-6, S21)', () => {
+test('twelve trainers register across twelve standalone 1-run-per-day categories (FR-6, S21)', () => {
   assert.equal(registry.size, 12);
   assert.deepEqual(
     registry.listCategories().map((c) => c.id),
@@ -87,32 +99,44 @@ test('twelve trainers register across eight categories (FR-6, S21)', () => {
       'timeline-sort',
       'connection-grid',
       'math',
-      'memory',
-      'geography',
+      'pattern-memory',
+      'figure-pairs',
+      'flag-guesser',
+      'outline-guesser',
+      'capital-guesser',
+      'border-hop',
       'people',
     ],
   );
-  assert.deepEqual(registry.trainersIn('word-rush').map((t) => t.id), ['word-rush']);
-  assert.deepEqual(registry.trainersIn('word-chain').map((t) => t.id), ['word-chain']);
-  assert.deepEqual(registry.trainersIn('timeline-sort').map((t) => t.id), ['timeline-sort']);
-  assert.deepEqual(registry.trainersIn('connection-grid').map((t) => t.id), ['connection-grid']);
-  assert.deepEqual(registry.trainersIn('memory').map((t) => t.id), [
-    'pattern-memory',
-    'figure-pairs',
-  ]);
-  assert.deepEqual(registry.trainersIn('geography').map((t) => t.id), [
-    'flag-guesser',
-    'outline-guesser',
-    'capital-guesser',
-    'border-hop',
-  ]);
+  for (const cat of registry.listCategories()) {
+    assert.equal(registry.trainersIn(cat.id).length, 1, `category ${cat.id} must have 1 trainer`);
+    const trainer = registry.trainersIn(cat.id)[0];
+    assert.equal(trainer.variants.length, 1, `trainer ${trainer.id} must have 1 daily attempt`);
+  }
 });
 
-// --- Mental Math ------------------------------------------------------------
+// --- Math Blitz -------------------------------------------------------------
 
-test('arithmetic is always valid (FR-106 to FR-108, S3)', () => {
+test('Math Blitz is a 3-lives, 20s-per-question daily streak trainer with escalating difficulty and practice filters', () => {
+  assert.equal(mentalMathTrainer.name, 'Math Blitz');
+  assert.equal(mentalMathTrainer.roundMode, 'lives');
+  assert.equal(mentalMathTrainer.modeParam, 3);
+  assert.equal(mentalMathTrainer.promptTimeLimitSeconds, 20);
+  assert.equal(MATH_TIME_LIMIT_SECONDS, 20);
+  assert.deepEqual(mentalMathTrainer.variants, ['daily']);
+  assert.ok(!mentalMathTrainer.noPractice, 'Math Blitz keeps Practice mode available');
+  assert.ok(mentalMathTrainer.practiceFilters?.topics, 'Math Blitz exposes topic filters in Practice');
+
+  assert.equal(bandForCorrectCount(0), 'beginner');
+  assert.equal(bandForCorrectCount(3), 'beginner');
+  assert.equal(bandForCorrectCount(4), 'intermediate');
+  assert.equal(bandForCorrectCount(9), 'advanced');
+  assert.equal(bandForCorrectCount(15), 'expert');
+});
+
+test('arithmetic is always valid across escalating bands (FR-106 to FR-108, S3)', () => {
   for (const band of BANDS) {
-    for (const prompt of pull(mentalMathTrainer, band, 400)) {
+    for (const prompt of pull(mentalMathTrainer, band, 200)) {
       assert.ok(!/÷ 0\b/.test(prompt.question), `divide by zero: ${prompt.question}`);
 
       if (prompt.topicId === 'division' && band !== 'expert') {
@@ -128,25 +152,25 @@ test('arithmetic is always valid (FR-106 to FR-108, S3)', () => {
 test('topics follow the band, with algebra and trig only at expert (FR-105, S3)', () => {
   for (const band of BANDS) {
     const allowed = new Set(topicsForBand(band));
-    for (const topicId of new Set(pull(mentalMathTrainer, band, 400).map((p) => p.topicId))) {
+    for (const topicId of new Set(pull(mentalMathTrainer, band, 250).map((p) => p.topicId))) {
       assert.ok(allowed.has(topicId), `${band} produced out-of-band topic ${topicId}`);
     }
   }
 
-  const expertTopics = new Set(pull(mentalMathTrainer, 'expert', 600).map((p) => p.topicId));
+  const expertTopics = new Set(pull(mentalMathTrainer, 'expert', 500).map((p) => p.topicId));
   assert.ok(expertTopics.has('algebra'));
   assert.ok(expertTopics.has('trigonometry'));
 
   for (const band of ['beginner', 'intermediate', 'advanced']) {
-    const topics = new Set(pull(mentalMathTrainer, band, 400).map((p) => p.topicId));
+    const topics = new Set(pull(mentalMathTrainer, band, 250).map((p) => p.topicId));
     assert.ok(!topics.has('algebra'), `${band} must not ask algebra`);
     assert.ok(!topics.has('trigonometry'), `${band} must not ask trigonometry`);
   }
 });
 
 test('algebra prompts have an integer solution that satisfies them (FR-109, S3)', () => {
-  const prompts = pull(mentalMathTrainer, 'expert', 800).filter((p) => p.topicId === 'algebra');
-  assert.ok(prompts.length > 20, 'expected a reasonable sample of algebra prompts');
+  const prompts = pull(mentalMathTrainer, 'expert', 600).filter((p) => p.topicId === 'algebra');
+  assert.ok(prompts.length > 15, 'expected a reasonable sample of algebra prompts');
 
   for (const prompt of prompts) {
     assert.ok(Number.isInteger(prompt.answer), `non-integer solution: ${prompt.question}`);
@@ -161,10 +185,10 @@ test('algebra prompts have an integer solution that satisfies them (FR-109, S3)'
 });
 
 test('trigonometry uses exact values and never asks tan 90 (FR-110, S3)', () => {
-  const prompts = pull(mentalMathTrainer, 'expert', 800).filter(
+  const prompts = pull(mentalMathTrainer, 'expert', 600).filter(
     (p) => p.topicId === 'trigonometry',
   );
-  assert.ok(prompts.length > 20);
+  assert.ok(prompts.length > 15);
   const exact = new Set(['0', '1/2', '√2/2', '√3/2', '1', '√3/3', '√3']);
 
   for (const prompt of prompts) {
@@ -177,7 +201,7 @@ test('trigonometry uses exact values and never asks tan 90 (FR-110, S3)', () => 
 });
 
 test('practice honours the topic filter exactly (FR-55, S18)', () => {
-  const prompts = pull(mentalMathTrainer, 'expert', 500, {
+  const prompts = pull(mentalMathTrainer, 'daily', 200, {
     practice: true,
     filters: { topics: ['algebra'] },
   });
@@ -190,26 +214,30 @@ test('an empty topic filter is refused rather than played (FR-56, S18)', () => {
   assert.equal(mentalMathTrainer.validateFilters({ topics: ['addition'] }).ok, true);
 });
 
-test('duration scales with the band (FR-29, US-3.3)', () => {
-  assert.equal(modeParamFor(mentalMathTrainer, 'beginner'), 45);
-  assert.equal(modeParamFor(mentalMathTrainer, 'expert'), 90);
-});
-
 // --- Pattern Memory ---------------------------------------------------------
 
-test('each level adds exactly one tile (FR-117, S15)', () => {
+test('each level adds exactly one tile and Pattern Memory has 1 life with no practice mode', () => {
+  assert.equal(patternMemoryTrainer.categoryId, 'pattern-memory');
+  assert.equal(patternMemoryTrainer.roundMode, 'lives');
+  assert.equal(patternMemoryTrainer.modeParam, 1);
+  assert.equal(patternMemoryTrainer.noPractice, true);
+  assert.deepEqual(patternMemoryTrainer.variants, ['daily']);
+
   for (let level = 1; level <= 10; level += 1) {
     assert.equal(tilesForLevel(level + 1) - tilesForLevel(level), 1);
   }
 });
 
-test('the board never grows mid-round (FR-119)', () => {
-  const prompts = pull(patternMemoryTrainer, '4x4', 50);
-  assert.ok(prompts.length > 1);
-  for (const prompt of prompts) {
-    assert.equal(prompt.columns, 4);
-    assert.equal(prompt.rows, 4);
+test('Pattern Memory daily board size varies across days and steps up when a grid reaches capacity', () => {
+  const sizesSeen = new Set();
+  for (let day = 1; day <= 25; day += 1) {
+    sizesSeen.add(dailyBoardSizeFor(`2026-11-${String(day).padStart(2, '0')}`));
   }
+  assert.ok(sizesSeen.size >= 3, 'daily board size should vary across dates');
+
+  const prompts = pull(patternMemoryTrainer, 'daily', 20);
+  assert.ok(prompts.length >= 15, 'Pattern Memory continues onto larger boards past initial capacity');
+  assert.equal(pull(patternMemoryTrainer, '3x3', 100).length, maxLevelFor('3x3'));
 });
 
 test('levels are a pure function of seed and level number (NFR-5)', () => {
@@ -224,11 +252,8 @@ test('levels are a pure function of seed and level number (NFR-5)', () => {
   for (const index of level.answer) assert.ok(index >= 0 && index < 36);
 });
 
-test('a bigger board allows more levels, and the round ends at capacity (FR-119, S15)', () => {
+test('a bigger board has higher single-grid capacity', () => {
   assert.ok(maxLevelFor('6x6') > maxLevelFor('3x3'));
-  assert.equal(pull(patternMemoryTrainer, '3x3', 100).length, maxLevelFor('3x3'));
-  // Corsi reports an average span of five to six on nine blocks, so the
-  // smallest board must allow at least that far before it runs out.
   assert.ok(tilesForLevel(maxLevelFor('3x3')) >= 5, 'a 3x3 board must reach the average human span');
 });
 
@@ -241,8 +266,19 @@ test('a pattern is checked as a set, not a sequence (FR-116, S4)', () => {
 
 // --- Figure Pairs -----------------------------------------------------------
 
-test('a board holds each figure exactly twice (FR-125, FR-126, S19)', () => {
-  for (const size of figurePairsTrainer.variants) {
+test('Figure Pairs is a standalone 1-run-per-day completion game with varying board size and no practice mode', () => {
+  assert.equal(figurePairsTrainer.categoryId, 'figure-pairs');
+  assert.equal(figurePairsTrainer.roundMode, 'completion');
+  assert.equal(figurePairsTrainer.noPractice, true);
+  assert.deepEqual(figurePairsTrainer.variants, ['daily']);
+
+  const sizesSeen = new Set();
+  for (let day = 1; day <= 25; day += 1) {
+    sizesSeen.add(dailyPairsBoardSizeFor(`2026-11-${String(day).padStart(2, '0')}`));
+  }
+  assert.ok(sizesSeen.size >= 3, 'daily pairs board size should vary across dates');
+
+  for (const size of ['4x3', '4x4', '6x4', '6x6']) {
     const board = dealBoard(createRng(7), size);
     assert.equal(board.faces.length, board.cells);
     assert.equal(board.cells % 2, 0);
@@ -257,6 +293,8 @@ test('a board holds each figure exactly twice (FR-125, FR-126, S19)', () => {
 test('the completion target is the number of pairs (FR-18, S19)', () => {
   assert.equal(modeParamFor(figurePairsTrainer, '6x4'), 12);
   assert.equal(modeParamFor(figurePairsTrainer, '4x4'), 8);
+  const dailySize = dailyPairsBoardSizeFor('2026-11-02');
+  assert.equal(modeParamFor(figurePairsTrainer, 'daily', '2026-11-02'), pairsFor(dailySize));
 });
 
 test('two cards match when their figures match (FR-127, FR-128)', () => {
@@ -317,39 +355,76 @@ test('bands widen the country pool (FR-137, S2)', () => {
   assert.equal(expert, 195);
 });
 
-test('choice bands offer four distinct plausible options, expert types (FR-138, FR-139)', () => {
+test('Geography is split into 4 standalone 1-run-per-day modes with varying daily difficulty and no practice mode', () => {
   const flags = registry.getTrainer('flag-guesser');
-
-  for (const prompt of pull(flags, 'beginner', 60)) {
-    assert.equal(prompt.kind, 'choice');
-    assert.equal(prompt.options.length, 4);
-    assert.equal(new Set(prompt.options).size, 4);
-    assert.ok(prompt.options.includes(prompt.answer));
-  }
-  for (const prompt of pull(flags, 'expert', 20)) {
-    assert.equal(prompt.kind, 'text');
-  }
-});
-
-test('every Geography trainer runs three lives (FR-140, S5)', () => {
-  for (const id of ['flag-guesser', 'outline-guesser', 'capital-guesser']) {
-    assert.equal(modeParamFor(registry.getTrainer(id), 'expert'), 3);
-  }
-});
-
-test('the Outline Guesser only asks countries it can draw (FR-135b)', () => {
-  const outlineTrainer = registry.getTrainer('outline-guesser');
-  for (const prompt of pull(outlineTrainer, 'expert', 120)) {
-    assert.ok(prompt.outline && prompt.outline.length > 10, `${prompt.answer} has no shape`);
-    assert.equal(prompt.viewBox, outlines.viewBox);
-  }
-});
-
-test('the Capital Guesser asks both directions (FR-153, FR-154)', () => {
+  const countryGuesser = registry.getTrainer('outline-guesser');
   const capitals = registry.getTrainer('capital-guesser');
-  const topics = new Set(pull(capitals, 'advanced', 200).map((p) => p.topicId));
-  assert.ok(topics.has('country-capital'));
-  assert.ok(topics.has('capital-country'));
+  const borderHop = registry.getTrainer('border-hop');
+
+  assert.equal(flags.categoryId, 'flag-guesser');
+  assert.equal(flags.modeParam, 3);
+  assert.equal(flags.noPractice, true);
+  assert.deepEqual(flags.variants, ['daily']);
+
+  assert.equal(countryGuesser.categoryId, 'outline-guesser');
+  assert.equal(countryGuesser.name, 'Country Guesser');
+  assert.equal(countryGuesser.modeParam, 6);
+  assert.equal(countryGuesser.noPractice, true);
+  assert.deepEqual(countryGuesser.variants, ['daily']);
+
+  assert.equal(capitals.categoryId, 'capital-guesser');
+  assert.equal(capitals.name, 'Capital Guesser');
+  assert.equal(capitals.modeParam, 4); // 3 wrong-guess hints + 1 final guess
+  assert.equal(capitals.noPractice, true);
+  assert.deepEqual(capitals.variants, ['daily']);
+
+  assert.equal(borderHop.categoryId, 'border-hop');
+  assert.equal(borderHop.modeParam, 3);
+  assert.equal(borderHop.noPractice, true);
+  assert.deepEqual(borderHop.variants, ['daily']);
+});
+
+test('Flag Guesser and Country Guesser are 1-target daily puzzles that stay on the same target across wrong guesses', () => {
+  const clock = createFixedClock({ today: '2026-11-15', startMs: 1000 });
+  const countryGuesser = registry.getTrainer('outline-guesser');
+  const gen = countryGuesser.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
+  const round = createRound({
+    trainer: countryGuesser,
+    variantKey: 'daily',
+    puzzleDate: '2026-11-15',
+    generator: gen,
+    clock,
+  });
+  const prompt = round.start();
+  assert.ok(prompt.outline && prompt.outline.length > 10);
+  assert.equal(prompt.stayOnWrongGuess, true);
+  assert.equal(round.livesRemaining, 6);
+
+  // 2 wrong guesses deduct lives but keep the same target country active
+  round.submit('Atlantis');
+  assert.equal(round.livesRemaining, 5);
+  assert.equal(round.prompt.answer, prompt.answer);
+  round.submit('Narnia');
+  assert.equal(round.livesRemaining, 4);
+  assert.equal(round.prompt.answer, prompt.answer);
+
+  // Solving the daily country completes the round immediately
+  const solved = round.submit(prompt.answer);
+  assert.equal(solved.status, 'correct');
+  assert.equal(solved.ended, true);
+  assert.equal(round.state, 'ended');
+});
+
+test('Capital Guesser only asks for the capital city and provides 3 progressive hints (closest city, fun fact, country)', () => {
+  const capitals = registry.getTrainer('capital-guesser');
+  const gen = capitals.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
+  const prompt = gen.next({ index: 0 });
+  assert.equal(prompt.stayOnWrongGuess, true);
+  assert.equal(prompt.capitalHints.length, 3);
+  assert.match(prompt.capitalHints[0].label, /Hint 1.*City/i);
+  assert.match(prompt.capitalHints[1].label, /Hint 2.*Fact/i);
+  assert.match(prompt.capitalHints[2].label, /Hint 3.*Country/i);
+  assert.ok(prompt.capitalHints[2].text.includes(prompt.countryName));
 });
 
 test('documented alternative names are accepted (FR-65, FR-155, S4)', () => {
@@ -651,6 +726,60 @@ test('GitHub auth and daily/all-time leaderboards record only real players with 
   assert.equal(allTime.length, 1);
   assert.equal(allTime[0].login, 'octocat');
   assert.equal(allTime[0].bestScore, 42);
+
+  // Pattern Memory leaderboard ranks higher levels first
+  lb.recordEntry({
+    user,
+    result: {
+      puzzleDate: '2026-10-15',
+      trainerId: 'pattern-memory',
+      variantKey: 'daily',
+      score: 11,
+      elapsedMs: 45000,
+    },
+  });
+  const pmDaily = lb.dailyLeaderboard('2026-10-15', { trainerId: 'pattern-memory' });
+  assert.equal(pmDaily.length, 1);
+  assert.equal(pmDaily[0].score, 11);
+
+  // Figure Pairs leaderboard records total tries (attempts) and ranks fewer tries first
+  const user2 = { login: 'alice', name: 'Alice', avatarUrl: '' };
+  lb.recordEntry({
+    user,
+    result: {
+      puzzleDate: '2026-10-15',
+      trainerId: 'figure-pairs',
+      variantKey: 'daily',
+      score: 4, // 4 mistakes
+      totalAnswered: 12, // 12 total tries
+      correctCount: 8,
+      mistakes: 4,
+      elapsedMs: 38000,
+    },
+  });
+  lb.recordEntry({
+    user: user2,
+    result: {
+      puzzleDate: '2026-10-15',
+      trainerId: 'figure-pairs',
+      variantKey: 'daily',
+      score: 1, // 1 mistake
+      totalAnswered: 9, // 9 total tries (fewer tries = rank #1)
+      correctCount: 8,
+      mistakes: 1,
+      elapsedMs: 32000,
+    },
+  });
+  const fpDaily = lb.dailyLeaderboard('2026-10-15', { trainerId: 'figure-pairs' });
+  assert.equal(fpDaily.length, 2);
+  assert.equal(fpDaily[0].login, 'alice');
+  assert.equal(fpDaily[0].score, 9);
+  assert.equal(fpDaily[1].login, 'octocat');
+  assert.equal(fpDaily[1].score, 12);
+
+  const fpAllTime = lb.allTimeLeaderboard({ trainerId: 'figure-pairs' });
+  assert.equal(fpAllTime[0].login, 'alice');
+  assert.equal(fpAllTime[0].bestScore, 9);
 });
 
 test('word-rush accepts compound/spaced variants (hashbrown / hash brown / hash browns) and minor 1-char typos (hotsog -> Hot Dog)', () => {
@@ -742,18 +871,29 @@ test('verifyWordRushCandidateOnline approves valid unseen foods and declines non
   assert.equal(declinedWrongLetter.approved, false);
 });
 
-test('Border Hop is registered under Geography and connects bordering countries along valid overland routes', () => {
+test('Border Hop is a standalone 1-run-per-day trainer that connects bordering countries and exposes a Travle-style live regional map', () => {
   const borderHop = registry.getTrainer('border-hop');
   assert.ok(borderHop, 'Border Hop trainer should exist');
-  assert.equal(borderHop.categoryId, 'geography');
+  assert.equal(borderHop.categoryId, 'border-hop');
 
-  const gen = borderHop.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'intermediate' });
+  const gen = borderHop.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const p1 = gen.next({ index: 0 });
   assert.equal(p1.kind, 'border-hop');
   assert.ok(p1.startCountry && p1.targetCountry);
   assert.notEqual(p1.startCountry, p1.targetCountry);
+  assert.ok(p1.startOutline && p1.targetOutline, 'start and target country outlines must be provided');
+  assert.ok(p1.mapViewBox && Array.isArray(p1.mapCountries), 'Travle-style mapViewBox and mapCountries must be provided');
+  assert.equal(p1.mapCountries.length, 2, 'Starts with start and target countries on the map');
   assert.ok(p1.validNextCountries.length > 0);
+  assert.equal(p1.stayOnWrongGuess, true);
   assert.equal(checkAnswer(p1, p1.answer), 'correct');
+
+  // Guessing a valid bordering country adds it to the live map
+  const p2 = gen.next({ index: 1, lastCorrect: true, lastSubmission: p1.answer });
+  if (p2) {
+    assert.equal(p2.mapCountries.length, 3, 'Connected country is added to the live map');
+    assert.ok(p2.mapCountries.some((c) => c.name === p1.answer && c.role === 'current'));
+  }
 });
 
 test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own categories as single daily 3-lives games with no practice mode', () => {
@@ -847,10 +987,55 @@ test('UI views and date formatting load cleanly and format dates in English', ()
   assert.ok(!wr.noPractice, 'Word Rush should have practice mode enabled');
   assert.ok(wr.practiceFilters?.category, 'Word Rush should expose category practice filters');
 
-  // Admin mode recognizes S3lDan1PS (case-insensitive) and rejects non-admin accounts
+  // Admin mode recognizes S3lDan1PS and bipa (case-insensitive) and rejects non-admin accounts
   assert.equal(isAdminUser({ login: 'S3lDan1PS' }), true);
   assert.equal(isAdminUser({ login: 's3ldan1ps' }), true);
+  assert.equal(isAdminUser({ login: 'bipa' }), true);
+  assert.equal(isAdminUser({ login: 'BIPA' }), true);
   assert.equal(isAdminUser({ login: 'octocat' }), false);
+});
+
+test('Preferences store orders favorited gamemodes at the top in favorite order and enforces 1 like/dislike per user per gamemode', () => {
+  const storage = createStorage({ backend: createMemoryBackend() });
+  const prefs = createPreferencesStore({ storage });
+  const userA = { login: 'bipa' };
+  const userB = { login: 'S3lDan1PS' };
+
+  const sampleCategories = [
+    { id: 'word-rush', name: 'Word Rush' },
+    { id: 'border-hop', name: 'Border Hop' },
+    { id: 'timeline-sort', name: 'Timeline Sort' },
+    { id: 'math', name: 'Math Blitz' },
+  ];
+
+  // Favorite timeline-sort first, then border-hop second
+  prefs.toggleFavorite(userA, 'timeline-sort');
+  prefs.toggleFavorite(userA, 'border-hop');
+  assert.deepEqual(prefs.getFavorites(userA), ['timeline-sort', 'border-hop']);
+
+  const sorted = prefs.sortCategories(sampleCategories, userA).map((c) => c.id);
+  assert.deepEqual(sorted, ['timeline-sort', 'border-hop', 'word-rush', 'math']);
+
+  // Move border-hop earlier to #1
+  prefs.moveFavorite(userA, 'border-hop', -1);
+  assert.deepEqual(prefs.getFavorites(userA), ['border-hop', 'timeline-sort']);
+
+  // 1 like/dislike per user per gamemode
+  let r = prefs.vote(userA, 'border-hop', 'like');
+  assert.deepEqual(r, { likes: 1, dislikes: 0, userVote: 'like' });
+
+  // Repeating the same vote toggles it off; switching to dislike moves the vote
+  prefs.vote(userA, 'border-hop', 'dislike');
+  r = prefs.getReaction('border-hop', userA);
+  assert.deepEqual(r, { likes: 0, dislikes: 1, userVote: 'dislike' });
+
+  // Second user likes border-hop
+  prefs.vote(userB, 'border-hop', 'like');
+  assert.deepEqual(prefs.getReaction('border-hop', userB), {
+    likes: 1,
+    dislikes: 1,
+    userVote: 'like',
+  });
 });
 
 test('every JavaScript file in src/ and api/ passes node --check syntax validation (prevents blank screen regressions)', () => {

@@ -32,6 +32,15 @@ export function pairsFor(boardSize) {
 }
 
 /**
+ * Deterministically pick today's board size for Figure Pairs so the grid
+ * varies each day (4×3, 4×4, 6×4, or 6×6).
+ */
+export function dailyPairsBoardSizeFor(puzzleDate = '2026-11-15') {
+  const rng = createRng(seedFor('figure-pairs-board', 'daily', puzzleDate));
+  return rng.pick(BOARD_SIZES);
+}
+
+/**
  * Deal a board: every figure appears exactly twice (FR-125, FR-126).
  */
 export function dealBoard(rng, boardSize) {
@@ -47,13 +56,17 @@ export function dealBoard(rng, boardSize) {
 
 export const figurePairsTrainer = {
   id: 'figure-pairs',
-  categoryId: 'memory',
+  categoryId: 'figure-pairs',
   name: 'Figure Pairs',
   description:
-    'A board of face-down figures. Turn two at a time and match them all, remembering what you have seen.',
+    'One daily run. The board size varies each day (4×3 to 6×6) — match all figure pairs in as few attempts as possible!',
   roundMode: 'completion',
-  variantKind: 'boardSize',
-  variants: [...BOARD_SIZES],
+  variantKind: 'pool',
+  variants: ['daily'],
+  variantLabels: {
+    daily: 'Daily Figure Pairs',
+  },
+  noPractice: true,
   scoreDirection: 'lower',
   headlineScore: 'mistakes',
   renderer: 'pairs',
@@ -61,21 +74,19 @@ export const figurePairsTrainer = {
   topics: [],
 
   /** Pairs to clear, which is the completion target for this board. */
-  modeParamFor(variantKey) {
-    return pairsFor(variantKey);
+  modeParamFor(variantKey, puzzleDate) {
+    if (parseBoardSize(variantKey)) {
+      return pairsFor(variantKey);
+    }
+    return pairsFor(dailyPairsBoardSizeFor(puzzleDate ?? new Date().toISOString().slice(0, 10)));
   },
 
-  practiceFilters: {
-    boardSize: {
-      label: 'Board size',
-      kind: 'single',
-      options: BOARD_SIZES.map((id) => ({ id, label: id.replace('x', '×') })),
-      default: '4x4',
-    },
-  },
-
-  createGenerator({ puzzleDate, variantKey, practice = false, filters = null }) {
-    const boardSize = practice ? (filters?.boardSize ?? variantKey) : variantKey;
+  createGenerator({ puzzleDate, variantKey = 'daily', practice = false, filters = null }) {
+    const boardSize = parseBoardSize(variantKey)
+      ? variantKey
+      : practice
+        ? (filters?.boardSize ?? '4x4')
+        : dailyPairsBoardSizeFor(puzzleDate);
     const rng = createRng(
       practice ? practiceSeed() : seedFor(this.id, variantKey, puzzleDate),
     );
@@ -98,7 +109,8 @@ export const figurePairsTrainer = {
         return {
           kind: 'pairs',
           key: `turn-${matched.size}-${context?.index ?? 0}`,
-          question: 'Turn two cards',
+          question: `Turn two cards (${board.columns}×${board.rows} Board)`,
+          boardSize,
           faces: board.faces,
           matched: [...matched],
           columns: board.columns,

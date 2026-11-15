@@ -1,78 +1,41 @@
 /**
- * The three Geography trainers: flags, outlines and capitals.
+ * The four standalone Geography trainers:
+ *   1. Flag Guesser (flag-guesser): 1 daily flag, 3 lives, difficulty varies by day.
+ *   2. Country Guesser (outline-guesser): 1 daily country outline, 6 lives, distance/direction hints on wrong guess, difficulty varies by day.
+ *   3. Capital Guesser (capital-guesser): 1 daily capital with a city photo at start, 3 progressive hints on wrong guesses (1: closest other city in same country, 2: fun fact about the city, 3: country name) + 1 final guess, difficulty varies by day.
+ *   4. Border Hop (border-hop): 1 daily overland route, 3 lives, displays outlines for both the starting country and endpoint country, difficulty varies by day.
  *
- * FR-140 to FR-155. They share one content file and one set of band rules, and
- * differ only in what they show and what they ask — which is exactly the test
- * of whether the engine abstraction holds (S21): all three were added without
- * touching a single file in src/core/.
+ * All four are 1 attempt per day with no practice mode.
  */
 
 import { createRng, seedFor, practiceSeed } from '../../core/rng.js';
 import { normaliseText } from '../../core/answer.js';
-import { buildChoices, continentsIn, poolFor, usesChoices } from './content.js';
+import { continentsIn } from './content.js';
 import { describeGuess } from './geo.js';
 import { buildBorderGraph, findShortestBorderPath, findRoutePairs } from './borders.js';
+import { CAPITAL_HINTS } from './capitals-data.js';
 
-const LIVES = 3;
+const DIFFICULTY_LABELS = Object.freeze({
+  1: 'Easy',
+  2: 'Medium',
+  3: 'Hard',
+});
 
-/** Shared practice filters: all three ask about the same countries. */
-function geographyFilters(continents) {
-  return {
-    continents: {
-      label: 'Continents',
-      kind: 'multi',
-      options: continents.map((id) => ({ id, label: id })),
-      default: continents,
-    },
-    answerFormat: {
-      label: 'Answer format',
-      kind: 'single',
-      options: [
-        { id: 'choice', label: 'Multiple choice' },
-        { id: 'text', label: 'Type the answer' },
-      ],
-      default: 'choice',
-    },
-  };
-}
-
-function baseTrainer(countries) {
-  return {
-    categoryId: 'geography',
-    roundMode: 'lives',
-    variantKind: 'band',
-    scoreDirection: 'higher',
-    headlineScore: 'correct',
-    scoreLabel: 'Correct answers',
-    modeParam: LIVES,
-    practiceFilters: geographyFilters(continentsIn(countries)),
-
-    validateFilters(filters) {
-      const chosen = filters?.continents ?? [];
-      if (chosen.length === 0) {
-        return { ok: false, reason: 'Pick at least one continent to practise.' };
-      }
-      return { ok: true };
-    },
-  };
-}
-
-/** Pick the round's subject and decide how it will be answered. */
-function prepare({ rng, countries, variantKey, practice, filters }) {
-  const pool = poolFor(countries, variantKey, practice ? filters : null);
-  if (pool.length < 4) return null;
-  return {
-    pool,
-    subject: rng.pick(pool),
-    choices: usesChoices(variantKey, practice ? filters : null),
-  };
-}
-
-function makeRng(trainerId, { puzzleDate, variantKey, practice }) {
+function makeRng(trainerId, { puzzleDate, variantKey = 'daily', practice = false }) {
   return createRng(practice ? practiceSeed() : seedFor(trainerId, variantKey, puzzleDate));
 }
 
-// --- Flag Guesser -----------------------------------------------------------
+/**
+ * Pick a daily country whose difficulty (tier 1, 2 or 3) varies deterministically by day.
+ */
+function pickDailyCountry(rng, countries) {
+  if (!countries || countries.length === 0) return null;
+  const targetTier = rng.pick([1, 2, 3]);
+  const tierPool = countries.filter((entry) => entry.tier === targetTier);
+  return rng.pick(tierPool.length > 0 ? tierPool : countries);
+}
+
+// --- 1. Flag Guesser --------------------------------------------------------
 
 export function createFlagTrainer(countries) {
   const countrySuggestions = countries.map((entry) => ({
@@ -81,35 +44,53 @@ export function createFlagTrainer(countries) {
   }));
 
   return {
-    ...baseTrainer(countries),
     id: 'flag-guesser',
+    categoryId: 'flag-guesser',
     name: 'Flag Guesser',
-    description: 'Identify the country from its flag. Three mistakes allowed.',
+    description:
+      'One daily flag with 3 lives. Difficulty varies each day from well-known nations to rare island states — identify today’s flag before you run out of lives!',
+    roundMode: 'lives',
+    modeParam: 3,
+    variantKind: 'pool',
+    variants: ['daily'],
+    variantLabels: {
+      daily: 'Daily Flag Challenge',
+    },
+    noPractice: true,
+    scoreDirection: 'higher',
+    headlineScore: 'correct',
+    scoreLabel: 'Solved',
     renderer: 'flag',
     topics: continentsIn(countries).map((id) => ({ id, label: id })),
 
     createGenerator(context) {
       const rng = makeRng('flag-guesser', context);
-      const { variantKey, practice = false, filters = null } = context;
+      const subject = pickDailyCountry(rng, countries);
+      let solved = false;
 
       return {
-        next() {
-          const setup = prepare({ rng, countries, variantKey, practice, filters });
-          if (!setup) return null;
-          const { pool, subject, choices } = setup;
+        next(turnContext) {
+          if (!subject) return null;
+          if (turnContext?.lastCorrect || solved) {
+            solved = true;
+            return null;
+          }
 
+          const difficultyLabel = DIFFICULTY_LABELS[subject.tier] ?? 'Medium';
           return {
-            kind: choices ? 'choice' : 'text',
+            kind: 'text',
             key: `flag:${subject.code}`,
             topicId: subject.continent,
             topicLabel: subject.continent,
+            difficultyLabel,
             question: 'Which country does this flag belong to?',
             flag: subject.flag,
             code: subject.code,
             answer: subject.name,
             alternatives: subject.alternatives,
-            suggestions: choices ? null : countrySuggestions,
-            options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
+            suggestions: countrySuggestions,
+            stayOnWrongGuess: true,
+            hideExpectedOnWrong: true,
           };
         },
       };
@@ -117,7 +98,7 @@ export function createFlagTrainer(countries) {
   };
 }
 
-// --- Outline Guesser --------------------------------------------------------
+// --- 2. Country Guesser (formerly Outline Guesser) --------------------------
 
 export function createOutlineTrainer(countries, outlines) {
   // Only countries with a silhouette can be asked here (FR-135b).
@@ -130,10 +111,22 @@ export function createOutlineTrainer(countries, outlines) {
   }));
 
   return {
-    ...baseTrainer(withOutline),
     id: 'outline-guesser',
-    name: 'Outline Guesser',
-    description: 'Identify the country from its shape. Wrong guesses tell you how far off you are.',
+    categoryId: 'outline-guesser',
+    name: 'Country Guesser',
+    description:
+      'One daily country outline with 6 lives. Difficulty varies each day — every wrong guess reveals the distance and direction to today’s mystery country!',
+    roundMode: 'lives',
+    modeParam: 6,
+    variantKind: 'pool',
+    variants: ['daily'],
+    variantLabels: {
+      daily: 'Daily Country Outline',
+    },
+    noPractice: true,
+    scoreDirection: 'higher',
+    headlineScore: 'correct',
+    scoreLabel: 'Solved',
     renderer: 'outline',
     topics: continentsIn(withOutline).map((id) => ({ id, label: id })),
 
@@ -156,31 +149,35 @@ export function createOutlineTrainer(countries, outlines) {
 
     createGenerator(context) {
       const rng = makeRng('outline-guesser', context);
-      const { variantKey, practice = false, filters = null } = context;
+      const subject = pickDailyCountry(rng, withOutline);
+      let solved = false;
 
       return {
-        next() {
-          const setup = prepare({ rng, countries: withOutline, variantKey, practice, filters });
-          if (!setup) return null;
-          const { pool, subject, choices } = setup;
+        next(turnContext) {
+          if (!subject) return null;
+          if (turnContext?.lastCorrect || solved) {
+            solved = true;
+            return null;
+          }
+
           const outline = outlines.outlines[subject.name];
+          const difficultyLabel = DIFFICULTY_LABELS[subject.tier] ?? 'Medium';
 
           return {
-            kind: choices ? 'choice' : 'text',
+            kind: 'text',
             key: `outline:${subject.code}`,
             topicId: subject.continent,
             topicLabel: subject.continent,
+            difficultyLabel,
             question: 'Which country has this shape?',
             outline: outline.d,
             viewBox: outlines.viewBox,
             answer: subject.name,
             alternatives: subject.alternatives,
-            suggestions: choices ? null : countrySuggestions,
-            options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
-            // Hints only make sense where the player types a country name (FR-152),
-            // and only help if there is another guess left to spend on them.
-            hintable: !choices,
-            maxGuesses: choices ? 1 : 3,
+            suggestions: countrySuggestions,
+            hintable: true,
+            stayOnWrongGuess: true,
+            hideExpectedOnWrong: true,
           };
         },
       };
@@ -188,63 +185,86 @@ export function createOutlineTrainer(countries, outlines) {
   };
 }
 
-// --- Capital Guesser --------------------------------------------------------
+// --- 3. Capital Guesser -----------------------------------------------------
 
 export function createCapitalTrainer(countries) {
-  const countrySuggestions = countries.map((entry) => ({
-    label: entry.name,
-    alternatives: entry.alternatives ?? [],
-  }));
   const capitalSuggestions = countries.map((entry) => ({
     label: entry.capital,
     alternatives: [],
   }));
 
   return {
-    ...baseTrainer(countries),
     id: 'capital-guesser',
+    categoryId: 'capital-guesser',
     name: 'Capital Guesser',
-    description: 'Name the capital, or the country it belongs to. Three mistakes allowed.',
-    renderer: 'prompt',
-    topics: [
-      { id: 'country-capital', label: 'Country → capital' },
-      { id: 'capital-country', label: 'Capital → country' },
-    ],
+    description:
+      'One daily capital city photo. Guess the capital (not the country)! Each mistake unlocks a progressive hint: 1st mistake reveals the closest other city in the same country, 2nd mistake reveals a fun fact about the city, and 3rd mistake reveals which country the capital belongs to for your final guess!',
+    roundMode: 'lives',
+    // 4 lives = 3 mistakes allowed (unlocking Hints 1, 2 and 3) + 1 final attempt with all 3 hints visible.
+    modeParam: 4,
+    variantKind: 'pool',
+    variants: ['daily'],
+    variantLabels: {
+      daily: 'Daily Capital Challenge',
+    },
+    noPractice: true,
+    scoreDirection: 'higher',
+    headlineScore: 'correct',
+    scoreLabel: 'Solved',
+    renderer: 'capital',
+    topics: continentsIn(countries).map((id) => ({ id, label: id })),
 
     createGenerator(context) {
       const rng = makeRng('capital-guesser', context);
-      const { variantKey, practice = false, filters = null } = context;
+      const subject = pickDailyCountry(rng, countries);
+      let solved = false;
 
       return {
-        next() {
-          const setup = prepare({ rng, countries, variantKey, practice, filters });
-          if (!setup) return null;
-          const { pool, subject, choices } = setup;
-
-          // Both directions appear, as separate topics (FR-153, FR-154).
-          if (rng.float() < 0.5) {
-            return {
-              kind: choices ? 'choice' : 'text',
-              key: `capital-of:${subject.code}`,
-              topicId: 'country-capital',
-              topicLabel: 'Country → capital',
-              question: `What is the capital of ${subject.name}?`,
-              answer: subject.capital,
-              suggestions: choices ? null : capitalSuggestions,
-              options: choices ? buildChoices(rng, pool, subject, (entry) => entry.capital) : null,
-            };
+        next(turnContext) {
+          if (!subject) return null;
+          if (turnContext?.lastCorrect || solved) {
+            solved = true;
+            return null;
           }
 
+          const meta = CAPITAL_HINTS[subject.name] ?? {
+            city: `Another major city in ${subject.name}`,
+            fact: `Serves as the national capital and cultural heart of its country in ${subject.continent}.`,
+          };
+          const difficultyLabel = DIFFICULTY_LABELS[subject.tier] ?? 'Medium';
+
           return {
-            kind: choices ? 'choice' : 'text',
-            key: `country-of:${subject.code}`,
-            topicId: 'capital-country',
-            topicLabel: 'Capital → country',
-            question: `${subject.capital} is the capital of which country?`,
-            answer: subject.name,
-            alternatives: subject.alternatives,
-            suggestions: choices ? null : countrySuggestions,
-            options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
+            kind: 'text',
+            key: `capital-of:${subject.code}`,
+            topicId: subject.continent,
+            topicLabel: subject.continent,
+            difficultyLabel,
+            question: 'Which capital city is pictured here?',
+            formatHint: 'Guess the capital city — wrong guesses unlock up to 3 progressive clues.',
+            answer: subject.capital,
+            countryName: subject.name,
+            countryCode: subject.code,
+            capitalName: subject.capital,
+            capitalHints: [
+              {
+                step: 1,
+                label: 'Hint 1 · Closest / Major Other City in Country',
+                text: meta.city,
+              },
+              {
+                step: 2,
+                label: 'Hint 2 · City Fun Fact',
+                text: meta.fact,
+              },
+              {
+                step: 3,
+                label: 'Hint 3 · Country',
+                text: subject.name,
+              },
+            ],
+            suggestions: capitalSuggestions,
+            stayOnWrongGuess: true,
+            hideExpectedOnWrong: true,
           };
         },
       };
@@ -252,14 +272,13 @@ export function createCapitalTrainer(countries) {
   };
 }
 
-// --- Border Hop -------------------------------------------------------------
+// --- 4. Border Hop ----------------------------------------------------------
 
-const HOP_RANGE_BY_BAND = Object.freeze({
-  beginner: [1, 1],
-  intermediate: [1, 2],
-  advanced: [2, 3],
-  expert: [2, 4],
-});
+const DAILY_HOP_RANGES = Object.freeze([
+  { min: 1, max: 1, label: 'Easy (1 intermediate country)' },
+  { min: 2, max: 2, label: 'Medium (2 intermediate countries)' },
+  { min: 3, max: 4, label: 'Hard (3–4 intermediate countries)' },
+]);
 
 export function createBorderHopTrainer(countries, outlines) {
   const validCountryNames = new Set(countries.map((c) => c.name));
@@ -287,36 +306,39 @@ export function createBorderHopTrainer(countries, outlines) {
   }
 
   return {
-    ...baseTrainer(countries),
     id: 'border-hop',
+    categoryId: 'border-hop',
     name: 'Border Hop',
     description:
-      'Travel overland from the starting country to the target country by naming bordering countries step by step.',
-    renderer: 'border-hop',
+      'One daily overland route with 3 lives. See the outlines of the starting country and destination country, then connect them step by step through bordering countries!',
+    roundMode: 'lives',
+    modeParam: 3,
+    variantKind: 'pool',
+    variants: ['daily'],
+    variantLabels: {
+      daily: 'Daily Border Route',
+    },
+    noPractice: true,
+    scoreDirection: 'higher',
+    headlineScore: 'correct',
     scoreLabel: 'Border hops',
+    renderer: 'border-hop',
     topics: continentsIn(countries).map((id) => ({ id, label: id })),
 
     createGenerator(context) {
       const rng = makeRng('border-hop', context);
-      const { variantKey = 'beginner', practice = false, filters = null } = context;
-      const [minInter, maxInter] = HOP_RANGE_BY_BAND[variantKey] ?? [1, 2];
-
-      let routePairs = findRoutePairs(graph, minInter, maxInter);
-      if (practice && Array.isArray(filters?.continents) && filters.continents.length > 0) {
-        const allowed = new Set(filters.continents);
-        const filtered = routePairs.filter((pair) => {
-          const s = byName.get(pair.start);
-          const t = byName.get(pair.target);
-          return s && t && (allowed.has(s.continent) || allowed.has(t.continent));
-        });
-        if (filtered.length > 0) routePairs = filtered;
+      const hopDifficulty = rng.pick(DAILY_HOP_RANGES);
+      let routePairs = findRoutePairs(graph, hopDifficulty.min, hopDifficulty.max);
+      if (routePairs.length === 0) {
+        routePairs = findRoutePairs(graph, 1, 3);
       }
 
       let activeRoute = null;
       let pathTaken = [];
+      let wrongGuesses = [];
+      let routeCompleted = false;
 
-      function startNewRoute() {
-        if (routePairs.length === 0) return false;
+      if (routePairs.length > 0) {
         const picked = rng.pick(routePairs);
         const swap = rng.float() < 0.5;
         const start = swap ? picked.target : picked.start;
@@ -325,36 +347,49 @@ export function createBorderHopTrainer(countries, outlines) {
         activeRoute = {
           start,
           target,
+          shortestPath: shortest,
           optimalSteps: shortest.length - 1,
+          difficultyLabel: hopDifficulty.label,
         };
         pathTaken = [start];
-        return true;
       }
 
       return {
         next(turnContext) {
-          if (turnContext?.lastCorrect && turnContext?.lastSubmission && activeRoute) {
+          if (!activeRoute || routeCompleted) return null;
+
+          if (turnContext?.lastSubmission) {
             const resolved = resolveCountryName(turnContext.lastSubmission);
-            if (resolved && resolved !== pathTaken[pathTaken.length - 1]) {
-              pathTaken.push(resolved);
+            if (turnContext.lastCorrect) {
+              if (resolved && resolved !== pathTaken[pathTaken.length - 1]) {
+                pathTaken.push(resolved);
+                wrongGuesses = wrongGuesses.filter((n) => n !== resolved);
+              }
+            } else if (
+              resolved &&
+              resolved !== activeRoute.start &&
+              resolved !== activeRoute.target &&
+              !pathTaken.includes(resolved) &&
+              !wrongGuesses.includes(resolved)
+            ) {
+              wrongGuesses.push(resolved);
             }
           }
 
           const current = pathTaken[pathTaken.length - 1];
-          // Check if the previous step reached a neighbor of target (or target itself)
-          if (!activeRoute || current === activeRoute.target) {
-            if (!startNewRoute()) return null;
-          } else {
-            const currentNeighbors = graph.get(current) ?? new Set();
-            if (currentNeighbors.has(activeRoute.target)) {
-              // Automatically complete the route and start a fresh one!
-              if (!startNewRoute()) return null;
-            }
+          // Once the player reaches the target or a country that directly borders the target, today's route is solved!
+          if (current === activeRoute.target) {
+            routeCompleted = true;
+            return null;
+          }
+          const currentNeighbors = graph.get(current) ?? new Set();
+          if (currentNeighbors.has(activeRoute.target) && pathTaken.length > 1) {
+            routeCompleted = true;
+            return null;
           }
 
-          const currentCountry = pathTaken[pathTaken.length - 1];
           const visited = new Set(pathTaken);
-          const neighbors = [...(graph.get(currentCountry) ?? [])].filter(
+          const neighbors = [...(graph.get(current) ?? [])].filter(
             (n) => !visited.has(n) && n !== activeRoute.target,
           );
 
@@ -362,18 +397,18 @@ export function createBorderHopTrainer(countries, outlines) {
           const validNextCountries =
             neighbors.length > 0
               ? neighbors
-              : [...(graph.get(currentCountry) ?? [])].filter((n) => n !== activeRoute.target);
+              : [...(graph.get(current) ?? [])].filter((n) => n !== activeRoute.target);
 
           const remainingShortest =
-            findShortestBorderPath(graph, currentCountry, activeRoute.target) ?? [
-              currentCountry,
+            findShortestBorderPath(graph, current, activeRoute.target) ?? [
+              current,
               activeRoute.target,
             ];
           const optimalNext = remainingShortest[1] ?? validNextCountries[0] ?? activeRoute.target;
 
           const startMeta = byName.get(activeRoute.start);
           const targetMeta = byName.get(activeRoute.target);
-          const currentMeta = byName.get(currentCountry);
+          const currentMeta = byName.get(current);
 
           // Build accepted answers: any valid bordering country (and its aliases)
           const acceptedNames = [];
@@ -383,21 +418,92 @@ export function createBorderHopTrainer(countries, outlines) {
             if (meta?.alternatives) acceptedNames.push(...meta.alternatives);
           }
 
+          // Build the Travle-style live regional map viewBox & country geometries
+          const mapFocusNames = new Set([
+            ...(activeRoute.shortestPath ?? [activeRoute.start, activeRoute.target]),
+            ...pathTaken,
+            ...wrongGuesses,
+          ]);
+          let minLon = Infinity;
+          let minLat = Infinity;
+          let maxLon = -Infinity;
+          let maxLat = -Infinity;
+          for (const name of mapFocusNames) {
+            const bbox = outlines?.outlines?.[name]?.bbox;
+            if (Array.isArray(bbox) && bbox.length === 4) {
+              if (bbox[0] < minLon) minLon = bbox[0];
+              if (bbox[1] < minLat) minLat = bbox[1];
+              if (bbox[2] > maxLon) maxLon = bbox[2];
+              if (bbox[3] > maxLat) maxLat = bbox[3];
+            }
+          }
+          if (!Number.isFinite(minLon)) {
+            minLon = -20;
+            minLat = -20;
+            maxLon = 40;
+            maxLat = 40;
+          }
+          const spanLon = Math.max(maxLon - minLon, 4);
+          const spanLat = Math.max(maxLat - minLat, 4);
+          const padX = Math.max(spanLon * 0.16, 1.8);
+          const padY = Math.max(spanLat * 0.16, 1.8);
+          const vbMinX = Number((minLon - padX).toFixed(2));
+          const vbMinY = Number((-(maxLat + padY)).toFixed(2));
+          const vbWidth = Number((spanLon + padX * 2).toFixed(2));
+          const vbHeight = Number((spanLat + padY * 2).toFixed(2));
+          const mapViewBox = `${vbMinX} ${vbMinY} ${vbWidth} ${vbHeight}`;
+
+          const mapCountries = [];
+          const addMapCountry = (countryName, role) => {
+            const entry = outlines?.outlines?.[countryName];
+            const meta = byName.get(countryName);
+            if (!entry?.worldPath) return;
+            mapCountries.push({
+              name: countryName,
+              code: meta?.code ?? '',
+              role,
+              worldPath: entry.worldPath,
+              centroid: entry.centroid ?? null,
+            });
+          };
+
+          for (const wrongName of wrongGuesses) {
+            if (!pathTaken.includes(wrongName) && wrongName !== activeRoute.target) {
+              addMapCountry(wrongName, 'wrong');
+            }
+          }
+          for (let i = 0; i < pathTaken.length; i += 1) {
+            const stepName = pathTaken[i];
+            const role =
+              i === 0
+                ? 'start'
+                : i === pathTaken.length - 1
+                  ? 'current'
+                  : 'step';
+            addMapCountry(stepName, role);
+          }
+          addMapCountry(activeRoute.target, 'target');
+
           return {
             kind: 'border-hop',
             key: `border-hop:${activeRoute.start}->${activeRoute.target}:${pathTaken.length}:${turnContext?.index ?? 0}`,
             topicId: startMeta?.continent ?? 'Europe',
             topicLabel: `${activeRoute.start} → ${activeRoute.target}`,
+            difficultyLabel: activeRoute.difficultyLabel,
             question: `Connect ${activeRoute.start} to ${activeRoute.target} overland`,
             startCountry: activeRoute.start,
             targetCountry: activeRoute.target,
-            currentCountry,
+            currentCountry: current,
             startCode: startMeta?.code ?? '',
             targetCode: targetMeta?.code ?? '',
             currentCode: currentMeta?.code ?? '',
             startOutline: outlines?.outlines?.[activeRoute.start]?.d ?? null,
             targetOutline: outlines?.outlines?.[activeRoute.target]?.d ?? null,
+            currentOutline: outlines?.outlines?.[current]?.d ?? null,
             viewBox: outlines?.viewBox ?? '0 0 200 200',
+            mapViewBox,
+            mapCountries,
+            wrongGuesses: [...wrongGuesses],
             pathTaken: [...pathTaken],
             optimalSteps: activeRoute.optimalSteps,
             optimalNext,
@@ -406,6 +512,8 @@ export function createBorderHopTrainer(countries, outlines) {
             displayAnswer: `One of: ${validNextCountries.slice(0, 4).join(', ')}`,
             alternatives: acceptedNames,
             suggestions: countrySuggestions,
+            stayOnWrongGuess: true,
+            hideExpectedOnWrong: true,
           };
         },
       };

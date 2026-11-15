@@ -97,9 +97,9 @@ export function isValidVariant(trainer, key) {
  * A trainer may override with modeParamFor; otherwise a timed band trainer
  * scales with the band (FR-29) and everything else uses its fixed value.
  */
-export function modeParamFor(trainer, variantKey) {
+export function modeParamFor(trainer, variantKey, puzzleDate) {
   if (typeof trainer.modeParamFor === 'function') {
-    return trainer.modeParamFor(variantKey);
+    return trainer.modeParamFor(variantKey, puzzleDate);
   }
   if (trainer.roundMode === 'timed' && trainer.variantKind === 'band') {
     return BAND_DURATION_SECONDS[variantKey];
@@ -108,17 +108,21 @@ export function modeParamFor(trainer, variantKey) {
 }
 
 /** Plain-language description of what the player is about to face (FR-4). */
-export function describeRound(trainer, variantKey) {
-  const param = modeParamFor(trainer, variantKey);
+export function describeRound(trainer, variantKey, puzzleDate) {
+  const param = modeParamFor(trainer, variantKey, puzzleDate);
   if (trainer.roundMode === 'timed') return `${param} seconds`;
   if (trainer.roundMode === 'lives') {
+    const perPromptUnit = trainer.id === 'famous-people' ? 'person' : 'question';
     const perPrompt =
       typeof trainer.promptTimeLimitSeconds === 'number' && trainer.promptTimeLimitSeconds > 0
-        ? ` · ${trainer.promptTimeLimitSeconds}s per person`
+        ? ` · ${trainer.promptTimeLimitSeconds}s per ${perPromptUnit}`
         : '';
+    if (trainer.id === 'capital-guesser') {
+      return '3 hint mistakes + 1 final guess · 1 daily capital city';
+    }
     return param === 1
       ? `One life — the first mistake ends it${perPrompt}`
       : `${param} lives${perPrompt}`;
   }
-  return `${param} pairs to match`;
+  return `${param} pairs to match (board size varies daily)`;
 }
