@@ -22,7 +22,13 @@ import {
   proximityPercent,
 } from '../src/trainers/geography/geo.js';
 import { createRng } from '../src/core/rng.js';
-import { checkAnswer, matchSuggestions, resolveClosestMatch } from '../src/core/answer.js';
+import {
+  checkAnswer,
+  matchSuggestions,
+  matchWordRushEntry,
+  resolveClosestMatch,
+} from '../src/core/answer.js';
+import { verifyWordRushCandidateOnline } from '../src/trainers/word-rush/index.js';
 import { BANDS, modeParamFor } from '../src/core/variants.js';
 import { buildGitHubAuthorizeUrl, createAuthStore } from '../src/core/auth.js';
 import { createLeaderboardStore } from '../src/core/leaderboard.js';
@@ -597,4 +603,93 @@ test('GitHub auth and daily/all-time leaderboards record only real players with 
   assert.equal(allTime.length, 1);
   assert.equal(allTime[0].login, 'octocat');
   assert.equal(allTime[0].bestScore, 42);
+});
+
+test('word-rush accepts compound/spaced variants (hashbrown / hash brown / hash browns) and minor 1-char typos (hotsog -> Hot Dog)', () => {
+  const wr = registry.getTrainer('word-rush');
+  // Find a date or use practice generator for Food with H
+  const hFoodPrompt = {
+    kind: 'word-rush',
+    letter: 'H',
+    topicId: 'food',
+    topicLabel: 'Food & Dishes',
+    categoryGroup: 'food',
+    validWords: [
+      { label: 'Hot Dog', alternatives: [] },
+      { label: 'Hash Browns', alternatives: [] },
+      { label: 'Hamburger', alternatives: [] },
+    ],
+    foundWords: [],
+  };
+
+  // Compound vs spaced vs singular/plural
+  assert.equal(matchWordRushEntry(hFoodPrompt, 'hash brown').status, 'correct');
+  assert.equal(matchWordRushEntry(hFoodPrompt, 'hashbrown').status, 'correct');
+  assert.equal(matchWordRushEntry(hFoodPrompt, 'hashbrowns').status, 'correct');
+  assert.equal(matchWordRushEntry(hFoodPrompt, 'hotdog').status, 'correct');
+  assert.equal(matchWordRushEntry(hFoodPrompt, 'hot dog').status, 'correct');
+
+  // 1-character typo tolerance on words >= 6 chars starting with the right letter
+  const hotsogMatch = matchWordRushEntry(hFoodPrompt, 'hotsog');
+  assert.equal(hotsogMatch.status, 'correct');
+  assert.equal(hotsogMatch.matchedEntry.label, 'Hot Dog');
+
+  // Duplicate detection works across compound/plural variants too
+  const withFound = { ...hFoodPrompt, foundWords: ['Hash Browns'] };
+  assert.equal(matchWordRushEntry(withFound, 'hashbrown').status, 'duplicate');
+  assert.equal(matchWordRushEntry(withFound, 'hash brown').status, 'duplicate');
+  assert.ok(wr);
+});
+
+test('verifyWordRushCandidateOnline approves valid unseen foods and declines non-matching words via public APIs', async () => {
+  const mockFetch = async (url) => {
+    if (url.includes('themealdb.com') && url.includes('Halloumi')) {
+      return {
+        ok: true,
+        json: async () => ({ meals: [{ strMeal: 'Halloumi Skewers' }] }),
+      };
+    }
+    if (url.includes('datamuse.com') && url.includes('hibachi')) {
+      return {
+        ok: true,
+        json: async () => [
+          {
+            word: 'hibachi',
+            defs: ['n\tA traditional Japanese heating device used for cooking food and grilled dishes.'],
+          },
+        ],
+      };
+    }
+    return {
+      ok: true,
+      json: async () => ({ meals: null }),
+    };
+  };
+
+  const approvedMeal = await verifyWordRushCandidateOnline({
+    word: 'Halloumi',
+    letter: 'H',
+    categoryId: 'food',
+    categoryGroup: 'food',
+    fetchImpl: mockFetch,
+  });
+  assert.equal(approvedMeal.approved, true);
+
+  const approvedDict = await verifyWordRushCandidateOnline({
+    word: 'hibachi',
+    letter: 'H',
+    categoryId: 'food',
+    categoryGroup: 'food',
+    fetchImpl: mockFetch,
+  });
+  assert.equal(approvedDict.approved, true);
+
+  const declinedWrongLetter = await verifyWordRushCandidateOnline({
+    word: 'Pizza',
+    letter: 'H',
+    categoryId: 'food',
+    categoryGroup: 'food',
+    fetchImpl: mockFetch,
+  });
+  assert.equal(declinedWrongLetter.approved, false);
 });

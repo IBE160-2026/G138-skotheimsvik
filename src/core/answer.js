@@ -24,6 +24,116 @@ export function normaliseText(value) {
 }
 
 /**
+ * Compact alphanumeric key that strips spaces, hyphens, apostrophes and punctuation
+ * so compound words like "hashbrown" == "Hash Browns" == "hash-brown" and "hotdog" == "Hot Dog".
+ */
+export function compactKey(value) {
+  return normaliseText(value).replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Strip common English plural suffixes from a compact key so singular/plural
+ * variations ("hashbrown" vs "hashbrowns", "taco" vs "tacos", "berry" vs "berries") match.
+ */
+export function singularKey(value) {
+  const c = compactKey(value);
+  if (c.length <= 3) return c;
+  if (c.endsWith('ies') && c.length > 4) return `${c.slice(0, -3)}y`;
+  if (
+    c.endsWith('ches') ||
+    c.endsWith('shes') ||
+    c.endsWith('xes') ||
+    c.endsWith('zes') ||
+    c.endsWith('oes')
+  ) {
+    return c.slice(0, -2);
+  }
+  if (c.endsWith('s') && !c.endsWith('ss') && !c.endsWith('us') && !c.endsWith('is')) {
+    return c.slice(0, -1);
+  }
+  return c;
+}
+
+/**
+ * Match a submitted Word Rush guess against the valid pool using:
+ *   1. Exact / space-insensitive / hyphen-insensitive match ("hashbrown" -> "Hash Browns")
+ *   2. Singular/plural stem match ("hashbrown" -> "Hash Browns", "pancakes" -> "Pancake")
+ *   3. Minor 1-character typo tolerance for words >= 6 chars starting with the required letter
+ *      ("hotsog" -> "Hot Dog", "hamberger" -> "Hamburger")
+ *
+ * Returns `{ status: 'correct'|'duplicate'|'incorrect', matchedEntry: object|null }`.
+ */
+export function matchWordRushEntry(prompt, submitted) {
+  const value = normaliseText(submitted);
+  const valCompact = compactKey(submitted);
+  const valSingular = singularKey(submitted);
+  if (!valCompact) return { status: 'ignored', matchedEntry: null };
+
+  const validPool = prompt?.validWords ?? [];
+  const foundCompactSet = new Set((prompt?.foundWords ?? []).map(compactKey));
+  const foundSingularSet = new Set((prompt?.foundWords ?? []).map(singularKey));
+
+  // Pass 1: Exact, compact (space/hyphen-insensitive), or singular/plural match
+  for (const entry of validPool) {
+    const label = typeof entry === 'string' ? entry : entry.label;
+    const forms = [label, ...(entry.alternatives ?? [])];
+    for (const form of forms) {
+      const fNorm = normaliseText(form);
+      const fCompact = compactKey(form);
+      const fSingular = singularKey(form);
+      if (
+        fNorm === value ||
+        fCompact === valCompact ||
+        (fSingular.length >= 3 && fSingular === valSingular)
+      ) {
+        const labelCompact = compactKey(label);
+        const labelSingular = singularKey(label);
+        if (foundCompactSet.has(labelCompact) || foundSingularSet.has(labelSingular)) {
+          return { status: 'duplicate', matchedEntry: typeof entry === 'string' ? { label } : entry };
+        }
+        return { status: 'correct', matchedEntry: typeof entry === 'string' ? { label } : entry };
+      }
+    }
+  }
+
+  // Pass 2: Forgiving 1-edit typo tolerance for words >= 6 chars (e.g. "hotsog" -> "hotdog")
+  const requiredLetter = compactKey(prompt?.letter ?? '');
+  if (valCompact.length >= 6 && (!requiredLetter || valCompact.startsWith(requiredLetter))) {
+    let bestEntry = null;
+    let bestDist = Infinity;
+    for (const entry of validPool) {
+      const label = typeof entry === 'string' ? entry : entry.label;
+      const forms = [label, ...(entry.alternatives ?? [])];
+      for (const form of forms) {
+        const fCompact = compactKey(form);
+        const fSingular = singularKey(form);
+        if (Math.abs(fCompact.length - valCompact.length) <= 1) {
+          const d = Math.min(
+            editDistance(valCompact, fCompact),
+            editDistance(valSingular, fSingular),
+          );
+          const maxDist = valCompact.length >= 9 ? 2 : 1;
+          if (d <= maxDist && d < bestDist) {
+            bestDist = d;
+            bestEntry = typeof entry === 'string' ? { label } : entry;
+          }
+        }
+      }
+    }
+    if (bestEntry) {
+      const labelCompact = compactKey(bestEntry.label);
+      const labelSingular = singularKey(bestEntry.label);
+      if (foundCompactSet.has(labelCompact) || foundSingularSet.has(labelSingular)) {
+        return { status: 'duplicate', matchedEntry: bestEntry };
+      }
+      return { status: 'correct', matchedEntry: bestEntry };
+    }
+  }
+
+  return { status: 'incorrect', matchedEntry: null };
+}
+
+/**
  * Is this submission empty, and therefore to be ignored entirely (FR-52)?
  * @param {unknown} value
  */
@@ -109,19 +219,8 @@ export function checkAnswer(prompt, submitted) {
     }
 
     case 'word-rush': {
-      const value = normaliseText(submitted);
-      if (!value) return 'ignored';
-      const validPool = prompt.validWords ?? [];
-      const foundSet = new Set((prompt.foundWords ?? []).map(normaliseText));
-      for (const entry of validPool) {
-        const label = typeof entry === 'string' ? entry : entry.label;
-        const forms = [label, ...(entry.alternatives ?? [])].map(normaliseText);
-        if (forms.includes(value)) {
-          if (foundSet.has(normaliseText(label))) return 'ignored';
-          return 'correct';
-        }
-      }
-      return 'incorrect';
+      const res = matchWordRushEntry(prompt, submitted);
+      return res.status;
     }
 
     case 'choice':

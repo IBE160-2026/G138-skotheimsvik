@@ -9,7 +9,12 @@
  */
 
 import { el, render, stat, formatClock } from './dom.js';
-import { checkAnswer, matchSuggestions, resolveClosestMatch } from '../core/answer.js';
+import {
+  checkAnswer,
+  matchSuggestions,
+  matchWordRushEntry,
+  resolveClosestMatch,
+} from '../core/answer.js';
 
 const FEEDBACK_MS = 700;
 const PAIR_REVEAL_MS = 850;
@@ -134,48 +139,103 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     // sees exactly one graded answer per country.
     const prompt = round.prompt;
 
-    // Word Rush is rapid-fire: no word help or autocorrect — you must type the word right.
+    // Word Rush is rapid-fire: compound/singular/plural/1-edit typo tolerance + live online engine lookup for unseen words.
     if (prompt?.kind === 'word-rush') {
-      const status = checkAnswer(prompt, value);
-      if (status === 'ignored') return;
-      if (status === 'duplicate') {
+      const matchResult = matchWordRushEntry(prompt, value);
+      if (matchResult.status === 'ignored') return;
+      if (matchResult.status === 'duplicate') {
+        const dupLabel = matchResult.matchedEntry?.label ?? value;
         render(
           feedbackBar,
           el('p', {
             class: 'feedback feedback-life',
-            text: `Already found "${value}" — keep going!`,
+            text: `Already found "${dupLabel}" — keep going!`,
           }),
         );
-        announce(`Already found ${value}`);
-        return;
-      }
-      if (status === 'incorrect') {
-        render(
-          feedbackBar,
-          el('p', {
-            class: 'feedback feedback-wrong',
-            text: `"${value}" is not on the ${prompt.topicLabel} (${prompt.letter}) list.`,
-          }),
-        );
-        announce(`Not in list: ${value}`);
+        announce(`Already found ${dupLabel}`);
         return;
       }
 
-      const feedback = round.submit(value);
-      renderStatus();
+      if (matchResult.status === 'correct') {
+        const canonical = matchResult.matchedEntry?.label ?? value;
+        const feedback = round.submit(canonical);
+        renderStatus();
+        render(
+          feedbackBar,
+          el('p', {
+            class: 'feedback feedback-correct',
+            text: `✓ +1 "${canonical}"`,
+          }),
+        );
+        announce(`Found ${canonical}`);
+        if (feedback.ended) {
+          finish();
+          return;
+        }
+        drawPrompt();
+        return;
+      }
+
+      // If not found in local dictionary, ask the online engine verifier (TheMealDB / Datamuse / Wikipedia)
+      if (typeof trainer?.verifyCandidateOnline === 'function') {
+        render(
+          feedbackBar,
+          el('p', {
+            class: 'feedback',
+            text: `Checking "${value}"...`,
+          }),
+        );
+        trainer.verifyCandidateOnline(value, prompt).then((verification) => {
+          if (!round || round.state !== 'running') return;
+          const activePrompt = round.prompt;
+          if (!activePrompt || activePrompt.kind !== 'word-rush') return;
+
+          if (verification?.approved) {
+            const approvedLabel = verification.canonicalLabel || value;
+            // Dynamically register the newly verified word in the active challenge pool so round.submit accepts it
+            if (Array.isArray(activePrompt.validWords)) {
+              activePrompt.validWords.push({
+                label: approvedLabel,
+                alternatives: [String(value).trim()],
+              });
+            }
+            const feedback = round.submit(approvedLabel);
+            renderStatus();
+            render(
+              feedbackBar,
+              el('p', {
+                class: 'feedback feedback-correct',
+                text: `✓ +1 "${approvedLabel}" (verified)`,
+              }),
+            );
+            announce(`Verified and found ${approvedLabel}`);
+            if (feedback.ended) {
+              finish();
+              return;
+            }
+            drawPrompt();
+          } else {
+            render(
+              feedbackBar,
+              el('p', {
+                class: 'feedback feedback-wrong',
+                text: `"${value}" is not a verified ${activePrompt.topicLabel} (${activePrompt.letter}) entry.`,
+              }),
+            );
+            announce(`Not verified: ${value}`);
+          }
+        });
+        return;
+      }
+
       render(
         feedbackBar,
         el('p', {
-          class: 'feedback feedback-correct',
-          text: `✓ +1 "${value}"`,
+          class: 'feedback feedback-wrong',
+          text: `"${value}" is not on the ${prompt.topicLabel} (${prompt.letter}) list.`,
         }),
       );
-      announce(`Found ${value}`);
-      if (feedback.ended) {
-        finish();
-        return;
-      }
-      drawPrompt();
+      announce(`Not in list: ${value}`);
       return;
     }
 
@@ -463,6 +523,14 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
           text: 'Submit',
           onClick: () => resolveAndSubmit(input.value),
         }),
+        prompt.kind === 'word-rush'
+          ? el('button', {
+              type: 'button',
+              class: 'secondary word-rush-give-up-btn',
+              text: 'Give Up',
+              onClick: () => giveUpWordRush(),
+            })
+          : null,
       ]),
       suggestionList,
     ]);
@@ -867,6 +935,15 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     stopTimer();
     if (round.state === 'running') round.abandon();
     onFinish(round);
+  }
+
+  /**
+   * Immediately finish a Word Rush round, record the score achieved so far,
+   * and reveal all valid answers on the results screen.
+   */
+  function giveUpWordRush() {
+    if (round.state !== 'running') return;
+    finish();
   }
 
   /** Leaving a daily round spends the attempt, so it asks first (FR-10a). */

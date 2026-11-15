@@ -9,7 +9,7 @@
  * Covers FR-9 to FR-25 and FR-68 to FR-73.
  */
 
-import { checkAnswer, formatExpected } from './answer.js';
+import { checkAnswer, formatExpected, matchWordRushEntry } from './answer.js';
 import { createScoreboard } from './scoring.js';
 import { modeParamFor } from './variants.js';
 
@@ -229,12 +229,8 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
       lastSubmission = value;
       lastCorrect = isCorrect;
       if (prompt?.kind === 'word-rush' && isCorrect && roundMeta) {
-        const subNorm = String(value ?? '').trim().toLocaleLowerCase();
-        const match = (prompt.validWords ?? []).find((w) => {
-          const label = typeof w === 'string' ? w : w.label;
-          return label.toLocaleLowerCase() === subNorm;
-        });
-        const canonical = match ? (typeof match === 'string' ? match : match.label) : String(value);
+        const matched = matchWordRushEntry(prompt, value);
+        const canonical = matched.matchedEntry?.label ?? String(value).trim();
         if (!roundMeta.foundWords.includes(canonical)) {
           roundMeta.foundWords.push(canonical);
         }

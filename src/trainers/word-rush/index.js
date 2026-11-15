@@ -9,7 +9,7 @@
  */
 
 import { createRng, seedFor, practiceSeed } from '../../core/rng.js';
-import { normaliseText } from '../../core/answer.js';
+import { normaliseText, compactKey, matchWordRushEntry } from '../../core/answer.js';
 
 export const WORD_RUSH_DURATION_SECONDS = 120;
 export const MIN_WORDS_FOR_LETTER = 5;
@@ -152,49 +152,176 @@ export const STATIC_CATEGORIES = Object.freeze({
     label: 'Food, Dishes & Ingredients',
     group: 'Food',
     items: [
-      'Almond', 'Anchovy', 'Apple', 'Apple Pie', 'Apricot', 'Artichoke', 'Asparagus', 'Avocado',
-      'Bacon', 'Bagel', 'Baguette', 'Baklava', 'Banana', 'Barbecue', 'Basil', 'Beef', 'Beef Stroganoff',
-      'Beetroot', 'Biryani', 'Biscuit', 'Blackberry', 'Blueberry', 'Bolognese', 'Bratwurst', 'Bread',
-      'Brie', 'Brisket', 'Broccoli', 'Brownie', 'Bruschetta', 'Burger', 'Burrito', 'Butter',
-      'Cabbage', 'Caesar Salad', 'Cake', 'Calamari', 'Camembert', 'Cannoli', 'Cantaloupe', 'Caprese',
-      'Caramel', 'Carbonara', 'Carrot', 'Cashew', 'Cassava', 'Cauliflower', 'Caviar', 'Celery',
-      'Ceviche', 'Cheddar', 'Cheese', 'Cheeseburger', 'Cheesecake', 'Cherry', 'Chestnut', 'Chicken',
-      'Chickpea', 'Chili Con Carne', 'Chimichanga', 'Chips', 'Chocolate', 'Chorizo', 'Chowder',
-      'Churro', 'Cilantro', 'Cinnamon', 'Clam', 'Clementine', 'Cobbler', 'Coconut', 'Cod', 'Coleslaw',
-      'Cookie', 'Corn', 'Cornbread', 'Couscous', 'Crab', 'Cranberry', 'Crepe', 'Croissant', 'Cucumber',
-      'Cupcake', 'Curry', 'Custard', 'Date', 'Dim Sum', 'Donut', 'Dragonfruit', 'Duck', 'Dumpling',
-      'Durian', 'Edamame', 'Egg', 'Eggplant', 'Empanada', 'Enchilada', 'Escargot', 'Espresso',
-      'Fajita', 'Falafel', 'Fennel', 'Feta', 'Fig', 'Filet Mignon', 'Fish and Chips', 'Flan',
-      'Focaccia', 'Fondue', 'French Fries', 'French Toast', 'Fried Chicken', 'Fried Rice', 'Fudge',
-      'Garlic', 'Gazpacho', 'Gelato', 'Ginger', 'Gnocchi', 'Goat Cheese', 'Gouda', 'Goulash',
-      'Granola', 'Grape', 'Grapefruit', 'Gravy', 'Greek Salad', 'Green Bean', 'Guacamole', 'Guava',
-      'Gumbo', 'Gyro', 'Haddock', 'Haggis', 'Halibut', 'Halloumi', 'Ham', 'Hamburger', 'Hash Browns',
-      'Hazelnut', 'Herring', 'Honey', 'Honeydew', 'Hot Dog', 'Hummus', 'Ice Cream', 'Jackfruit',
-      'Jalapeno', 'Jam', 'Jambalaya', 'Jelly', 'Jerky', 'Kale', 'Kebab', 'Ketchup', 'Key Lime Pie',
-      'Kimchi', 'Kiwi', 'Kohlrabi', 'Kombucha', 'Lamb', 'Lasagna', 'Leek', 'Lemon', 'Lentil',
-      'Lettuce', 'Licorice', 'Lime', 'Linguine', 'Lobster', 'Lychee', 'Macaron', 'Macaroni',
-      'Mango', 'Maple Syrup', 'Marzipan', 'Mashed Potatoes', 'Matcha', 'Mayonnaise', 'Meatball',
-      'Meatloaf', 'Melon', 'Meringue', 'Milkshake', 'Minestrone', 'Mint', 'Miso Soup', 'Molasses',
-      'Moussaka', 'Mozzarella', 'Muffin', 'Mushroom', 'Mussel', 'Mustard', 'Naan', 'Nachos',
-      'Nectarine', 'Noodles', 'Nougat', 'Nutmeg', 'Oatmeal', 'Octopus', 'Okra', 'Olive', 'Omelette',
-      'Onion', 'Orange', 'Oregano', 'Oyster', 'Pad Thai', 'Paella', 'Pancake', 'Paneer', 'Papaya',
-      'Paprika', 'Parmesan', 'Parsley', 'Parsnip', 'Passionfruit', 'Pasta', 'Pastrami', 'Peach',
-      'Peanut', 'Peanut Butter', 'Pear', 'Peas', 'Pecan', 'Peking Duck', 'Pepper', 'Pepperoni',
-      'Persimmon', 'Pesto', 'Pho', 'Pickle', 'Pie', 'Pineapple', 'Pistachio', 'Pita', 'Pizza',
-      'Plantain', 'Plum', 'Polenta', 'Pomegranate', 'Popcorn', 'Pork', 'Porridge', 'Potato',
-      'Poutine', 'Prawn', 'Pretzel', 'Prosciutto', 'Prune', 'Pudding', 'Pumpkin', 'Quesadilla',
-      'Quiche', 'Quinoa', 'Radish', 'Raisin', 'Ramen', 'Raspberry', 'Ratatouille', 'Ravioli',
-      'Red Cabbage', 'Rhubarb', 'Ribs', 'Rice', 'Ricotta', 'Risotto', 'Roast Beef', 'Rosemary',
-      'Saffron', 'Salad', 'Salami', 'Salmon', 'Salsa', 'Salt', 'Samosa', 'Sandwich', 'Sardine',
-      'Sashimi', 'Satay', 'Sauerkraut', 'Sausage', 'Scallop', 'Scone', 'Seaweed', 'Sesame',
-      'Shallot', 'Shawarma', 'Shepherds Pie', 'Sherbet', 'Shrimp', 'Smoothie', 'Snapper', 'Soba',
-      'Sorbet', 'Souffle', 'ourdough', 'Soup', 'Sour Cream', 'Soy Sauce', 'Spaghetti', 'Spinach',
-      'Spring Roll', 'Squash', 'Squid', 'Steak', 'Strawberry', 'Strudel', 'Sushi', 'Sweet Potato',
-      'Swordfish', 'Syrup', 'Taco', 'Tahini', 'Tamale', 'Tangerine', 'Tapas', 'Tapioca', 'Taro',
-      'Tart', 'Tempura', 'Teriyaki', 'Thyme', 'Tiramisu', 'Toast', 'Tofu', 'Tomatillo', 'Tomato',
-      'Tortellini', 'Tortilla', 'Trout', 'Truffle', 'Tuna', 'Turkey', 'Turmeric', 'Turnip',
-      'Udon', 'Vanilla', 'Veal', 'Venison', 'Vinegar', 'Waffle', 'Walnut', 'Wasabi', 'Watercress',
-      'Watermelon', 'Whipped Cream', 'Wonton', 'Yam', 'Yogurt', 'Zucchini',
+      'Acai', 'Adobo', 'Affogato', 'Aioli', 'Alfalfa', 'Alfredo', 'Allspice', 'Almond', 'Amaranth',
+      'Ambrosia', 'American Cheese', 'Anchovy', 'Andouille', 'Angel Hair Pasta', 'Anise', 'Antipasto',
+      'Apple', 'Apple Cider', 'Apple Pie', 'Applesauce', 'Apricot', 'Arancini', 'Arepa', 'Artichoke',
+      'Arugula', 'Asado', 'Asparagus', 'Aubergine', 'Avocado', 'Avocado Toast', 'Baba Ganoush',
+      'Babka', 'Bacon', 'Bagel', 'Baguette', 'Baked Alaska', 'Baked Beans', 'Baked Potato', 'Baklava',
+      'Balsamic Vinegar', 'Bamboo Shoot', 'Banana', 'Banana Bread', 'Bangers and Mash', 'Banh Mi',
+      'Banoffee Pie', 'Bao', 'Baozi', 'Barbecue', 'Barley', 'Basil', 'Basmati Rice', 'Bay Leaf',
+      'Bean', 'Bean Sprout', 'Bearnaise', 'Beef', 'Beef Jerky', 'Beef Stroganoff', 'Beef Wellington',
+      'Beet', 'Beetroot', 'Beignet', 'Bell Pepper', 'Bento', 'Berries', 'Berry', 'Bhaji', 'Bibimbap',
+      'Biltong', 'Birria', 'Biryani', 'Biscotti', 'Biscuit', 'Bisque', 'Black Bean', 'Black Olive',
+      'Black Pepper', 'Black Pudding', 'Blackberry', 'Blackcurrant', 'Blini', 'Blood Orange',
+      'Blood Sausage', 'Blue Cheese', 'Blueberry', 'Boiled Egg', 'Bok Choy', 'Bolognese', 'Borscht',
+      'Bouillabaisse', 'Bourbon Biscuit', 'Boysnberry', 'Bran', 'Bratwurst', 'Brazil Nut', 'Bread',
+      'Breadfruit', 'Breadstick', 'Bresaola', 'Brie', 'Brioche', 'Brisket', 'Broccoli', 'Broccolini',
+      'Broth', 'Brown Bread', 'Brown Rice', 'Brown Sugar', 'Brownie', 'Brunch', 'Bruschetta',
+      'Brussels Sprouts', 'Bubble Tea', 'Buckwheat', 'Buffalo Wings', 'Bulgur', 'Bulgogi', 'Bun',
+      'Burger', 'Burrata', 'Burrito', 'Butter', 'Butter Chicken', 'Butterbean', 'Buttermilk',
+      'Butternut Squash', 'Butterscotch', 'Cabbage', 'Cacao', 'Cacio e Pepe', 'Caesar Salad', 'Cake',
+      'Calamari', 'Calzone', 'Camembert', 'Candy', 'Cannelloni', 'Cannoli', 'Cantaloupe', 'Capers',
+      'Cappuccino', 'Caprese', 'Caramel', 'Caraway', 'Carbonara', 'Cardamom', 'Carpaccio', 'Carrot',
+      'Carrot Cake', 'Cashew', 'Cassava', 'Casserole', 'Catfish', 'Cauliflower', 'Caviar',
+      'Cayenne Pepper', 'Celeriac', 'Celery', 'Cereal', 'Ceviche', 'Chai', 'Challah', 'Chamomile',
+      'Champagne', 'Chana Masala', 'Chanterelle', 'Chapati', 'Chard', 'Charcuterie', 'Cheddar',
+      'Cheese', 'Cheeseburger', 'Cheesecake', 'Cheesesteak', 'Cherimoya', 'Cherry', 'Cherry Tomato',
+      'Chervil', 'Chestnut', 'Chia Seed', 'Chicken', 'Chicken Nuggets', 'Chicken Parmesan',
+      'Chicken Soup', 'Chicken Tikka Masala', 'Chicken Wings', 'Chickpea', 'Chicory', 'Chilaquiles',
+      'Chili', 'Chili Con Carne', 'Chili Dog', 'Chili Pepper', 'Chimichanga', 'Chimichurri', 'Chips',
+      'Chives', 'Chocolate', 'Chocolate Cake', 'Chocolate Chip Cookie', 'Chops', 'Chorizo', 'Chow Mein',
+      'Chowder', 'Chutney', 'Churro', 'Ciabatta', 'Cider', 'Cilantro', 'Cinnamon', 'Cinnamon Roll',
+      'Citron', 'Clam', 'Clam Chowder', 'Clementine', 'Clotted Cream', 'Clove', 'Club Sandwich',
+      'Cobbler', 'Cobb Salad', 'Cocoa', 'Coconut', 'Coconut Milk', 'Cod', 'Coffee', 'Colby',
+      'Coleslaw', 'Collard Greens', 'Compote', 'Condensed Milk', 'Confit', 'Consomme', 'Cookie',
+      'Coriander', 'Corn', 'Corn Dog', 'Corn Flakes', 'Corn Tortilla', 'Cornbread', 'Corned Beef',
+      'Cornish Pasty', 'Cornmeal', 'Cottage Cheese', 'Cotton Candy', 'Courgette', 'Couscous', 'Crab',
+      'Crab Cake', 'Cracker', 'Cranberry', 'Crawfish', 'Crayfish', 'Cream', 'Cream Cheese',
+      'Cream Puff', 'Creme Brulee', 'Crepe', 'Cress', 'Crisps', 'Croissant', 'Croque Monsieur',
+      'Croquette', 'Crostini', 'Crouton', 'Crumpet', 'Cucumber', 'Cumin', 'Cupcake', 'Curd',
+      'Currant', 'Curry', 'Currywurst', 'Custard', 'Cutlet', 'Daikon', 'Dal', 'Dandelion Greens',
+      'Danish Pastry', 'Dark Chocolate', 'Date', 'Deviled Eggs', 'Dill', 'Dill Pickle', 'Dim Sum',
+      'Dolma', 'Doner Kebab', 'Donut', 'Dorayaki', 'Dosa', 'Doughnut', 'Dragonfruit', 'Dressing',
+      'Dried Fruit', 'Duck', 'Dulce de Leche', 'Dumpling', 'Durian', 'Eclair', 'Edam', 'Edamame',
+      'Eel', 'Egg', 'Egg Drop Soup', 'Egg Fried Rice', 'Egg Roll', 'Egg Salad', 'Eggnog', 'Eggplant',
+      'Elderberry', 'Emmental', 'Empanada', 'Enchilada', 'Endive', 'English Muffin', 'Escargot',
+      'Espresso', 'Eton Mess', 'Evaporated Milk', 'Fajita', 'Falafel', 'Farfalle', 'Farro',
+      'Fava Bean', 'Feijoada', 'Fennel', 'Fenugreek', 'Feta', 'Fettuccine', 'Fig', 'Filet Mignon',
+      'Filo Pastry', 'Fish', 'Fish Cake', 'Fish Finger', 'Fish Sauce', 'Fish Taco', 'Fish and Chips',
+      'Flan', 'Flatbread', 'Flaxseed', 'Flounder', 'Flour', 'Focaccia', 'Foie Gras', 'Fondant',
+      'Fondue', 'Fontina', 'Frankfurter', 'French Bean', 'French Bread', 'French Onion Soup',
+      'French Fries', 'French Toast', 'Feta Cheese', 'Fried Chicken', 'Fried Egg', 'Fried Fish',
+      'Fried Noodles', 'Fried Potato', 'Fried Rice', 'Frittata', 'Fritter', 'Frog Legs', 'Frosting',
+      'Frozen Yogurt', 'Fruit', 'Fruit Salad', 'Fruitcake', 'Fudge', 'Fugu', 'Funnel Cake',
+      'Galangal', 'Galette', 'Game', 'Garam Masala', 'Garbanzo Bean', 'Garlic', 'Garlic Bread',
+      'Gazpacho', 'Gelatin', 'Gelato', 'Genovese', 'Ghee', 'Gherkin', 'Giblets', 'Gin', 'Ginger',
+      'Ginger Ale', 'Ginger Beer', 'Gingerbread', 'Ginseng', 'Glazed Donut', 'Gnocchi', 'Goat',
+      'Goat Cheese', 'Goji Berry', 'Golden Syrup', 'Goose', 'Gooseberry', 'Gorgonzola', 'Gouda',
+      'Goulash', 'Graham Cracker', 'Grain', 'Granita', 'Granola', 'Grape', 'Grapefruit', 'Gratin',
+      'Gravy', 'Greek Salad', 'Greek Yogurt', 'Green Bean', 'Green Onion', 'Green Pepper',
+      'Green Salad', 'Green Tea', 'Greens', 'Grits', 'Ground Beef', 'Grouper', 'Gruyere', 'Guacamole',
+      'Guava', 'Goulash', 'Gumbo', 'Gummy Bear', 'Gyoza', 'Gyro', 'Habanero', 'Haddock', 'Haggis',
+      'Hake', 'Halibut', 'Halloumi', 'Halva', 'Ham', 'Hamburger', 'Harissa', 'Hash', 'Hash Brown',
+      'Hash Browns', 'Havarti', 'Hazelnut', 'Heart of Palm', 'Herb', 'Herring', 'Hibiscus',
+      'Hickory', 'Hoisin Sauce', 'Hollandaise', 'Hominy', 'Honey', 'Honey Mustard', 'Honeycomb',
+      'Honeydew', 'Horchata', 'Horseradish', 'Hot Cross Bun', 'Hot Chocolate', 'Hot Dog', 'Hot Pot',
+      'Hot Sauce', 'Hot Wings', 'Huevos Rancheros', 'Huckleberry', 'Hummus', 'Hushpuppy', 'Ice',
+      'Ice Cream', 'Ice Lolly', 'Iceberg Lettuce', 'Iced Coffee', 'Iced Tea', 'Icing', 'Irish Stew',
+      'Injers', 'Injera', 'Jack Cheese', 'Jackfruit', 'Jaffa Cake', 'Jalapeno', 'Jam', 'Jambalaya',
+      'Jambon', 'Jasmine Rice', 'Jellied Eels', 'Jelly', 'Jelly Bean', 'Jerk Chicken', 'Jerky',
+      'Jerusalem Artichoke', 'Jicama', 'Jollof Rice', 'Jordan Almond', 'Juice', 'Jujube', 'Julienne',
+      'Juniper Berry', 'Kabanos', 'Kaki', 'Kale', 'Katsu', 'Katsu Curry', 'Kebab', 'Kedgeree',
+      'Kefir', 'Kelp', 'Ketchup', 'Kettle Corn', 'Key Lime', 'Key Lime Pie', 'Khachapuri', 'Khichdi',
+      'Kidney Bean', 'Kielbasa', 'Kimchi', 'King Crab', 'Kipper', 'Kirsch', 'Kitfo', 'Kiwi',
+      'Kiwifruit', 'Knish', 'Kofta', 'Kohlrabi', 'Kombu', 'Kombucha', 'Korma', 'Kumquat', 'Laksa',
+      'Lamb', 'Lamb Chop', 'Lamb Shank', 'Langoustine', 'Lard', 'Lardon', 'Lasagna', 'Lassi',
+      'Latke', 'Latte', 'Lavender', 'Lavash', 'Layer Cake', 'Leek', 'Legume', 'Lemon', 'Lemon Curd',
+      'Lemon Meringue Pie', 'Lemon Tart', 'Lemonade', 'Lemongrass', 'Lentil', 'Lentil Soup',
+      'Lettuce', 'Licorice', 'Lima Bean', 'Lime', 'Limoncello', 'Lingonberry', 'Linguine', 'Liquorice',
+      'Liver', 'Liverwurst', 'Lo Mein', 'Lobster', 'Lobster Bisque', 'Lobster Roll', 'Loganberry',
+      'Loin', 'Lollipop', 'London Broil', 'Longan', 'Loquat', 'Lotus Root', 'Lox', 'Lychee',
+      'Macadamia', 'Macaron', 'Macaroni', 'Macaroni and Cheese', 'Macaroon', 'Mace', 'Mackerel',
+      'Madeleine', 'Madras', 'Mahi Mahi', 'Malt', 'Manchego', 'Mandarin', 'Mango', 'Mango Chutney',
+      'Mango Lassi', 'Mangosteen', 'Manicotti', 'Maple Syrup', 'Maraschino Cherry', 'Margarine',
+      'Margherita Pizza', 'Marinara', 'Marjoram', 'Marmalade', 'Marmite', 'Marrow', 'Marsala',
+      'Marshmallow', 'Marzipan', 'Mascarpone', 'Mash', 'Mashed Potato', 'Mashed Potatoes', 'Matcha',
+      'Matzo', 'Matzo Ball Soup', 'Mayonnaise', 'Meat', 'Meat Pie', 'Meat Sauce', 'Meatball',
+      'Meatloaf', 'Melba Toast', 'Melon', 'Meringue', 'Milk', 'Milk Chocolate', 'Milkshake',
+      'Millet', 'Mince', 'Mince Pie', 'Mincemeat', 'Minestrone', 'Mint', 'Mirepoix', 'Mirin',
+      'Miso', 'Miso Soup', 'Mocha', 'Molasses', 'Mole', 'Monkfish', 'Monterey Jack', 'Meringue',
+      'Mortadella', 'Mochi', 'Moussaka', 'Mousse', 'Mozzarella', 'Mozzarella Sticks', 'Muesli',
+      'Muffin', 'Muffuletta', 'Mulberry', 'Mulligatawny', 'Mung Bean', 'Munster', 'Mushroom',
+      'Mushroom Soup', 'Mussel', 'Mustard', 'Mutton', 'Naan', 'Nachos', 'Napa Cabbage', 'Nashi Pear',
+      'Natto', 'Navy Bean', 'Neapolitan Ice Cream', 'Nectar', 'Nectarine', 'Noodle', 'Noodle Soup',
+      'Noodles', 'Nori', 'Nougat', 'Nut', 'Nutella', 'Nutmeg', 'Oat', 'Oat Milk', 'Oatcake',
+      'Oatmeal', 'Octopus', 'Offal', 'Oil', 'Okonomiyaki', 'Okra', 'Olive', 'Olive Oil', 'Omelet',
+      'Omelette', 'Onion', 'Onion Bhaji', 'Onion Ring', 'Onion Rings', 'Onion Soup', 'Orange',
+      'Orange Chicken', 'Orange Juice', 'Oregano', 'Oreo', 'Orzo', 'Osso Buco', 'Ostrich', 'Oxtail',
+      'Oyster', 'Oyster Mushroom', 'Oyster Sauce', 'Pad See Ew', 'Pad Thai', 'Paella', 'Pakora',
+      'Palak Paneer', 'Palm Oil', 'Panang Curry', 'Pancake', 'Pancetta', 'Pandan', 'Paneer',
+      'Panettone', 'Panini', 'Panna Cotta', 'Papadum', 'Papaya', 'Pappardelle', 'Paprika',
+      'Parfait', 'Parmesan', 'Parmigiana', 'Parsley', 'Parsnip', 'Passion Fruit', 'Passionfruit',
+      'Pasta', 'Pasta Salad', 'Pasteis de Nata', 'Pastrami', 'Pastry', 'Pasty', 'Pate', 'Pavlova',
+      'Pea', 'Pea Soup', 'Peach', 'Peach Cobbler', 'Peanut', 'Peanut Brittle', 'Peanut Butter',
+      'Pear', 'Pearl Barley', 'Pearl Onion', 'Peas', 'Pecan', 'Pecan Pie', 'Pecorino', 'Peking Duck',
+      'Penne', 'Pepper', 'Peppermint', 'Pepperoni', 'Perch', 'Peri Peri', 'Persimmon', 'Pesto',
+      'Pheasant', 'Philly Cheesesteak', 'Pho', 'Piccalilli', 'Pickle', 'Pickled Ginger',
+      'Pickled Onion', 'Pico de Gallo', 'Pie', 'Pierogi', 'Pig', 'Pigeon', 'Pike', 'Pilaf',
+      'Pimento', 'Pine Nut', 'Pineapple', 'Pinto Bean', 'Pistachio', 'Pita', 'Pita Bread', 'Pizza',
+      'Plaice', 'Plantain', 'Plum', 'Poached Egg', 'Poke', 'Poke Bowl', 'Polenta', 'Polish Sausage',
+      'Pollock', 'Pomegranate', 'Pomelo', 'Ponzu', 'Pop Tart', 'Popcorn', 'Poppadom', 'Poppy Seed',
+      'Popover', 'Porcini', 'Pork', 'Pork Belly', 'Pork Bun', 'Pork Chop', 'Pork Rind', 'Pork Scratchings',
+      'Porridge', 'Portobello', 'Pot Pie', 'Pot Roast', 'Potato', 'Potato Chips', 'Potato Salad',
+      'Potato Soup', 'Potato Wedge', 'Poutine', 'Praline', 'Prawn', 'Pretzel', 'Prime Rib',
+      'Profiterole', 'Prosciutto', 'Provolone', 'Prune', 'Pudding', 'Puff Pastry', 'Pulled Pork',
+      'Pumpernickel', 'Pumpkin', 'Pumpkin Pie', 'Pumpkin Seed', 'Pumpkin Soup', 'Puri', 'Quail',
+      'Quail Egg', 'Quark', 'Quarter Pounder', 'Quesadilla', 'Queso', 'Quiche', 'Quince', 'Quinoa',
+      'Rabbit', 'Raclette', 'Radicchio', 'Radish', 'Ragu', 'Rainbow Trout', 'Raisin', 'Raita',
+      'Ramen', 'Ranch Dressing', 'Raspberry', 'Ratatouille', 'Ravioli', 'Red Bean', 'Red Cabbage',
+      'Red Onion', 'Red Pepper', 'Red Velvet Cake', 'Redcurrant', 'Refried Beans', 'Relish',
+      'Remoulade', 'Rhubarb', 'Rib', 'Ribeye', 'Ribs', 'Rice', 'Rice Cake', 'Rice Noodle',
+      'Rice Paper', 'Rice Krispies', 'Rice Pudding', 'Ricotta', 'Rigatoni', 'Risotto', 'Roast',
+      'Roast Beef', 'Roast Chicken', 'Roast Duck', 'Roast Lamb', 'Roast Pork', 'Roast Potato',
+      'Roast Turkey', 'Roasted Garlic', 'Rock Cake', 'Rocket', 'Rocky Road', 'Roe', 'Roll',
+      'Romaine', 'Romesco', 'Root Beer', 'Roquefort', 'Rose Water', 'Rosemary', 'Rosti', 'Roti',
+      'Rotisserie Chicken', 'Roulade', 'Rueben', 'Reuben Sandwich', 'Rum Baba', 'Rump Steak',
+      'Rusk', 'Rutabaga', 'Rye', 'Rye Bread', 'Saffron', 'Sage', 'Sago', 'Salad', 'Salami',
+      'Salisbury Steak', 'Salmon', 'Salsa', 'Salt', 'Salt Beef', 'Salt Cod', 'Saltine', 'Sambal',
+      'Samosa', 'Samphire', 'Sandwich', 'Sangria', 'Sardine', 'Sashimi', 'Satay', 'Satsuma',
+      'Sauce', 'Sauerkraut', 'Sausage', 'Sausage Roll', 'Savory', 'Savoy Cabbage', 'Scallion',
+      'Scallop', 'Scalloped Potatoes', 'Scampi', 'Schnitzel', 'Scone', 'Scotch Bonnet', 'Scotch Egg',
+      'Scrambled Eggs', 'Sea Bass', 'Sea Salt', 'Seafood', 'Seaweed', 'Seed', 'Seitan', 'Semolina',
+      'Serrano Ham', 'Sesame', 'Sesame Oil', 'Sesame Seed', 'Seviche', 'Shallot', 'Shark Fin Soup',
+      'Shawarma', 'Shepherd Pie', 'Shepherds Pie', 'Sherbet', 'Sherry', 'Shiitake', 'Shortbread',
+      'Shortcake', 'Shortening', 'Short Rib', 'Shrimp', 'Sirloin', 'Skewer', 'Slaw', 'Slider',
+      'Sloppy Joe', 'Smoked Fish', 'Smoked Salmon', 'Smoothie', 'Smore', 'Snack', 'Snail', 'Snap Pea',
+      'Snapper', 'Snickerdoodle', 'Snow Pea', 'Soba', 'Soda', 'Soda Bread', 'Soft Pretzel',
+      'Soft Serve', 'Sole', 'Som Tam', 'Sorbet', 'Sorghum', 'Sorrel', 'Souffle', 'Soup', 'Sour Cream',
+      'Sourdough', 'Soursop', 'Soy', 'Soy Milk', 'Soy Sauce', 'Soybean', 'Spaghetti',
+      'Spaghetti Bolognese', 'Spam', 'Spanakopita', 'Spare Ribs', 'Spatzle', 'Spearmint', 'Spelt',
+      'Spice', 'Spicy Tuna', 'Spinach', 'Split Pea', 'Split Pea Soup', 'Sponge Cake', 'Spring Onion',
+      'Spring Roll', 'Sprinkles', 'Sprout', 'Squab', 'Squash', 'Squid', 'Star Anise', 'Starfruit',
+      'Steak', 'Steak Tartare', 'Steamed Bun', 'Stew', 'Sticky Rice', 'Sticky Toffee Pudding',
+      'Stilton', 'Stir Fry', 'Stock', 'Stracciatella', 'Strawberry', 'Strawberry Shortcake',
+      'Streusel', 'String Bean', 'String Cheese', 'Stroganoff', 'Stromboli', 'Stroopwafel', 'Strudel',
+      'Stuffed Pepper', 'Stuffing', 'Sturgeon', 'Succotash', 'Suet', 'Sugar', 'Sugar Snap Pea',
+      'Sultana', 'Sumac', 'Summer Roll', 'Sundae', 'Sunflower Oil', 'Sunflower Seed', 'Supreme Pizza',
+      'Surf and Turf', 'Sushi', 'Swede', 'Sweet Corn', 'Sweet Sour Chicken', 'Sweet Potato',
+      'Sweet Potato Fries', 'Sweetbread', 'Sweetener', 'Swiss Chard', 'Swiss Cheese', 'Swiss Roll',
+      'Swordfish', 'Syrup', 'Szechuan Chicken', 'Tabasco', 'Tabbouleh', 'Taco', 'Taco Salad',
+      'Taffy', 'Tagine', 'Tagliatelle', 'Tahini', 'Takoyaki', 'Taleggio', 'Tamago', 'Tamale',
+      'Tamarillo', 'Tamarind', 'Tandoori', 'Tandoori Chicken', 'Tangelo', 'Tangerine', 'Tapas',
+      'Tapenade', 'Tapioca', 'Taramasalata', 'Taro', 'Tarragon', 'Tart', 'Tartar Sauce',
+      'Tarte Tatin', 'Tater Tots', 'Tea', 'Tea Cake', 'Tempeh', 'Tempura', 'Tenderloin', 'Tequila',
+      'Teriyaki', 'Terrine', 'Texas Toast', 'Thai Curry', 'Thousand Island', 'Thyme', 'Tikka',
+      'Tikka Masala', 'Tilapia', 'Tiramisu', 'Toad in the Hole', 'Toast', 'Toasted Sandwich',
+      'Toastie', 'Toffee', 'Tofu', 'Tom Yum', 'Tomatillo', 'Tomato', 'Tomato Paste', 'Tomato Sauce',
+      'Tomato Soup', 'Tonkatsu', 'Tonkotsu Ramen', 'Torte', 'Tortellini', 'Tortilla', 'Tortilla Chip',
+      'Tortilla Soup', 'Tostada', 'Trail Mix', 'Treacle', 'Tres Leches Cake', 'Trifle', 'Tripe',
+      'Trout', 'Truffle', 'Tuna', 'Tuna Melt', 'Tuna Salad', 'Turbot', 'Turducken', 'Turkey',
+      'Turkish Delight', 'Turmeric', 'Turnip', 'Turnover', 'Tzatziki', 'Ube', 'Udon', 'Ugli Fruit',
+      'Umeboshi', 'Uni', 'Upside Down Cake', 'Vanilla', 'Vanilla Extract', 'Vanilla Ice Cream',
+      'Veal', 'Vegan Burger', 'Vegetable', 'Vegetable Oil', 'Vegetable Soup', 'Vegemite',
+      'Vegetarian Pizza', 'Veggie Burger', 'Veloute', 'Venison', 'Vermicelli', 'Vichyssoise',
+      'Victoria Sponge', 'Vinaigrette', 'Vindaloo', 'Vinegar', 'Wafer', 'Waffle', 'Waffle Fries',
+      'Wagyu', 'Waldorf Salad', 'Walnut', 'Wasabi', 'Water', 'Water Chestnut', 'Watercress',
+      'Watermelon', 'Wedge Salad', 'Welsh Rarebit', 'Western Omelet', 'Wheat', 'Wheat Bread',
+      'Whelk', 'Whey', 'Whipped Cream', 'Whisky', 'White Bean', 'White Bread', 'White Chocolate',
+      'White Pepper', 'White Rice', 'Whitebait', 'Whole Wheat Bread', 'Whoopie Pie', 'Wild Boar',
+      'Wild Mushroom', 'Wild Rice', 'Wine', 'Wonton', 'Wonton Soup', 'Worcestershire Sauce', 'Wrap',
+      'Xacuti', 'Xanthan Gum', 'Xiaolongbao', 'Xigua', 'Ximenia', 'Xnipec', 'Yakitori', 'Yakisoba',
+      'Yam', 'Yeast', 'Yellow Pepper', 'Yellowfin Tuna', 'Yoghurt', 'Yogurt', 'Yorkshire Pudding',
+      'Yuca', 'Yuzu', 'Zabaglione', 'Zaatar', 'Zest', 'Ziti', 'Zucchini', 'Zucchini Bread', 'Zwieback',
     ],
   },
   music: {
@@ -542,6 +669,160 @@ export function resolveWordRushChallenge(categoriesMap, { puzzleDate, variantKey
   };
 }
 
+/**
+ * Keywords per category group / category ID used by the live public-API word verifier
+ * when a player types a valid word that isn't yet in our local static list.
+ */
+const CATEGORY_VERIFY_KEYWORDS = Object.freeze({
+  food: [
+    'food', 'dish', 'cuisine', 'fruit', 'vegetable', 'meat', 'cheese', 'bread', 'pastry',
+    'dessert', 'ingredient', 'sauce', 'soup', 'snack', 'beverage', 'drink', 'spice', 'herb',
+    'meal', 'seafood', 'fish', 'pasta', 'noodle', 'cake', 'pie', 'cookie', 'candy', 'sausage',
+    'sandwich', 'salad', 'stew', 'curry', 'baked', 'fried', 'edible', 'culinary', 'cooking',
+  ],
+  sport: [
+    'sport', 'athletic', 'olympic', 'ball game', 'martial art', 'racing', 'competition',
+    'exercise', 'gymnastics', 'skating', 'skiing', 'swimming', 'wrestling', 'tournament',
+  ],
+  gaming: [
+    'video game', 'computer game', 'arcade game', 'playstation', 'xbox', 'nintendo', 'pc game',
+    'multiplayer', 'role-playing game', 'first-person shooter', 'franchise', 'esports',
+  ],
+  'fortnite-weapons': ['fortnite', 'battle royale', 'epic games', 'weapon', 'shotgun', 'rifle', 'smg'],
+  'rockstar-games': ['grand theft auto', 'red dead', 'rockstar games', 'bully', 'max payne', 'l.a. noire'],
+  music: [
+    'music', 'musician', 'singer', 'band', 'songwriter', 'rapper', 'composer', 'instrument',
+    'musical genre', 'album', 'orchestra', 'rock band', 'pop', 'hip hop', 'jazz',
+  ],
+  movies: [
+    'film', 'movie', 'cinema', 'animated film', 'motion picture', 'directed by', 'starring',
+    'box office', 'screenplay', 'thriller', 'comedy film', 'drama film', 'action film',
+  ],
+  actors: ['actor', 'actress', 'filmmaker', 'director', 'screenwriter', 'starring', 'cinema'],
+  musicians: ['singer', 'musician', 'rapper', 'songwriter', 'composer', 'vocalist', 'guitarist'],
+  athletes: ['player', 'athlete', 'olympic', 'footballer', 'basketball', 'tennis', 'champion', 'sprinter'],
+  countries: ['country', 'sovereign state', 'nation', 'republic', 'kingdom'],
+  capitals: ['capital city', 'capital of', 'largest city', 'municipality'],
+});
+
+const liveVerifiedCache = new Map();
+
+/**
+ * Live engine word verifier: if a player submits a word that starts with the
+ * required letter and is not yet in our local static list, query public APIs
+ * (TheMealDB for food, Wikipedia REST summary, and Datamuse semantic dictionary)
+ * to verify whether it is a genuine entry in that category.
+ *
+ * @param {{ word: string, letter: string, categoryId: string, categoryGroup?: string, fetchImpl?: typeof fetch }} opts
+ * @returns {Promise<{ approved: boolean, canonicalLabel?: string }>}
+ */
+export async function verifyWordRushCandidateOnline({
+  word,
+  letter,
+  categoryId,
+  categoryGroup = '',
+  fetchImpl = globalThis.fetch,
+}) {
+  const cleaned = String(word ?? '').trim().replace(/\s+/g, ' ');
+  const norm = normaliseText(cleaned);
+  const reqLetter = normaliseText(letter).charAt(0);
+
+  if (!norm || norm.length < 2 || (reqLetter && norm.charAt(0) !== reqLetter)) {
+    return { approved: false };
+  }
+  if (typeof fetchImpl !== 'function') {
+    return { approved: false };
+  }
+
+  const cacheKey = `${categoryId}:${ reqLetter }:${compactKey(cleaned)}`;
+  if (liveVerifiedCache.has(cacheKey)) {
+    return liveVerifiedCache.get(cacheKey);
+  }
+
+  const titleCase = cleaned
+    .split(' ')
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : ''))
+    .join(' ');
+
+  const keywords =
+    CATEGORY_VERIFY_KEYWORDS[categoryId] ??
+    CATEGORY_VERIFY_KEYWORDS[String(categoryGroup).toLowerCase()] ??
+    CATEGORY_VERIFY_KEYWORDS.food;
+
+  try {
+    // 1. For Food category, check TheMealDB public API first (meals & ingredients)
+    if (categoryId === 'food' || String(categoryGroup).toLowerCase() === 'food') {
+      try {
+        const mealRes = await fetchImpl(
+          `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(cleaned)}`,
+        );
+        if (mealRes.ok) {
+          const mealData = await mealRes.json();
+          if (Array.isArray(mealData?.meals) && mealData.meals.length > 0) {
+            const matchMeal = mealData.meals.find((m) =>
+              normaliseText(m.strMeal).startsWith(reqLetter),
+            );
+            if (matchMeal) {
+              const result = { approved: true, canonicalLabel: titleCase };
+              liveVerifiedCache.set(cacheKey, result);
+              return result;
+            }
+          }
+        }
+      } catch {
+        // Continue to Wikipedia / Datamuse fallback
+      }
+    }
+
+    // 2. Check Datamuse dictionary & semantic tags (`md=d` returns definitions)
+    try {
+      const dmRes = await fetchImpl(
+        `https://api.datamuse.com/words?sp=${encodeURIComponent(cleaned)}&md=d&max=3`,
+      );
+      if (dmRes.ok) {
+        const dmItems = await dmRes.json();
+        if (Array.isArray(dmItems)) {
+          for (const item of dmItems) {
+            if (compactKey(item.word) !== compactKey(cleaned)) continue;
+            const defs = Array.isArray(item.defs) ? item.defs.join(' ').toLowerCase() : '';
+            if (defs && keywords.some((kw) => defs.includes(kw))) {
+              const result = { approved: true, canonicalLabel: titleCase };
+              liveVerifiedCache.set(cacheKey, result);
+              return result;
+            }
+          }
+        }
+      }
+    } catch {
+      // Continue to Wikipedia fallback
+    }
+
+    // 3. Check Wikipedia REST Page Summary API for encyclopedic description + extract
+    const wikiRes = await fetchImpl(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(titleCase)}`,
+    );
+    if (wikiRes.ok) {
+      const wikiData = await wikiRes.json();
+      const combinedText = `${wikiData?.description ?? ''} ${wikiData?.extract ?? ''}`.toLowerCase();
+      if (combinedText && keywords.some((kw) => combinedText.includes(kw))) {
+        const canonical =
+          wikiData?.title && normaliseText(wikiData.title).charAt(0) === reqLetter
+            ? wikiData.title.replace(/\s*\([^)]*\)\s*$/, '')
+            : titleCase;
+        const result = { approved: true, canonicalLabel: canonical };
+        liveVerifiedCache.set(cacheKey, result);
+        return result;
+      }
+    }
+  } catch {
+    // Network error — decline gracefully
+  }
+
+  const declined = { approved: false };
+  liveVerifiedCache.set(cacheKey, declined);
+  return declined;
+}
+
 export function createWordRushTrainer({ countries = [], people = [] } = {}) {
   const categoriesMap = buildWordRushCategories({ countries, people });
   const categoryKeys = Object.keys(categoriesMap);
@@ -581,6 +862,19 @@ export function createWordRushTrainer({ countries = [], people = [] } = {}) {
       return resolveWordRushChallenge(categoriesMap, { puzzleDate, variantKey, practice: false });
     },
 
+    /**
+     * Live online verification hook for words not yet in the local dictionary.
+     */
+    verifyCandidateOnline(word, prompt, fetchImpl) {
+      return verifyWordRushCandidateOnline({
+        word,
+        letter: prompt?.letter ?? '',
+        categoryId: prompt?.topicId ?? '',
+        categoryGroup: prompt?.categoryGroup ?? '',
+        fetchImpl,
+      });
+    },
+
     createGenerator({ puzzleDate, variantKey, practice = false, filters = null }) {
       const challenge = resolveWordRushChallenge(categoriesMap, {
         puzzleDate,
@@ -589,20 +883,25 @@ export function createWordRushTrainer({ countries = [], people = [] } = {}) {
         filters,
       });
       const foundWords = [];
-      const foundNorm = new Set();
+      const foundCompact = new Set();
 
       return {
         next(context) {
           // Record the word that was just submitted if it was correct
           if (context?.lastCorrect && context?.lastSubmission) {
-            const subNorm = normaliseText(context.lastSubmission);
-            const matchedEntry = challenge.validWords.find((entry) => {
-              const forms = [entry.label, ...(entry.alternatives ?? [])].map(normaliseText);
-              return forms.includes(subNorm);
-            });
-            if (matchedEntry && !foundNorm.has(normaliseText(matchedEntry.label))) {
-              foundNorm.add(normaliseText(matchedEntry.label));
-              foundWords.push(matchedEntry.label);
+            const matched = matchWordRushEntry(
+              {
+                validWords: challenge.validWords,
+                foundWords: [],
+                letter: challenge.letter,
+              },
+              context.lastSubmission,
+            );
+            const canonicalLabel = matched.matchedEntry?.label ?? String(context.lastSubmission).trim();
+            const key = compactKey(canonicalLabel);
+            if (key && !foundCompact.has(key)) {
+              foundCompact.add(key);
+              foundWords.push(canonicalLabel);
             }
           }
 
