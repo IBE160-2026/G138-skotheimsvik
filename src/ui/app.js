@@ -520,7 +520,11 @@ function applyTheme(theme) {
       : theme;
   document.documentElement.dataset.theme = resolved;
   const icon = document.querySelector('#theme-icon');
-  if (icon) icon.textContent = resolved === 'light' ? 'Light' : 'Dark';, adminMode: false });
+  if (icon) icon.textContent = resolved === 'light' ? 'Light' : 'Dark';
+}
+
+function setupChrome() {
+  const settings = storage.read(STORAGE_KEYS.settings, { theme: 'system', adminMode: false });
   adminMode = Boolean(settings.adminMode);
   applyTheme(settings.theme ?? 'system');
 
@@ -528,11 +532,7 @@ function applyTheme(theme) {
     const current = document.documentElement.dataset.theme;
     const next = current === 'light' ? 'dark' : 'light';
     applyTheme(next);
-    storage.write(STORAGE_KEYS.settings, { theme: next, adminModetener('click', () => {
-    const current = document.documentElement.dataset.theme;
-    const next = current === 'light' ? 'dark' : 'light';
-    applyTheme(next);
-    storage.write(STORAGE_KEYS.settings, { theme: next });
+    storage.write(STORAGE_KEYS.settings, { theme: next, adminMode });
   });
 
   const navEl = document.querySelector('.app-nav');

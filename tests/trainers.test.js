@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -826,4 +827,26 @@ test('UI views and date formatting load cleanly and format dates in English', ()
   assert.equal(isAdminUser({ login: 'S3lDan1PS' }), true);
   assert.equal(isAdminUser({ login: 's3ldan1ps' }), true);
   assert.equal(isAdminUser({ login: 'octocat' }), false);
+});
+
+test('every JavaScript file in src/ and api/ passes node --check syntax validation (prevents blank screen regressions)', () => {
+  function collectJsFiles(dir) {
+    const files = [];
+    if (!existsSync(dir)) return files;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...collectJsFiles(fullPath));
+      } else if (entry.isFile() && entry.name.endsWith('.js')) {
+        files.push(fullPath);
+      }
+    }
+    return files;
+  }
+
+  const allJsFiles = [...collectJsFiles(join(root, 'src')), ...collectJsFiles(join(root, 'api'))];
+  assert.ok(allJsFiles.length >= 20, 'Should discover all source JS files');
+  for (const file of allJsFiles) {
+    execFileSync(process.execPath, ['--check', file]);
+  }
 });
