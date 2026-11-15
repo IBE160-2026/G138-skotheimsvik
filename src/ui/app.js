@@ -122,10 +122,8 @@ function redirectToGitHubLogin(nextTarget = '') {
     );
     return;
   }
-  const redirectUri = `${globalThis.location.origin}${globalThis.location.pathname}`;
   const githubAuthUrl = buildGitHubAuthorizeUrl({
     clientId: githubClientId,
-    redirectUri,
     state: nextTarget,
   });
   globalThis.location.assign(githubAuthUrl);
