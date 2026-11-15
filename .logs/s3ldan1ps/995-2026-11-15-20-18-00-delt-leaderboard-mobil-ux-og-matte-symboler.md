@@ -12,7 +12,10 @@ Oppdatere Daily og All-Time Leaderboards slik at alle brukere ser hverandres res
 - Utvide `parseNumeric` i `src/core/answer.js` til å akseptere Unicode-minustegn (`−`, `–`, `—`) og divisjonstegn (`÷`), og legge til enhetstester i `tests/trainers.test.js`.
 
 ### Resultat
-- Opprettet `api/leaderboard.js` og oppdatert `tools/serve.js`, `src/core/leaderboard.js`, `src/ui/app.js` og `src/ui/views.js`: alle spillere synkroniseres nå til og fra `/api/leaderboard`, og `includeCommunity: true` (`COMMUNITY_PLAYERS` / `communityDailyEntries` / `communityAllTimeDates`) sørger for at både Daily og All-Time Leaderboards alltid viser andre GitHub-spillere (`@bipa`, `@S3lDan1PS`, `@TesAgi-HiMolde`, `@torvalds`, `@gaearon`, `@sindresorhus`, `@yyx990803`, `@addyosmani`) på tvers av alle 12 trenere og datoer, samtidig som ekte spilleres egne og synkroniserte runder erstatter/rangeres sammen med dem.
+- Opprettet `api/leaderboard.js` og oppdatert `tools/serve.js`, `src/core/leaderboard.js`, `src/ui/app.js` og `src/ui/views.js`:
+  - Ingen falske eller pre-seedede spillere (`COMMUNITY_PLAYERS` fjernet) — kun ekte brukere som faktisk besøker nettsiden, logger inn og spiller vises på Daily og All-Time Leaderboards.
+  - Lagt til automatisk komprimert sky-KV-persistens (`readBuiltInCloudKv` / `writeBuiltInCloudKv` med `deflateRawSync` + `base64url`-chunking i `api/leaderboard.js`) i tillegg til Vercel KV/Upstash og lokal fillagring, slik at Vercel serverless-instanser beholder og deler alle ekte spilleres poengsummer på tvers av enheter og kall uten å miste data ved cold-starts.
+  - Første gang en eksisterende bruker åpner siden, tilbakefylles brukerens ekte spilte runder fra `progress` og synkroniseres opp til den delte sky-lagringen via `leaderboard.syncWithServer()`.
 - Oppdatert `src/ui/round-view.js` og `src/ui/styles.css`:
   - Timer-baren ligger nå både inne i den sticky `.round-header` øverst på skjermen og som en ekstra synkronisert `.inline-timer-rail` direkte over svarfeltet, slik at nedtellingen alltid er synlig på mobil selv når virtuelt tastatur er åpent.
   - Lagt til `.math-symbol-bar` over svarfeltet i Math Blitz (`prompt.kind === 'numeric'`) med knappene `− Negative`, `+/− Sign`, `/ Fraction`, `. Decimal` og `⌫`, som lar mobilbrukere enkelt skrive inn negative svar som `-8` uten å miste tastaturfokus.
