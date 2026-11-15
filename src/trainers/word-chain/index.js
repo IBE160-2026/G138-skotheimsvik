@@ -175,19 +175,24 @@ export function createWordChainTrainer({ countries = [], people = [] } = {}) {
         filters,
       });
 
-      const chain = [setup.starterWord];
-      const usedCompact = new Set([compactKey(setup.starterWord)]);
+      const chain = [];
+      const usedCompact = new Set();
 
       return {
         next(context) {
           if (context?.lastCorrect && context?.lastSubmission) {
-            const currentReqLetter = lastAlphaLetter(chain[chain.length - 1]);
-            const validForLetter = setup.allEntries.filter(
-              (entry) => normaliseText(entry.label).charAt(0).toUpperCase() === currentReqLetter,
-            );
+            const currentReqLetter =
+              chain.length === 0 ? '' : lastAlphaLetter(chain[chain.length - 1]);
+            const validForStep =
+              currentReqLetter === ''
+                ? setup.allEntries
+                : setup.allEntries.filter(
+                    (entry) =>
+                      normaliseText(entry.label).charAt(0).toUpperCase() === currentReqLetter,
+                  );
             const matched = matchWordRushEntry(
               {
-                validWords: validForLetter,
+                validWords: validForStep,
                 foundWords: [],
                 letter: currentReqLetter,
               },
@@ -200,6 +205,29 @@ export function createWordChainTrainer({ countries = [], people = [] } = {}) {
               usedCompact.add(key);
               chain.push(canonicalLabel);
             }
+          }
+
+          // First turn: the player picks the starting word themselves!
+          if (chain.length === 0) {
+            const firstEntry = setup.allEntries[0];
+            if (!firstEntry) return null;
+            return {
+              kind: 'word-rush',
+              isWordChain: true,
+              key: `word-chain:${setup.categoryId}:0:start`,
+              topicId: setup.categoryId,
+              topicLabel: setup.categoryLabel,
+              categoryGroup: setup.categoryGroup,
+              question: `Choose any ${setup.categoryLabel} word to start the chain!`,
+              starterWord: null,
+              previousWord: null,
+              letter: '',
+              answer: firstEntry.label,
+              validWords: setup.allEntries,
+              foundWords: [],
+              chainWords: [],
+              totalPossible: setup.allEntries.length,
+            };
           }
 
           const lastWord = chain[chain.length - 1];
@@ -232,7 +260,7 @@ export function createWordChainTrainer({ countries = [], people = [] } = {}) {
             topicLabel: setup.categoryLabel,
             categoryGroup: setup.categoryGroup,
             question: `Next word must start with "${requiredLetter}" (from ${lastWord})`,
-            starterWord: setup.starterWord,
+            starterWord: chain[0],
             previousWord: lastWord,
             letter: requiredLetter,
             answer: firstUnused.label,

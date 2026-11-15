@@ -1,20 +1,14 @@
 /**
- * Famous People — the People category's guessing trainer.
+ * People Guesser — the People category's daily guessing trainer.
  *
- * A clue, three lives, and fifteen people a day. Pick the category before you
- * start: Everything, or just music, film, sport, science or history. Each
- * category is its own daily puzzle with its own record, which is what the
- * `pool` variant axis is for.
- *
- * Answers are free text rather than multiple choice. With four options a clue
- * this specific would give itself away, and the whole point of "you get to see
- * the name" after a wrong guess is that you did not already have it in front
- * of you.
+ * One daily run combining all categories. You get three lives: guess wrong and
+ * you see who the person was before moving on to the next person. When you run
+ * out of lives, your score is how many people you managed to guess.
  */
 
 import { createRng, seedFor, practiceSeed } from '../../core/rng.js';
 
-/** Fifteen people a day, as the round length. */
+/** Kept for backwards-compatible imports. */
 export const PEOPLE_PER_ROUND = 15;
 
 const LIVES = 3;
@@ -118,36 +112,20 @@ export function createFamousPeopleTrainer({ people, categories }, portraits = nu
   return {
     id: 'famous-people',
     categoryId: 'people',
-    name: 'Famous People',
+    name: 'People Guesser',
     description:
-      'Fifteen clues, fifteen people. Three lives — guess wrong and you find out who it was before moving on.',
+      'One daily run across all categories. Three lives — guess wrong and you find out who the person was before moving on to the next person. See how many people you can guess!',
     roundMode: 'lives',
     variantKind: 'pool',
-    variants: ['all', ...categoryKeys],
+    variants: ['all'],
+    noPractice: true,
     scoreDirection: 'higher',
     headlineScore: 'correct',
     renderer: 'portrait',
-    scoreLabel: 'Correct answers',
+    scoreLabel: 'People guessed',
     modeParam: LIVES,
     topics: categoryKeys.map((id) => ({ id, label: categories[id] })),
-    variantLabels: { all: 'Everything', ...categories },
-
-    practiceFilters: {
-      categories: {
-        label: 'Categories',
-        kind: 'multi',
-        options: categoryKeys.map((id) => ({ id, label: categories[id] })),
-        default: categoryKeys,
-      },
-    },
-
-    validateFilters(filters) {
-      const chosen = filters?.categories ?? [];
-      if (chosen.length === 0) {
-        return { ok: false, reason: 'Pick at least one category to practise.' };
-      }
-      return { ok: true };
-    },
+    variantLabels: { all: 'Daily Challenge (All Categories)', ...categories },
 
     createGenerator({ puzzleDate, variantKey, practice = false, filters = null }) {
       const rng = createRng(practice ? practiceSeed() : seedFor(this.id, variantKey, puzzleDate));
@@ -158,8 +136,8 @@ export function createFamousPeopleTrainer({ people, categories }, portraits = nu
         pool = people.filter((entry) => allowed.has(entry.category));
       }
 
-      // The day's fifteen are drawn up front so nobody appears twice in a round.
-      const order = rng.shuffle(pool).slice(0, PEOPLE_PER_ROUND);
+      // Shuffle the full pool so the player can keep guessing until losing all 3 lives.
+      const order = rng.shuffle(pool);
       let index = 0;
 
       return {

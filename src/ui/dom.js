@@ -80,11 +80,11 @@ export function formatClock(ms) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-/** Readable date, e.g. "Mon 12 Oct 2026". */
+/** Readable date in English, e.g. "Sun, 15 Nov 2026". */
 export function formatDate(iso) {
   const [year, month, day] = iso.split('-').map(Number);
   const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
   });
 }

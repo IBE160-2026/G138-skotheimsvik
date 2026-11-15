@@ -227,7 +227,9 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
               feedbackBar,
               el('p', {
                 class: 'feedback feedback-wrong',
-                text: `"${value}" is not a verified ${activePrompt.topicLabel} (${activePrompt.letter}) entry.`,
+                text: activePrompt.letter
+                  ? `"${value}" is not a verified ${activePrompt.topicLabel} (${activePrompt.letter}) entry.`
+                  : `"${value}" is not a verified ${activePrompt.topicLabel} entry.`,
               }),
               lifeLost ? el('p', { class: 'feedback-life', text: '♥ You lost a life' }) : null,
             );
@@ -253,7 +255,9 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         feedbackBar,
         el('p', {
           class: 'feedback feedback-wrong',
-          text: `"${value}" is not on the ${prompt.topicLabel} (${prompt.letter}) list.`,
+          text: prompt.letter
+            ? `"${value}" is not on the ${prompt.topicLabel} (${prompt.letter}) list.`
+            : `"${value}" is not on the ${prompt.topicLabel} list.`,
         }),
         lifeLost ? el('p', { class: 'feedback-life', text: '♥ You lost a life' }) : null,
       );
@@ -527,7 +531,9 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       inputmode: prompt.kind === 'numeric' ? 'decimal' : 'text',
       placeholder:
         prompt.kind === 'word-rush'
-          ? `Type a ${prompt.topicLabel} word starting with ${prompt.letter}...`
+          ? prompt.letter
+            ? `Type a ${prompt.topicLabel} word starting with ${prompt.letter}...`
+            : `Type any ${prompt.topicLabel} word to start the chain...`
           : hasSuggestions
             ? 'Start typing (e.g. AL for Albania)...'
             : 'Your answer...',
@@ -973,6 +979,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
    */
   function renderWordChain(prompt) {
     const chainWords = prompt.chainWords ?? [prompt.previousWord].filter(Boolean);
+    const isFirstTurn = chainWords.length === 0;
     render(
       promptBody,
       el('div', { class: 'word-rush-header' }, [
@@ -994,17 +1001,23 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
           ]),
           el('div', { class: 'word-rush-pill' }, [
             el('span', { class: 'word-rush-pill-label', text: 'Last word' }),
-            el('strong', { class: 'word-rush-pill-value', text: prompt.previousWord }),
+            el('strong', {
+              class: 'word-rush-pill-value',
+              text: isFirstTurn ? 'Choose your first word!' : prompt.previousWord,
+            }),
           ]),
           el('div', { class: 'word-rush-pill word-rush-pill-letter' }, [
             el('span', { class: 'word-rush-pill-label', text: 'Next starts with' }),
-            el('strong', { class: 'word-rush-pill-value', text: prompt.letter }),
+            el('strong', {
+              class: 'word-rush-pill-value',
+              text: isFirstTurn ? 'Any' : prompt.letter,
+            }),
           ]),
           el('div', { class: 'word-rush-pill' }, [
             el('span', { class: 'word-rush-pill-label', text: 'Chain' }),
             el('strong', {
               class: 'word-rush-pill-value',
-              text: String(Math.max(0, chainWords.length - 1)),
+              text: String(chainWords.length),
             }),
           ]),
         ]),
@@ -1015,16 +1028,21 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
           class: 'word-rush-found-title',
           text: `Word Relay (${chainWords.length} in chain)`,
         }),
-        el(
-          'ul',
-          { class: 'word-rush-chips word-chain-relay', 'aria-label': 'Word chain sequence' },
-          chainWords.map((word, idx) =>
-            el('li', {
-              class: `word-rush-chip ${idx === 0 ? 'is-starter' : 'is-found'}`,
-              text: idx === 0 ? `🏁 ${word}` : `→ ${word}`,
-            }),
-          ),
-        ),
+        chainWords.length === 0
+          ? el('p', {
+              class: 'muted',
+              text: `Type any ${prompt.topicLabel} word to start your chain!`,
+            })
+          : el(
+              'ul',
+              { class: 'word-rush-chips word-chain-relay', 'aria-label': 'Word chain sequence' },
+              chainWords.map((word, idx) =>
+                el('li', {
+                  class: `word-rush-chip ${idx === 0 ? 'is-starter' : 'is-found'}`,
+                  text: idx === 0 ? `🏁 ${word}` : `→ ${word}`,
+                }),
+              ),
+            ),
       ]),
     );
   }

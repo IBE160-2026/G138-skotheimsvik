@@ -68,8 +68,8 @@ export const CATEGORIES = [
   },
   {
     id: 'people',
-    name: 'People',
-    tagline: 'Fifteen clues a day. Music, film, sport, science or history.',
+    name: 'People Guesser',
+    tagline: 'One daily run across music, film, sport, science & history. 3 lives — how many people can you guess?',
     icon: '☺',
   },
 ];

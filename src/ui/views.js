@@ -114,10 +114,11 @@ export function categoriesView({
       (sum, trainer) => sum + progress.spentVariants(trainer.id, today).length,
       0,
     );
-    if (!isWordRush) {
-      allTotal += total;
-      allSpent += spent;
-    }
+    const isCompleted = total > 0 && spent >= total;
+    const hasPractice = trainers.some((trainer) => !trainer.noPractice);
+
+    allTotal += total;
+    allSpent += spent;
 
     return el(
       'article',
@@ -131,16 +132,28 @@ export function categoriesView({
             'aria-hidden': 'true',
             html: CATEGORY_LOGO_SVG[category.id] ?? category.icon,
           }),
-          !isWordRush
-            ? el('span', {
-                class: 'remaining-pill',
-                text: spent === total ? 'Completed' : `${total - spent} / ${total} open`,
-              })
-            : null,
+          el('span', {
+            class: 'remaining-pill',
+            text: isCompleted
+              ? 'Completed'
+              : total === 1
+                ? `${spent} / 1 attempt`
+                : `${total - spent} / ${total} open`,
+          }),
         ]),
         el('h2', { text: category.name }),
         el('p', { class: 'muted', text: category.tagline }),
-        !isWordRush ? meter(spent, total) : null,
+        meter(spent, total),
+        el('p', {
+          class: 'muted small',
+          text: isCompleted
+            ? hasPractice
+              ? 'Completed today · Practice mode available'
+              : 'Completed today · Practice mode not available'
+            : hasPractice
+              ? 'Practice mode available'
+              : '1 attempt per day · No practice mode',
+        }),
         el('button', {
           type: 'button',
           class: 'primary',
@@ -185,22 +198,25 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
         const isWordRush = trainer.id === 'word-rush';
         const variants = variantsFor(trainer);
         const spent = progress.spentVariants(trainer.id, today);
+        const isCompleted = spent.length >= variants.length;
+        const hasPractice = !trainer.noPractice;
         return el('article', { class: 'card' }, [
           el('h2', { text: trainer.name }),
           el('p', { class: 'muted', text: trainer.description }),
-          !isWordRush
-            ? el('p', { class: 'mode-label', text: ROUND_MODE_LABEL[trainer.roundMode] })
-            : null,
-          !isWordRush
-            ? el('p', {
-                class: 'remaining',
-                text:
-                  spent.length === variants.length
-                    ? 'All done today'
-                    : `${variants.length - spent.length} of ${variants.length} left today`,
-              })
-            : null,
-          !isWordRush ? meter(spent.length, variants.length) : null,
+          el('p', { class: 'mode-label', text: ROUND_MODE_LABEL[trainer.roundMode] }),
+          el('p', {
+            class: 'remaining',
+            text: isCompleted
+              ? 'Completed'
+              : variants.length === 1
+                ? `${spent.length} / 1 attempt today`
+                : `${variants.length - spent.length} of ${variants.length} left today`,
+          }),
+          meter(spent.length, variants.length),
+          el('p', {
+            class: 'muted small',
+            text: hasPractice ? 'Practice mode available' : 'Practice mode not available',
+          }),
           el('button', {
             type: 'button',
             class: 'primary',
@@ -211,14 +227,16 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
       }),
     ),
   ]);
-}
-
-/** A trainer's variants, marking what has already been spent (FR-3). */
-export function trainerView({ today, trainer, progress, onPlay, onPractice, onBack }) {
-  const spent = new Set(progress.spentVariants(trainer.id, today));
+}Leaderboard, onBack }) {
+  const variants = variantsFor(trainer);
+  const spentList = progress.spentVariants(trainer.id, today);
+  const spent = new Set(spentList);
+  const isSingleAttempt = variants.length === 1;
+  const isCompleted = spentList.length >= variants.length;
+  const hasPractice = !trainer.noPractice;
   const axisLabel = VARIANT_AXIS_LABEL[trainer.variantKind] ?? 'Level';
 
-  const options = variantsFor(trainer).map((key) => {
+  const options = variants.map((key) => {
     const played = spent.has(key);
     const best = progress.personalBest(trainer.id, key);
     return el('article', { class: `card variant-card${played ? ' variant-done' : ''}` }, [
@@ -227,12 +245,17 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onBa
         : null,
       el('h3', { text: labelFor(trainer, key) }),
       el('p', { class: 'muted', text: describeRound(trainer, key) }),
+      isSingleAttempt ? meter(played ? 1 : 0, 1) : null,
       el('p', {
         class: 'muted small',
         text: best === null ? 'No personal best yet' : `Best: ${best}`,
       }),
+      el('p', {
+        class: 'muted small',
+        text: hasPractice ? 'Practice mode: Available' : 'Practice mode: Not available',
+      }),
       played
-        ? el('p', { class: 'done-label', text: '✓ Played today' })
+        ? el('p', { class: 'done-label', text: '✓ Completed today' })
         : el('button', {
             type: 'button',
             class: 'primary',
@@ -246,15 +269,47 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onBa
     el('button', { type: 'button', class: 'ghost back', text: '← Back', onClick: onBack }),
     el('h1', { text: trainer.name }),
     el('p', { class: 'muted', text: trainer.description }),
+    isSingleAttempt
+      ? el('div', { class: 'card', style: 'margin-bottom: 1rem;' }, [
+          el('div', { class: 'category-card-top' }, [
+            el('strong', { text: 'Daily Attempt Progress' }),
+            el('span', {
+              class: 'remaining-pill',
+              text: isCompleted ? 'Completed' : '0 / 1 attempt used',
+            }),
+          ]),
+          meter(spentList.length, variants.length),
+          el('p', {
+            class: 'muted small',
+            text: isCompleted
+              ? `Completed today · ${hasPractice ? 'Practice mode available' : 'Practice mode is not available for this game'}`
+              : `1 attempt per day · ${hasPractice ? 'Practice mode available' : 'Practice mode is not available for this game'}`,
+          }),
+        ])
+      : null,
     el('h2', { class: 'section-label', text: axisLabel }),
     el('div', { class: 'grid' }, options),
-    !trainer.noPractice && onPractice
-      ? el('div', { class: 'row-actions' }, [
-          el('button', {
+    el('div', { class: 'row-actions' }, [
+      hasPractice && onPractice
+        ? el('button', {
             type: 'button',
             class: 'ghost',
             text: 'Practice freely (unscored)',
             onClick: onPractice,
+          })
+        : el('p', {
+            class: 'muted small',
+            text: 'Practice mode is not available for this daily challenge.',
+          }),
+      onLeaderboard
+        ? el('button', {
+            type: 'button',
+            class: 'ghost',
+            text: 'Daily & All-Time Leaderboards →',
+            onClick: onLeaderboard,
+          })
+        : null,
+    ])onClick: onPractice,
           }),
         ])
       : null,
@@ -405,24 +460,31 @@ export function resultsView({
             }),
             el('span', {
               class: 'badge badge-accent',
-              text: `${wr.foundWords.length} word${wr.foundWords.length === 1 ? '' : 's'} chained from "${wr.starterWord ?? chainWords[0] ?? ''}"`,
+              text:
+                chainWords.length > 0
+                  ? `${chainWords.length} word${chainWords.length === 1 ? '' : 's'} chained (started with "${chainWords[0]}")`
+                  : '0 words chained',
             }),
           ]),
-          el(
-            'ul',
-            { class: 'word-rush-chips word-rush-reveal-grid', 'aria-label': 'Completed word chain' },
-            chainWords.map((word, idx) =>
-              el('li', { class: 'word-rush-chip is-found' }, [
-                el('span', { class: 'chip-mark', text: idx === 0 ? '🏁' : `${idx}.` }),
-                el('span', { text: word }),
-              ]),
-            ),
-          ),
+          chainWords.length > 0
+            ? el(
+                'ul',
+                { class: 'word-rush-chips word-rush-reveal-grid', 'aria-label': 'Completed word chain' },
+                chainWords.map((word, idx) =>
+                  el('li', { class: 'word-rush-chip is-found' }, [
+                    el('span', { class: 'chip-mark', text: `${idx + 1}.` }),
+                    el('span', { text: word }),
+                  ]),
+                ),
+              )
+            : el('p', { class: 'muted', text: 'No words were added to the chain.' }),
           wr.validWords?.length > 0
             ? el('div', { class: 'word-rush-reveal-header', style: 'margin-top: 1rem;' }, [
                 el('h3', {
                   class: 'section-label',
-                  text: `Possible Next Words Starting With "${wr.letter}" (from ${chainWords[chainWords.length - 1] ?? ''})`,
+                  text: wr.letter
+                    ? `Possible Next Words Starting With "${wr.letter}" (from ${chainWords[chainWords.length - 1] ?? ''})`
+                    : `Possible ${wr.categoryLabel} Words`,
                 }),
               ])
             : null,
@@ -477,18 +539,32 @@ export function resultsView({
         ])
     : null;
 
+  const isPeopleGuesser = (result.trainerId ?? trainer?.id) === 'famous-people';
+  const hasLeaderboard = (wr && !isWordChain) || isPeopleGuesser;
+  const leaderboardTrainerId = isPeopleGuesser ? 'famous-people' : (result.trainerId ?? 'word-rush');
+
   const dailyBoard =
-    wr && !isWordChain && leaderboard
+    hasLeaderboard && leaderboard
       ? leaderboard.dailyLeaderboard(result.puzzleDate, {
-          trainerId: result.trainerId ?? 'word-rush',
-          maxPossible: wr.validWords.length,
+          trainerId: leaderboardTrainerId,
+          maxPossible: wr?.validWords?.length ?? 1000,
         })
+      : null;
+
+  const allTimeBoard =
+    isPeopleGuesser && leaderboard
+      ? leaderboard.allTimeLeaderboard({ trainerId: 'famous-people' })
       : null;
 
   const miniLeaderboardSection = dailyBoard
     ? el('div', { class: 'results-leaderboard' }, [
         el('div', { class: 'word-rush-reveal-header' }, [
-          el('h2', { class: 'section-label', text: `Today’s Leaderboard (${formatDate(result.puzzleDate)})` }),
+          el('h2', {
+            class: 'section-label',
+            text: isPeopleGuesser
+              ? `Most Guesses Today (${formatDate(result.puzzleDate)})`
+              : `Today’s Leaderboard (${formatDate(result.puzzleDate)})`,
+          }),
           onLeaderboard
             ? el('button', {
                 type: 'button',
@@ -498,7 +574,15 @@ export function resultsView({
               })
             : null,
         ]),
-        renderLeaderboardTable(dailyBoard.slice(0, 8), currentUser, 'daily'),
+        renderLeaderboardTable(dailyBoard.slice(0, 8), currentUser, 'daily', leaderboardTrainerId),
+        allTimeBoard
+          ? el('div', { style: 'margin-top: 1.25rem;' }, [
+              el('div', { class: 'word-rush-reveal-header' }, [
+                el('h2', { class: 'section-label', text: 'All-Time Most Guesses (People Guesser)' }),
+              ]),
+              renderLeaderboardTable(allTimeBoard.slice(0, 8), currentUser, 'all-time', 'famous-people'),
+            ])
+          : null,
       ])
     : null;
 
@@ -554,15 +638,17 @@ export function resultsView({
   ]);
 }
 
-function renderLeaderboardTable(rows, currentUser, mode = 'daily') {
+function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = 'word-rush') {
+  const isPeople = trainerId === 'famous-people';
+  const gameTitle = isPeople ? 'People Guesser' : 'Word Rush';
   if (!rows || rows.length === 0) {
     return el('div', { class: 'empty-state leaderboard-empty' }, [
       el('p', {
         class: 'muted',
         text:
           mode === 'all-time'
-            ? 'No players on the All-Time leaderboard yet. Play a round of Word Rush to claim #1!'
-            : 'No scores recorded for this day yet. Play Word Rush to be first on the board!',
+            ? `No players on the All-Time leaderboard yet. Play a round of ${gameTitle} to claim #1!`
+            : `No scores recorded for this day yet. Play ${gameTitle} to be first on the board!`,
       }),
     ]);
   }
@@ -573,7 +659,16 @@ function renderLeaderboardTable(rows, currentUser, mode = 'daily') {
         el('tr', {}, [
           el('th', { text: 'Rank' }),
           el('th', { text: 'GitHub Player' }),
-          el('th', { text: mode === 'all-time' ? 'Total Words' : 'Words Found' }),
+          el('th', {
+            text:
+              mode === 'all-time'
+                ? isPeople
+                  ? 'Total Guesses'
+                  : 'Total Words'
+                : isPeople
+                  ? 'People Guessed'
+                  : 'Words Found',
+          }),
           el('th', { text: mode === 'all-time' ? 'Personal Best' : 'Time' }),
         ]),
       ]),
@@ -624,25 +719,28 @@ export function leaderboardView({
   today,
   selectedDate,
   tab = 'daily',
+  trainerId = 'word-rush',
   leaderboard,
   wordRushTrainer,
   currentUser,
   progress,
   onSelectTab,
+  onSelectTrainer,
   onSelectDate,
   onPlayToday,
   onBack,
 }) {
+  const isPeople = trainerId === 'famous-people';
   const activeDate = selectedDate || today;
-  const challenge = wordRushTrainer?.getChallenge?.(activeDate, 'daily') ?? null;
+  const challenge = !isPeople ? (wordRushTrainer?.getChallenge?.(activeDate, 'daily') ?? null) : null;
   const hasPlayedActiveDate = Boolean(
-    progress?.hasAttempt?.('word-rush', 'daily', activeDate),
+    progress?.hasAttempt?.(trainerId, isPeople ? 'all' : 'daily', activeDate),
   );
   const dailyRows = leaderboard.dailyLeaderboard(activeDate, {
-    trainerId: 'word-rush',
+    trainerId,
     maxPossible: challenge?.validWords?.length ?? 25,
   });
-  const allTimeRows = leaderboard.allTimeLeaderboard({ trainerId: 'word-rush' });
+  const allTimeRows = leaderboard.allTimeLeaderboard({ trainerId });
 
   // Last 7 days quick date selector for daily leaderboard
   const recentDates = Array.from({ length: 7 }, (_, i) => {
@@ -655,32 +753,51 @@ export function leaderboardView({
     el('button', { type: 'button', class: 'ghost back', text: '← Back', onClick: onBack }),
     el('div', { class: 'leaderboard-hero' }, [
       el('div', {}, [
-        el('h1', { text: 'Word Rush Leaderboards' }),
+        el('h1', { text: isPeople ? 'People Guesser Leaderboards' : 'Word Rush Leaderboards' }),
         el('p', { class: 'muted' }, [
-          'Ranked by the most words guessed in the 2-Minute Daily Word Rush.',
+          isPeople
+            ? 'Ranked by most people guessed today and all-time in People Guesser.'
+            : 'Ranked by the most words guessed in the 2-Minute Daily Word Rush.',
         ]),
       ]),
       onPlayToday
         ? el('button', {
             type: 'button',
             class: 'primary',
-            text: 'Play Today’s Word Rush',
-            onClick: onPlayToday,
+            text: isPeople ? 'Play Today’s People Guesser' : 'Play Today’s Word Rush',
+            onClick: () => onPlayToday(trainerId),
           })
         : null,
     ]),
+
+    onSelectTrainer
+      ? el('div', { class: 'leaderboard-tabs', style: 'margin-bottom: 0.5rem;' }, [
+          el('button', {
+            type: 'button',
+            class: `tab-btn${!isPeople ? ' is-active' : ''}`,
+            text: 'Word Rush',
+            onClick: () => onSelectTrainer('word-rush'),
+          }),
+          el('button', {
+            type: 'button',
+            class: `tab-btn${isPeople ? ' is-active' : ''}`,
+            text: 'People Guesser',
+            onClick: () => onSelectTrainer('famous-people'),
+          }),
+        ])
+      : null,
 
     el('div', { class: 'leaderboard-tabs' }, [
       el('button', {
         type: 'button',
         class: `tab-btn${tab === 'daily' ? ' is-active' : ''}`,
-        text: 'Daily Leaderboard',
+        text: isPeople ? 'Most Guesses Today' : 'Daily Leaderboard',
         onClick: () => onSelectTab('daily'),
       }),
       el('button', {
         type: 'button',
         class: `tab-btn${tab === 'all-time' ? ' is-active' : ''}`,
-        text: 'All-Time Most Words',
+        text: isPeople ? 'All-Time Most Guesses' : 'All-Time Most Words',
         onClick: () => onSelectTab('all-time'),
       }),
     ]),
@@ -711,14 +828,16 @@ export function leaderboardView({
                   ])
               : null,
           ]),
-          renderLeaderboardTable(dailyRows, currentUser, 'daily'),
+          renderLeaderboardTable(dailyRows, currentUser, 'daily', trainerId),
         ])
       : el('div', {}, [
           el('p', {
             class: 'muted leaderboard-caption',
-            text: 'Cumulative words discovered and single-round personal bests across all daily Word Rush challenges.',
+            text: isPeople
+              ? 'Cumulative people guessed and single-run personal bests across all daily People Guesser challenges.'
+              : 'Cumulative words discovered and single-round personal bests across all daily Word Rush challenges.',
           }),
-          renderLeaderboardTable(allTimeRows, currentUser, 'all-time'),
+          renderLeaderboardTable(allTimeRows, currentUser, 'all-time', trainerId),
         ]),
   ]);
 }

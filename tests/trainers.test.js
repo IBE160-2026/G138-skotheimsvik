@@ -440,14 +440,19 @@ test('every category pool is big enough for a full round', () => {
   assert.equal(peoplePoolFor(peopleContent.people, 'all').length, peopleContent.people.length);
 });
 
-test('a round draws fifteen distinct people (US-12.1)', () => {
+test('People Guesser is a single daily 3-lives run combining all categories with no practice mode (US-12.1)', () => {
   const trainer = registry.getTrainer('famous-people');
+  assert.equal(trainer.name, 'People Guesser');
+  assert.equal(trainer.roundMode, 'lives');
+  assert.equal(trainer.modeParam, 3);
+  assert.deepEqual(trainer.variants, ['all']);
+  assert.equal(trainer.noPractice, true);
   const prompts = pull(trainer, 'all', 40);
-  assert.equal(prompts.length, PEOPLE_PER_ROUND);
-  assert.equal(new Set(prompts.map((p) => p.answer)).size, PEOPLE_PER_ROUND);
+  assert.equal(prompts.length, 40);
+  assert.equal(new Set(prompts.map((p) => p.answer)).size, 40);
 });
 
-test('a category round only asks that category (FR-156)', () => {
+test('poolFor filters by category when given a category key (FR-156)', () => {
   const trainer = registry.getTrainer('famous-people');
   for (const key of Object.keys(peopleContent.categories)) {
     for (const prompt of pull(trainer, key, 20)) {
@@ -749,15 +754,17 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   const wcGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const wcPrompt = wcGen.next({ index: 0 });
   assert.equal(wcPrompt.isWordChain, true);
+  assert.equal(wcPrompt.previousWord, null, 'First word is chosen by the player, not the game');
+  assert.equal(wcPrompt.letter, '', 'First word can start with any letter in the category');
   assert.equal(checkAnswer(wcPrompt, wcPrompt.answer), 'correct');
-  // Starter word is in foundWords so repeating the starter word is rejected as a duplicate
-  assert.equal(matchWordRushEntry(wcPrompt, wcPrompt.starterWord).status, 'duplicate');
   const wcNext = wcGen.next({ index: 1, lastCorrect: true, lastSubmission: wcPrompt.answer });
   assert.equal(
     wcNext.previousWord,
     wcPrompt.answer,
-    'Word Chain advances to the submitted word and requires its last letter next',
+    'Word Chain advances to the player’s chosen starter word and requires its last letter next',
   );
+  // Starter word is now in foundWords so repeating it is rejected as a duplicate
+  assert.equal(matchWordRushEntry(wcNext, wcPrompt.answer).status, 'duplicate');
 
   // Verify round.result() records isWordChain, starterWord, and chainWords accurately
   const clock = createFixedClock({ today: '2026-11-15', startMs: 1000 });
@@ -777,9 +784,9 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   wcRound.abandon();
   const wcResult = wcRound.result();
   assert.equal(wcResult.wordRush.isWordChain, true);
-  assert.equal(wcResult.wordRush.starterWord, firstPrompt.starterWord);
+  assert.equal(wcResult.wordRush.starterWord, firstWord);
   assert.deepEqual(wcResult.wordRush.foundWords, [firstWord, secondWord]);
-  assert.deepEqual(wcResult.wordRush.chainWords, [firstPrompt.starterWord, firstWord, secondWord]);
+  assert.deepEqual(wcResult.wordRush.chainWords, [firstWord, secondWord]);
 
   const connGrid = registry.getTrainer('connection-grid');
   assert.ok(connGrid);

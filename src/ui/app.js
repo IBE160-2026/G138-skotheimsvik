@@ -45,7 +45,7 @@ let roundView = null;
 let activeRound = null;
 let activeTrainer = null;
 let progressSelection = { trainerId: null, variantKey: null };
-let leaderboardState = { tab: 'daily', selectedDate: null };
+let leaderboardState = { tab: 'daily', selectedDate: null, trainerId: 'word-rush' };
 let practiceFilters = {};
 let githubClientId = null;
 
@@ -204,7 +204,7 @@ function goHome() {
 function goCategory(categoryId) {
   requireAuth(() => {
     const trainers = registry.trainersIn(categoryId);
-    if (trainers.length === 1 && trainers[0].id === categoryId) {
+    if (trainers.length === 1) {
       goTrainer(trainers[0].id);
       return;
     }
@@ -224,7 +224,7 @@ function goCategory(categoryId) {
 function goTrainer(trainerId) {
   requireAuth(() => {
     const trainer = registry.getTrainer(trainerId);
-    const isDirectCategory = registry.trainersIn(trainer.categoryId).length === 1 && trainer.id === trainer.categoryId;
+    const isDirectCategory = registry.trainersIn(trainer.categoryId).length === 1;
     show(
       trainerView({
         today: clock.today(),
@@ -232,6 +232,10 @@ function goTrainer(trainerId) {
         progress,
         onPlay: (variantKey) => goBriefing(trainerId, variantKey, clock.today()),
         onPractice: () => goPractice(trainerId),
+        onLeaderboard:
+          trainerId === 'famous-people' || trainerId === 'word-rush'
+            ? () => goLeaderboard({ trainerId, selectedDate: clock.today() })
+            : null,
         onBack: () => (isDirectCategory ? goHome() : goCategory(trainer.categoryId)),
       }),
     );
@@ -259,6 +263,7 @@ function goLeaderboard(nextState = {}) {
     leaderboardState = {
       tab: nextState.tab ?? leaderboardState.tab ?? 'daily',
       selectedDate: nextState.selectedDate ?? leaderboardState.selectedDate ?? clock.today(),
+      trainerId: nextState.trainerId ?? leaderboardState.trainerId ?? 'word-rush',
     };
     const wordRushTrainer = registry.listTrainers().find((t) => t.id === 'word-rush');
     show(
@@ -266,13 +271,20 @@ function goLeaderboard(nextState = {}) {
         today: clock.today(),
         selectedDate: leaderboardState.selectedDate,
         tab: leaderboardState.tab,
+        trainerId: leaderboardState.trainerId,
         leaderboard,
         wordRushTrainer,
         currentUser: auth.getUser(),
         progress,
         onSelectTab: (tab) => goLeaderboard({ tab }),
+        onSelectTrainer: (trainerId) => goLeaderboard({ trainerId }),
         onSelectDate: (selectedDate) => goLeaderboard({ selectedDate }),
-        onPlayToday: () => goBriefing('word-rush', 'daily', clock.today()),
+        onPlayToday: (targetTrainerId = leaderboardState.trainerId) =>
+          goBriefing(
+            targetTrainerId,
+            targetTrainerId === 'famous-people' ? 'all' : 'daily',
+            clock.today(),
+          ),
         onBack: goHome,
       }),
     );
@@ -412,7 +424,11 @@ function finishRound(round) {
         onBack: () => goTrainer(activeTrainer.id),
         onArchive: goArchive,
         onProgress: () => goProgress(),
-        onLeaderboard: () => goLeaderboard({ selectedDate: result.puzzleDate }),
+        onLeaderboard: () =>
+          goLeaderboard({
+            selectedDate: result.puzzleDate,
+            trainerId: activeTrainer.id === 'famous-people' ? 'famous-people' : 'word-rush',
+          }),
       }),
     );
     return;
@@ -439,7 +455,11 @@ function finishRound(round) {
       onArchive: goArchive,
       onProgress: () =>
         goProgress({ trainerId: activeTrainer.id, variantKey: result.variantKey }),
-      onLeaderboard: () => goLeaderboard({ selectedDate: result.puzzleDate }),
+      onLeaderboard: () =>
+        goLeaderboard({
+          selectedDate: result.puzzleDate,
+          trainerId: activeTrainer.id === 'famous-people' ? 'famous-people' : 'word-rush',
+        }),
     }),
   );
 }

@@ -133,7 +133,7 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
         categoryLabel: next.topicLabel,
         categoryGroup: next.categoryGroup,
         validWords: next.validWords?.map((w) => (typeof w === 'string' ? w : w.label)) ?? [],
-        foundWords: isChain ? chainList.slice(1) : [...(next.foundWords ?? [])],
+        foundWords: isChain ? [...chainList] : [...(next.foundWords ?? [])],
         totalPossible: next.totalPossible ?? 0,
       };
     }
