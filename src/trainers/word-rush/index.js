@@ -840,7 +840,6 @@ export function createWordRushTrainer({ countries = [], people = [] } = {}) {
     roundMode: 'timed',
     variantKind: 'pool',
     variants: ['daily'],
-    noPractice: true,
     variantLabels,
     scoreDirection: 'higher',
     headlineScore: 'correct',

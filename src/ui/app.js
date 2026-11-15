@@ -48,6 +48,23 @@ let progressSelection = { trainerId: null, variantKey: null };
 let leaderboardState = { tab: 'daily', selectedDate: null, trainerId: 'word-rush' };
 let practiceFilters = {};
 let githubClientId = null;
+let adminMode = false;
+let currentViewRefresh = null;
+
+function isAdminMode() {
+  return Boolean(auth.isAdmin() && adminMode);
+}
+
+function toggleAdminMode() {
+  if (!auth.isAdmin()) return;
+  adminMode = !adminMode;
+  const settings = storage.read(STORAGE_KEYS.settings, { theme: 'system' });
+  storage.write(STORAGE_KEYS.settings, { ...settings, adminMode });
+  renderUserBadge();
+  if (!activeRound && typeof currentViewRefresh === 'function') {
+    currentViewRefresh();
+  }
+}
 
 function announce(message) {
   if (liveRegion) liveRegion.textContent = message;
@@ -153,29 +170,51 @@ function renderUserBadge() {
     return;
   }
 
+  const isAdmin = auth.isAdmin();
+  const activeAdmin = isAdminMode();
+
   render(
     userBadgeSlot,
-    el('div', { class: 'user-pill' }, [
-      el('img', {
-        class: 'user-pill-avatar',
-        src: user.avatarUrl,
-        alt: `${user.login} GitHub avatar`,
-      }),
-      el('span', { class: 'user-pill-handle', text: `@${user.login}` }),
-      el('button', {
-        type: 'button',
-        class: 'user-pill-logout',
-        title: 'Sign out of GitHub',
-        'aria-label': 'Sign out of GitHub',
-        text: '×',
-        onClick: () => {
-          guardNavigation(() => {
-            auth.logout();
-            renderUserBadge();
-            goHome();
-          });
-        },
-      }),
+    el('div', { style: 'display: inline-flex; align-items: center; gap: 0.45rem;' }, [
+      isAdmin
+        ? el(
+            'button',
+            {
+              type: 'button',
+              class: `admin-switch-btn${activeAdmin ? ' is-active' : ''}`,
+              role: 'switch',
+              'aria-checked': activeAdmin ? 'true' : 'false',
+              title: 'Toggle Admin Mode (unlimited playthroughs & replay)',
+              onClick: () => toggleAdminMode(),
+            },
+            [
+              el('span', { class: 'admin-switch-dot', 'aria-hidden': 'true' }),
+              el('span', { text: activeAdmin ? 'Admin: ON' : 'Admin: OFF' }),
+            ],
+          )
+        : null,
+      el('div', { class: 'user-pill' }, [
+        el('img', {
+          class: 'user-pill-avatar',
+          src: user.avatarUrl,
+          alt: `${user.login} GitHub avatar`,
+        }),
+        el('span', { class: 'user-pill-handle', text: `@${user.login}` }),
+        el('button', {
+          type: 'button',
+          class: 'user-pill-logout',
+          title: 'Sign out of GitHub',
+          'aria-label': 'Sign out of GitHub',
+          text: '×',
+          onClick: () => {
+            guardNavigation(() => {
+              auth.logout();
+              renderUserBadge();
+              goHome();
+            });
+          },
+        }),
+      ]),
     ]),
   );
 }
@@ -189,6 +228,7 @@ function requireAuth(action, nextTarget = '') {
 }
 
 function goHome() {
+  currentViewRefresh = () => goHome();
   show(
     categoriesView({
       today: clock.today(),
@@ -208,6 +248,7 @@ function goCategory(categoryId) {
       goTrainer(trainers[0].id);
       return;
     }
+    currentViewRefresh = () => goCategory(categoryId);
     show(
       categoryView({
         today: clock.today(),
@@ -225,11 +266,13 @@ function goTrainer(trainerId) {
   requireAuth(() => {
     const trainer = registry.getTrainer(trainerId);
     const isDirectCategory = registry.trainersIn(trainer.categoryId).length === 1;
+    currentViewRefresh = () => goTrainer(trainerId);
     show(
       trainerView({
         today: clock.today(),
         trainer,
         progress,
+        adminMode: isAdminMode(),
         onPlay: (variantKey) => goBriefing(trainerId, variantKey, clock.today()),
         onPractice: () => goPractice(trainerId),
         onLeaderboard:
@@ -328,6 +371,7 @@ function goPractice(trainerId, error = null) {
 
 function goArchive() {
   requireAuth(() => {
+    currentViewRefresh = () => goArchive();
     show(
       archiveView({
         entries: listArchive({
@@ -335,6 +379,7 @@ function goArchive() {
           trainers: registry.listTrainers(),
           progress,
         }),
+        adminMode: isAdminMode(),
         onPlay: (trainerId, variantKey, puzzleDate) => goBriefing(trainerId, variantKey, puzzleDate),
         onBack: goHome,
       }),
@@ -376,7 +421,7 @@ function startRound({ trainer, variantKey, puzzleDate, practice = false, filters
       goHome();
       return;
     }
-    if (progress.hasAttempt(trainer.id, variantKey, puzzleDate)) {
+    if (!isAdminMode() && progress.hasAttempt(trainer.id, variantKey, puzzleDate)) {
       showNotice('You have already played that one.');
       goTrainer(trainer.id);
       return;
@@ -475,14 +520,15 @@ function applyTheme(theme) {
       : theme;
   document.documentElement.dataset.theme = resolved;
   const icon = document.querySelector('#theme-icon');
-  if (icon) icon.textContent = resolved === 'light' ? 'Light' : 'Dark';
-}
-
-function setupChrome() {
-  const settings = storage.read(STORAGE_KEYS.settings, { theme: 'system' });
+  if (icon) icon.textContent = resolved === 'light' ? 'Light' : 'Dark';, adminMode: false });
+  adminMode = Boolean(settings.adminMode);
   applyTheme(settings.theme ?? 'system');
 
   document.querySelector('#theme-toggle')?.addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme;
+    const next = current === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    storage.write(STORAGE_KEYS.settings, { theme: next, adminModetener('click', () => {
     const current = document.documentElement.dataset.theme;
     const next = current === 'light' ? 'dark' : 'light';
     applyTheme(next);

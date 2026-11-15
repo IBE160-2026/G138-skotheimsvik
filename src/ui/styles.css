@@ -257,7 +257,7 @@ main:focus { outline: none; }
   transform: translateY(-5px) rotate(-45deg);
 }
 
-.user-badge-slot { display: inline-flex; align-items: center; margin-left: 0.25rem; }
+.user-badge-slot { display: inline-flex; align-items: center; gap: 0.45rem; margin-left: 0.25rem; }
 .user-pill {
   display: inline-flex; align-items: center; gap: 0.45rem;
   padding: 0.25rem 0.4rem 0.25rem 0.3rem;
@@ -265,6 +265,40 @@ main:focus { outline: none; }
   background: var(--surface-2);
   border: 1px solid var(--border);
   font-size: 0.82rem; font-weight: 600;
+}
+.admin-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s var(--ease);
+}
+.admin-switch-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.admin-switch-btn.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.admin-switch-dot {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 50%;
+  background: var(--text-faint);
+  transition: background-color 0.14s var(--ease);
+}
+.admin-switch-btn.is-active .admin-switch-dot {
+  background: var(--accent);
 }
 .user-pill-guest {
   padding: 0.4rem 0.8rem;
@@ -493,6 +527,21 @@ select:hover { border-color: var(--border-strong); }
 .card h2, .card h3 { margin: 0; }
 .card p { margin: 0; }
 .card > button { margin-top: auto; width: 100%; }
+
+.card-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  padding-top: 0.25rem;
+}
+.card-bottom > button {
+  width: 100%;
+}
+.card-bottom .practice-status {
+  margin: 0;
+}
 
 .category-card-featured {
   border-color: var(--border-strong);

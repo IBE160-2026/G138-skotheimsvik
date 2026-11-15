@@ -143,23 +143,21 @@ export function categoriesView({
         ]),
         el('h2', { text: category.name }),
         el('p', { class: 'muted', text: category.tagline }),
-        meter(spent, total),
-        el('p', {
-          class: 'muted small',
-          text: isCompleted
-            ? hasPractice
-              ? 'Completed today · Practice mode available'
-              : 'Completed today · Practice mode not available'
-            : hasPractice
-              ? 'Practice mode available'
-              : '1 attempt per day · No practice mode',
-        }),
-        el('button', {
-          type: 'button',
-          class: 'primary',
-          text: `Open ${category.name}`,
-          onClick: () => onCategory(category.id),
-        }),
+        el('div', { class: 'card-bottom' }, [
+          hasPractice
+            ? el('p', {
+                class: 'muted small practice-status',
+                text: 'Practice mode available',
+              })
+            : null,
+          meter(spent, total),
+          el('button', {
+            type: 'button',
+            class: 'primary',
+            text: `Open ${category.name}`,
+            onClick: () => onCategory(category.id),
+          }),
+        ]),
       ],
     );
   });
@@ -212,17 +210,21 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
                 ? `${spent.length} / 1 attempt today`
                 : `${variants.length - spent.length} of ${variants.length} left today`,
           }),
-          meter(spent.length, variants.length),
-          el('p', {
-            class: 'muted small',
-            text: hasPractice ? 'Practice mode available' : 'Practice mode not available',
-          }),
-          el('button', {
-            type: 'button',
-            class: 'primary',
-            text: isWordRush ? 'Open Word Rush' : 'Choose level',
-            onClick: () => onTrainer(trainer.id),
-          }),
+          el('div', { class: 'card-bottom' }, [
+            hasPractice
+              ? el('p', {
+                  class: 'muted small practice-status',
+                  text: 'Practice mode available',
+                })
+              : null,
+            meter(spent.length, variants.length),
+            el('button', {
+              type: 'button',
+              class: 'primary',
+              text: isWordRush ? 'Open Word Rush' : 'Choose level',
+              onClick: () => onTrainer(trainer.id),
+            }),
+          ]),
         ]);
       }),
     ),
@@ -230,7 +232,16 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
 }
 
 /** A trainer's variants, marking what has already been spent (FR-3). */
-export function trainerView({ today, trainer, progress, onPlay, onPractice, onLeaderboard, onBack }) {
+export function trainerView({
+  today,
+  trainer,
+  progress,
+  adminMode = false,
+  onPlay,
+  onPractice,
+  onLeaderboard,
+  onBack,
+}) {
   const variants = variantsFor(trainer);
   const spentList = progress.spentVariants(trainer.id, today);
   const spent = new Set(spentList);
@@ -242,29 +253,33 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onLe
   const options = variants.map((key) => {
     const played = spent.has(key);
     const best = progress.personalBest(trainer.id, key);
-    return el('article', { class: `card variant-card${played ? ' variant-done' : ''}` }, [
+    return el('article', { class: `card variant-card${played && !adminMode ? ' variant-done' : ''}` }, [
       trainer.variantKind === 'band'
         ? el('span', { class: `band-stripe band-${key}`, 'aria-hidden': 'true' })
         : null,
       el('h3', { text: labelFor(trainer, key) }),
       el('p', { class: 'muted', text: describeRound(trainer, key) }),
-      isSingleAttempt ? meter(played ? 1 : 0, 1) : null,
       el('p', {
         class: 'muted small',
         text: best === null ? 'No personal best yet' : `Best: ${best}`,
       }),
-      el('p', {
-        class: 'muted small',
-        text: hasPractice ? 'Practice mode: Available' : 'Practice mode: Not available',
-      }),
-      played
-        ? el('p', { class: 'done-label', text: '✓ Completed today' })
-        : el('button', {
-            type: 'button',
-            class: 'primary',
-            text: 'Play',
-            onClick: () => onPlay(key),
-          }),
+      el('div', { class: 'card-bottom' }, [
+        hasPractice
+          ? el('p', {
+              class: 'muted small practice-status',
+              text: 'Practice mode available',
+            })
+          : null,
+        isSingleAttempt ? meter(played ? 1 : 0, 1) : null,
+        played && !adminMode
+          ? el('p', { class: 'done-label', text: '✓ Completed today' })
+          : el('button', {
+              type: 'button',
+              class: 'primary',
+              text: played && adminMode ? 'Replay (Admin)' : 'Play',
+              onClick: () => onPlay(key),
+            }),
+      ]),
     ]);
   });
 
@@ -278,41 +293,44 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onLe
             el('strong', { text: 'Daily Attempt Progress' }),
             el('span', {
               class: 'remaining-pill',
-              text: isCompleted ? 'Completed' : '0 / 1 attempt used',
+              text: isCompleted
+                ? adminMode
+                  ? 'Completed (Admin Unlimited)'
+                  : 'Completed'
+                : '0 / 1 attempt used',
             }),
           ]),
+          hasPractice
+            ? el('p', {
+                class: 'muted small practice-status',
+                text: 'Practice mode available',
+              })
+            : null,
           meter(spentList.length, variants.length),
-          el('p', {
-            class: 'muted small',
-            text: isCompleted
-              ? `Completed today · ${hasPractice ? 'Practice mode available' : 'Practice mode is not available for this game'}`
-              : `1 attempt per day · ${hasPractice ? 'Practice mode available' : 'Practice mode is not available for this game'}`,
-          }),
         ])
       : null,
     el('h2', { class: 'section-label', text: axisLabel }),
     el('div', { class: 'grid' }, options),
-    el('div', { class: 'row-actions' }, [
-      hasPractice && onPractice
-        ? el('button', {
-            type: 'button',
-            class: 'ghost',
-            text: 'Practice freely (unscored)',
-            onClick: onPractice,
-          })
-        : el('p', {
-            class: 'muted small',
-            text: 'Practice mode is not available for this daily challenge.',
-          }),
-      onLeaderboard
-        ? el('button', {
-            type: 'button',
-            class: 'ghost',
-            text: 'Daily & All-Time Leaderboards →',
-            onClick: onLeaderboard,
-          })
-        : null,
-    ]),
+    hasPractice || onLeaderboard
+      ? el('div', { class: 'row-actions' }, [
+          hasPractice && onPractice
+            ? el('button', {
+                type: 'button',
+                class: 'ghost',
+                text: 'Practice freely (unscored)',
+                onClick: onPractice,
+              })
+            : null,
+          onLeaderboard
+            ? el('button', {
+                type: 'button',
+                class: 'ghost',
+                text: 'Daily & All-Time Leaderboards →',
+                onClick: onLeaderboard,
+              })
+            : null,
+        ])
+      : null,
   ]);
 }
 
@@ -843,7 +861,7 @@ export function leaderboardView({
 }
 
 /** Archive: every past day, with what is left per trainer and variant (FR-39). */
-export function archiveView({ entries, onPlay, onBack }) {
+export function archiveView({ entries, adminMode = false, onPlay, onBack }) {
   if (entries.length === 0) {
     return el('section', {}, [
       el('h1', { text: 'Archive' }),
@@ -879,7 +897,7 @@ export function archiveView({ entries, onPlay, onBack }) {
                   'div',
                   { class: 'archive-variants' },
                   trainerState.variants.map((variant) =>
-                    variant.played
+                    variant.played && !adminMode
                       ? el('span', {
                           class: 'badge badge-done',
                           text: `${trainerState.variantLabels?.[variant.key] ?? variantLabel(trainerState.variantKind, variant.key)} · ${variant.score}`,
@@ -887,7 +905,10 @@ export function archiveView({ entries, onPlay, onBack }) {
                       : el('button', {
                           type: 'button',
                           class: 'ghost small',
-                          text: trainerState.variantLabels?.[variant.key] ?? variantLabel(trainerState.variantKind, variant.key),
+                          text:
+                            variant.played && adminMode
+                              ? `${trainerState.variantLabels?.[variant.key] ?? variantLabel(trainerState.variantKind, variant.key)} · ${variant.score} (Replay)`
+                              : trainerState.variantLabels?.[variant.key] ?? variantLabel(trainerState.variantKind, variant.key),
                           onClick: () => onPlay(trainerState.trainerId, variant.key, entry.puzzleDate),
                         }),
                   ),

@@ -11,6 +11,14 @@
 
 import { STORAGE_KEYS } from './storage.js';
 
+/** GitHub logins with Admin Mode access (unlimited playthroughs & replay). */
+export const ADMIN_LOGINS = new Set(['s3ldan1ps', 'danthebanan']);
+
+export function isAdminUser(user) {
+  const login = String(user?.login ?? '').trim().toLowerCase();
+  return Boolean(login && ADMIN_LOGINS.has(login));
+}
+
 /**
  * Build the real GitHub OAuth authorization URL (Step 2).
  *
@@ -113,6 +121,7 @@ export function createAuthStore({ storage }) {
   return {
     getUser: () => currentUser,
     isAuthenticated: () => Boolean(currentUser?.login),
+    isAdmin: () => isAdminUser(currentUser),
 
     async completeOAuthCallback(code, fetchImpl) {
       const profile = await exchangeGitHubCode(code, fetchImpl);

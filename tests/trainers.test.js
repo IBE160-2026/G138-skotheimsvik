@@ -30,7 +30,7 @@ import {
 } from '../src/core/answer.js';
 import { verifyWordRushCandidateOnline } from '../src/trainers/word-rush/index.js';
 import { BANDS, modeParamFor } from '../src/core/variants.js';
-import { buildGitHubAuthorizeUrl, createAuthStore } from '../src/core/auth.js';
+import { buildGitHubAuthorizeUrl, createAuthStore, isAdminUser } from '../src/core/auth.js';
 import { createLeaderboardStore } from '../src/core/leaderboard.js';
 import { createStorage, createMemoryBackend } from '../src/core/storage.js';
 import { createRound } from '../src/core/round.js';
@@ -816,4 +816,14 @@ test('UI views and date formatting load cleanly and format dates in English', ()
   assert.equal(typeof createRoundView, 'function');
   const formatted = formatDate('2026-11-15');
   assert.match(formatted, /Sun.*15.*Nov.*2026/);
+
+  // Word Rush has practice mode enabled, while Timeline Sort / Word Chain / ConnectionGrid / People Guesser do not
+  const wr = registry.getTrainer('word-rush');
+  assert.ok(!wr.noPractice, 'Word Rush should have practice mode enabled');
+  assert.ok(wr.practiceFilters?.category, 'Word Rush should expose category practice filters');
+
+  // Admin mode recognizes S3lDan1PS (case-insensitive) and rejects non-admin accounts
+  assert.equal(isAdminUser({ login: 'S3lDan1PS' }), true);
+  assert.equal(isAdminUser({ login: 's3ldan1ps' }), true);
+  assert.equal(isAdminUser({ login: 'octocat' }), false);
 });
