@@ -167,7 +167,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         feedbackBar,
         el('p', {
           class: 'feedback feedback-correct',
-          text: `✓ +1 "${value}" (${round.score()} / ${prompt.totalPossible})`,
+          text: `✓ +1 "${value}"`,
         }),
       );
       announce(`Found ${value}`);
@@ -817,7 +817,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
             el('span', { class: 'word-rush-pill-label', text: 'Found' }),
             el('strong', {
               class: 'word-rush-pill-value',
-              text: `${foundWords.length} / ${prompt.totalPossible}`,
+              text: String(foundWords.length),
             }),
           ]),
         ]),
@@ -826,7 +826,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       el('div', { class: 'word-rush-found-panel' }, [
         el('h3', {
           class: 'word-rush-found-title',
-          text: `Words Found (${foundWords.length} / ${prompt.totalPossible})`,
+          text: `Words Found (${foundWords.length})`,
         }),
         foundWords.length === 0
           ? el('p', {

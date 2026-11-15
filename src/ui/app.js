@@ -206,6 +206,10 @@ function goHome() {
 
 function goCategory(categoryId) {
   requireAuth(() => {
+    if (categoryId === 'word-rush') {
+      goTrainer('word-rush');
+      return;
+    }
     show(
       categoryView({
         today: clock.today(),
@@ -229,7 +233,7 @@ function goTrainer(trainerId) {
         progress,
         onPlay: (variantKey) => goBriefing(trainerId, variantKey, clock.today()),
         onPractice: () => goPractice(trainerId),
-        onBack: () => goCategory(trainer.categoryId),
+        onBack: () => (trainer.id === 'word-rush' ? goHome() : goCategory(trainer.categoryId)),
       }),
     );
   });

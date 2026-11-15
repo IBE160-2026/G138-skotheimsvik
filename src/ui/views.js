@@ -157,32 +157,27 @@ export function categoriesView({
   progress,
   user,
   onCategory,
-  onQuickWordRush,
-  onLeaderboard,
 }) {
   let allTotal = 0;
   let allSpent = 0;
 
-  const wordRushTrainer = registry.listTrainers().find((t) => t.id === 'word-rush');
-  const todayChallenge = wordRushTrainer?.getChallenge?.(today, 'daily') ?? null;
-  const wordRushDone = wordRushTrainer
-    ? progress.hasAttempt('word-rush', 'daily', today)
-    : false;
-
   const cards = categories.map((category) => {
+    const isWordRush = category.id === 'word-rush';
     const trainers = registry.trainersIn(category.id);
     const total = trainers.reduce((sum, trainer) => sum + variantsFor(trainer).length, 0);
     const spent = trainers.reduce(
       (sum, trainer) => sum + progress.spentVariants(trainer.id, today).length,
       0,
     );
-    allTotal += total;
-    allSpent += spent;
+    if (!isWordRush) {
+      allTotal += total;
+      allSpent += spent;
+    }
 
     return el(
       'article',
       {
-        class: `card category-card${category.id === 'word-rush' ? ' category-card-featured' : ''}`,
+        class: `card category-card${isWordRush ? ' category-card-word-rush' : ''}`,
       },
       [
         el('div', { class: 'category-card-top' }, [
@@ -191,14 +186,16 @@ export function categoriesView({
             'aria-hidden': 'true',
             html: CATEGORY_LOGO_SVG[category.id] ?? category.icon,
           }),
-          el('span', {
-            class: 'remaining-pill',
-            text: spent === total ? 'Completed' : `${total - spent} / ${total} open`,
-          }),
+          !isWordRush
+            ? el('span', {
+                class: 'remaining-pill',
+                text: spent === total ? 'Completed' : `${total - spent} / ${total} open`,
+              })
+            : null,
         ]),
         el('h2', { text: category.name }),
         el('p', { class: 'muted', text: category.tagline }),
-        meter(spent, total),
+        !isWordRush ? meter(spent, total) : null,
         el('button', {
           type: 'button',
           class: 'primary',
@@ -212,12 +209,9 @@ export function categoriesView({
   return el('section', {}, [
     el('div', { class: 'hero' }, [
       el('div', { class: 'hero-text' }, [
-        el('p', { class: 'hero-eyebrow', text: formatDate(today).toUpperCase() }),
         el('h1', { text: 'Daily Drills' }),
         el('p', { class: 'muted' }, [
-          user
-            ? `Signed in as @${user.login}. Same daily puzzle seed for everyone.`
-            : `${formatDate(today)} — pick your own level. Everyone playing that level today gets the same puzzle.`,
+          `${formatDate(today)} — same daily puzzle seed for everyone.`,
         ]),
       ]),
       el('div', { class: 'hero-meter' }, [
@@ -228,42 +222,6 @@ export function categoriesView({
         meter(allSpent, allTotal),
       ]),
     ]),
-
-    todayChallenge && onQuickWordRush
-      ? el('div', { class: 'spotlight-banner' }, [
-          el('div', { class: 'spotlight-brand' }, [
-            wordRushLogoMark(46),
-          ]),
-          el('div', { class: 'spotlight-content' }, [
-            el('div', { class: 'spotlight-title-row' }, [
-              el('h2', {
-                class: 'spotlight-title',
-                text: 'Word Rush',
-              }),
-              el('span', { class: 'badge badge-accent', text: '2:00 DAILY MODE' }),
-            ]),
-            el('p', {
-              class: 'muted',
-              text: `Today: ${todayChallenge.categoryLabel} · Letter "${todayChallenge.letter}" · ${todayChallenge.validWords.length} answers in pool`,
-            }),
-          ]),
-          el('div', { class: 'spotlight-actions' }, [
-            wordRushDone
-              ? el('button', {
-                  type: 'button',
-                  class: 'ghost',
-                  text: '✓ Played Today · Leaderboard',
-                  onClick: onLeaderboard,
-                })
-              : el('button', {
-                  type: 'button',
-                  class: 'primary',
-                  text: 'Play Word Rush →',
-                  onClick: onQuickWordRush,
-                }),
-          ]),
-        ])
-      : null,
 
     el('div', { class: 'grid' }, cards),
   ]);
@@ -279,24 +237,29 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
       'div',
       { class: 'grid' },
       trainers.map((trainer) => {
+        const isWordRush = trainer.id === 'word-rush';
         const variants = variantsFor(trainer);
         const spent = progress.spentVariants(trainer.id, today);
         return el('article', { class: 'card' }, [
           el('h2', { text: trainer.name }),
           el('p', { class: 'muted', text: trainer.description }),
-          el('p', { class: 'mode-label', text: ROUND_MODE_LABEL[trainer.roundMode] }),
-          el('p', {
-            class: 'remaining',
-            text:
-              spent.length === variants.length
-                ? 'All done today'
-                : `${variants.length - spent.length} of ${variants.length} left today`,
-          }),
-          meter(spent.length, variants.length),
+          !isWordRush
+            ? el('p', { class: 'mode-label', text: ROUND_MODE_LABEL[trainer.roundMode] })
+            : null,
+          !isWordRush
+            ? el('p', {
+                class: 'remaining',
+                text:
+                  spent.length === variants.length
+                    ? 'All done today'
+                    : `${variants.length - spent.length} of ${variants.length} left today`,
+              })
+            : null,
+          !isWordRush ? meter(spent.length, variants.length) : null,
           el('button', {
             type: 'button',
             class: 'primary',
-            text: 'Choose level',
+            text: isWordRush ? 'Open Word Rush' : 'Choose level',
             onClick: () => onTrainer(trainer.id),
           }),
         ]);
@@ -375,10 +338,6 @@ export function briefingView({ trainer, variantKey, puzzleDate, isArchive, onSta
             el('span', { class: 'badge', text: wordRushChallenge.categoryGroup }),
             el('p', { class: 'word-rush-category-line' }, [
               el('strong', { text: wordRushChallenge.categoryLabel }),
-              el('span', {
-                class: 'muted',
-                text: ` · ${wordRushChallenge.validWords.length} answers in pool`,
-              }),
             ]),
           ]),
         ])
@@ -684,7 +643,6 @@ export function leaderboardView({
     el('button', { type: 'button', class: 'ghost back', text: '← Back', onClick: onBack }),
     el('div', { class: 'leaderboard-hero' }, [
       el('div', {}, [
-        el('p', { class: 'hero-eyebrow', text: 'GLOBAL STANDINGS' }),
         el('h1', { text: 'Word Rush Leaderboards' }),
         el('p', { class: 'muted' }, [
           'Ranked by the most words guessed in the 2-Minute Daily Word Rush.',
@@ -694,7 +652,7 @@ export function leaderboardView({
         ? el('button', {
             type: 'button',
             class: 'primary',
-            text: 'Play Today’s Word Rush →',
+            text: 'Play Today’s Word Rush',
             onClick: onPlayToday,
           })
         : null,
@@ -733,7 +691,7 @@ export function leaderboardView({
             challenge
               ? el('div', { class: 'daily-challenge-pill' }, [
                   el('span', { class: 'badge badge-accent', text: `Letter "${challenge.letter}"` }),
-                  el('span', { text: `${challenge.categoryLabel} (${challenge.validWords.length} words)` }),
+                  el('span', { text: challenge.categoryLabel }),
                 ])
               : null,
           ]),
