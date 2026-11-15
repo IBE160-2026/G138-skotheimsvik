@@ -112,7 +112,8 @@ for (const trainer of registry.listTrainers()) {
 test('every mode reaches the end condition it is supposed to (S5)', () => {
   const byMode = {};
   for (const trainer of registry.listTrainers()) {
-    const { result } = playRound(trainer, variantsFor(trainer)[1]);
+    const variants = variantsFor(trainer);
+    const { result } = playRound(trainer, variants[1] ?? variants[0]);
     byMode[trainer.roundMode] ??= new Set();
     byMode[trainer.roundMode].add(result.endedBy);
   }

@@ -723,11 +723,15 @@ test('Border Hop is registered under Geography and connects bordering countries 
   assert.equal(checkAnswer(p1, p1.answer), 'correct');
 });
 
-test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own categories and grade answers accurately', () => {
+test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own categories as single daily 3-lives games with no practice mode', () => {
   const timeline = registry.getTrainer('timeline-sort');
   assert.ok(timeline);
   assert.equal(timeline.categoryId, 'timeline-sort');
-  const tlGen = timeline.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'beginner' });
+  assert.equal(timeline.roundMode, 'lives');
+  assert.equal(timeline.modeParam, 3);
+  assert.deepEqual(timeline.variants, ['daily']);
+  assert.equal(timeline.noPractice, true);
+  const tlGen = timeline.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const tlPrompt = tlGen.next({ index: 0 });
   assert.equal(tlPrompt.kind, 'timeline-sort');
   assert.equal(tlPrompt.timeline.length, 1);
@@ -738,7 +742,11 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   const wordChain = registry.getTrainer('word-chain');
   assert.ok(wordChain);
   assert.equal(wordChain.categoryId, 'word-chain');
-  const wcGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'food' });
+  assert.equal(wordChain.roundMode, 'lives');
+  assert.equal(wordChain.modeParam, 3);
+  assert.deepEqual(wordChain.variants, ['daily']);
+  assert.equal(wordChain.noPractice, true);
+  const wcGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const wcPrompt = wcGen.next({ index: 0 });
   assert.equal(wcPrompt.isWordChain, true);
   assert.equal(checkAnswer(wcPrompt, wcPrompt.answer), 'correct');
@@ -753,10 +761,10 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
 
   // Verify round.result() records isWordChain, starterWord, and chainWords accurately
   const clock = createFixedClock({ today: '2026-11-15', startMs: 1000 });
-  const wcRoundGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'countries' });
+  const wcRoundGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const wcRound = createRound({
     trainer: wordChain,
-    variantKey: 'countries',
+    variantKey: 'daily',
     puzzleDate: '2026-11-15',
     generator: wcRoundGen,
     clock,
@@ -776,7 +784,11 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   const connGrid = registry.getTrainer('connection-grid');
   assert.ok(connGrid);
   assert.equal(connGrid.categoryId, 'connection-grid');
-  const cgGen = connGrid.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'beginner' });
+  assert.equal(connGrid.roundMode, 'lives');
+  assert.equal(connGrid.modeParam, 3);
+  assert.deepEqual(connGrid.variants, ['daily']);
+  assert.equal(connGrid.noPractice, true);
+  const cgGen = connGrid.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const cgPrompt = cgGen.next({ index: 0 });
   assert.equal(cgPrompt.kind, 'connection-grid');
   assert.equal(cgPrompt.remainingCells.length, 16);

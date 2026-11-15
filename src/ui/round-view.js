@@ -215,27 +215,53 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
             }
             drawPrompt();
           } else {
+            let lifeLost = false;
+            let ended = false;
+            if (round.roundMode === 'lives') {
+              const fb = round.submit(value);
+              lifeLost = Boolean(fb.lifeLost);
+              ended = Boolean(fb.ended);
+              renderStatus();
+            }
             render(
               feedbackBar,
               el('p', {
                 class: 'feedback feedback-wrong',
                 text: `"${value}" is not a verified ${activePrompt.topicLabel} (${activePrompt.letter}) entry.`,
               }),
+              lifeLost ? el('p', { class: 'feedback-life', text: '♥ You lost a life' }) : null,
             );
             announce(`Not verified: ${value}`);
+            if (ended) {
+              busy = true;
+              setTimeout(finish, FEEDBACK_MS);
+            }
           }
         });
         return;
       }
 
+      let lifeLost = false;
+      let ended = false;
+      if (round.roundMode === 'lives') {
+        const fb = round.submit(value);
+        lifeLost = Boolean(fb.lifeLost);
+        ended = Boolean(fb.ended);
+        renderStatus();
+      }
       render(
         feedbackBar,
         el('p', {
           class: 'feedback feedback-wrong',
           text: `"${value}" is not on the ${prompt.topicLabel} (${prompt.letter}) list.`,
         }),
+        lifeLost ? el('p', { class: 'feedback-life', text: '♥ You lost a life' }) : null,
       );
       announce(`Not in list: ${value}`);
+      if (ended) {
+        busy = true;
+        setTimeout(finish, FEEDBACK_MS);
+      }
       return;
     }
 

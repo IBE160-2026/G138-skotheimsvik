@@ -130,9 +130,14 @@ export const timelineSortTrainer = {
   categoryId: 'timeline-sort',
   name: 'Timeline Sort',
   description:
-    'Place historical milestones, inventions, and cultural moments in the right chronological spot on a growing timeline. Three mistakes allowed.',
+    'Place historical milestones, inventions, and cultural moments in the right chronological spot on a growing timeline. One daily round per day — three mistakes allowed!',
   roundMode: 'lives',
-  variantKind: 'band',
+  variantKind: 'pool',
+  variants: ['daily'],
+  variantLabels: {
+    daily: 'Daily Challenge (Shared)',
+  },
+  noPractice: true,
   scoreDirection: 'higher',
   headlineScore: 'correct',
   renderer: 'timeline-sort',
@@ -146,26 +151,11 @@ export const timelineSortTrainer = {
     { id: 'Gaming & Pop Culture', label: 'Gaming & Pop Culture' },
   ],
 
-  practiceFilters: {
-    band: {
-      label: 'Difficulty',
-      kind: 'single',
-      options: [
-        { id: 'beginner', label: 'Beginner' },
-        { id: 'intermediate', label: 'Intermediate' },
-        { id: 'advanced', label: 'Advanced' },
-        { id: 'expert', label: 'Expert' },
-      ],
-      default: 'intermediate',
-    },
-  },
-
-  createGenerator({ puzzleDate, variantKey = 'beginner', practice = false, filters = null }) {
-    const activeBand = practice ? (filters?.band ?? variantKey) : variantKey;
+  createGenerator({ puzzleDate, variantKey = 'daily', practice = false }) {
     const rng = createRng(
-      practice ? practiceSeed() : seedFor('timeline-sort', activeBand, puzzleDate),
+      practice ? practiceSeed() : seedFor('timeline-sort', variantKey, puzzleDate),
     );
-    const maxTier = BAND_MAX_TIER[activeBand] ?? 3;
+    const maxTier = 3;
 
     // Deduplicate by year so slots are unambiguous, then shuffle
     const rawPool = TIMELINE_EVENTS.filter((e) => e.tier <= maxTier);

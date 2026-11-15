@@ -142,26 +142,20 @@ export function createWordChainTrainer({ countries = [], people = [] } = {}) {
     categoryId: 'word-chain',
     name: 'Word Chain',
     description:
-      '90-second last-letter word relay. Every word you type must belong to the category and begin with the LAST letter of the previous word!',
-    roundMode: 'timed',
+      'Last-letter word relay. Every word you type must belong to today’s category and begin with the LAST letter of the previous word! One daily round per day — three mistakes allowed!',
+    roundMode: 'lives',
     variantKind: 'pool',
-    variants: ['daily', ...categoryKeys],
-    variantLabels,
+    variants: ['daily'],
+    variantLabels: {
+      daily: 'Daily Challenge (Shared)',
+    },
+    noPractice: true,
     scoreDirection: 'higher',
     headlineScore: 'correct',
     renderer: 'word-chain',
     scoreLabel: 'Chain length',
-    modeParam: WORD_CHAIN_DURATION_SECONDS,
+    modeParam: 3,
     topics: categoryKeys.map((id) => ({ id, label: categoriesMap[id].label })),
-
-    practiceFilters: {
-      category: {
-        label: 'Category',
-        kind: 'single',
-        options: categoryKeys.map((id) => ({ id, label: categoriesMap[id].label })),
-        default: 'food',
-      },
-    },
 
     verifyCandidateOnline(word, prompt, fetchImpl) {
       return verifyWordRushCandidateOnline({

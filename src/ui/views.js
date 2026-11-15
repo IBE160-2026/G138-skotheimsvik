@@ -248,14 +248,16 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onBa
     el('p', { class: 'muted', text: trainer.description }),
     el('h2', { class: 'section-label', text: axisLabel }),
     el('div', { class: 'grid' }, options),
-    el('div', { class: 'row-actions' }, [
-      el('button', {
-        type: 'button',
-        class: 'ghost',
-        text: 'Practice freely (unscored)',
-        onClick: onPractice,
-      }),
-    ]),
+    !trainer.noPractice && onPractice
+      ? el('div', { class: 'row-actions' }, [
+          el('button', {
+            type: 'button',
+            class: 'ghost',
+            text: 'Practice freely (unscored)',
+            onClick: onPractice,
+          }),
+        ])
+      : null,
   ]);
 }
 

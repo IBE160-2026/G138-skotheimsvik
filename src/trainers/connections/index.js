@@ -118,9 +118,14 @@ export const connectionGridTrainer = {
   categoryId: 'connection-grid',
   name: 'ConnectionGrid',
   description:
-    'Find the 4 hidden categories that link 16 words into groups of 4. Watch out for overlapping red herrings — three mistakes allowed!',
+    'Find the 4 hidden categories that link 16 words into groups of 4. One shared daily board per day — three mistakes allowed!',
   roundMode: 'lives',
-  variantKind: 'band',
+  variantKind: 'pool',
+  variants: ['daily'],
+  variantLabels: {
+    daily: 'Daily Challenge (Shared)',
+  },
+  noPractice: true,
   scoreDirection: 'higher',
   headlineScore: 'correct',
   renderer: 'connection-grid',
@@ -132,26 +137,11 @@ export const connectionGridTrainer = {
     { id: 'tier-3', label: 'Wordplay & Red Herrings' },
   ],
 
-  practiceFilters: {
-    band: {
-      label: 'Difficulty',
-      kind: 'single',
-      options: [
-        { id: 'beginner', label: 'Beginner' },
-        { id: 'intermediate', label: 'Intermediate' },
-        { id: 'advanced', label: 'Advanced' },
-        { id: 'expert', label: 'Expert' },
-      ],
-      default: 'intermediate',
-    },
-  },
-
-  createGenerator({ puzzleDate, variantKey = 'beginner', practice = false, filters = null }) {
-    const activeBand = practice ? (filters?.band ?? variantKey) : variantKey;
+  createGenerator({ puzzleDate, variantKey = 'daily', practice = false }) {
     const rng = createRng(
-      practice ? practiceSeed() : seedFor('connection-grid', activeBand, puzzleDate),
+      practice ? practiceSeed() : seedFor('connection-grid', variantKey, puzzleDate),
     );
-    const maxTier = BAND_MAX_TIER[activeBand] ?? 3;
+    const maxTier = 3;
 
     let board = dealConnectionBoard(rng, maxTier);
     let solvedGroupIds = new Set();
