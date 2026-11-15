@@ -155,12 +155,17 @@ export function isEmptySubmission(value) {
 
 /**
  * Parse a numeric answer, accepting plain numbers, fractions ("3/4"), decimals
- * with either separator ("0,75"), and percent signs (FR-93).
+ * with either separator ("0,75"), Unicode minus ("−"), and percent signs (FR-93).
  * @param {unknown} value
  * @returns {number|null} null when it is not a number at all
  */
 export function parseNumeric(value) {
-  const raw = String(value ?? '').trim().replace(/\s+/g, '').replace(/%$/, '');
+  const raw = String(value ?? '')
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/[−–—]/g, '-')
+    .replace(/÷/g, '/')
+    .replace(/%$/, '');
   if (raw === '') return null;
 
   const fraction = raw.match(/^(-?\d+)\/(\d+)$/);

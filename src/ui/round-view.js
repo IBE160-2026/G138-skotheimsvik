@@ -80,6 +80,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   let statusBar = null;
   /** Visual countdown for timed rounds; null for the other two modes. */
   let timerRail = null;
+  let timerBars = [];
   /** Wrong guesses so far on the current outline prompt (FR-148). */
   let hints = [];
   let guessesUsed = 0;
@@ -151,9 +152,15 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         ? round.modeParam * 1000
         : (round.promptTimeLimitSeconds ?? 30) * 1000;
     const fraction = Math.max(0, Math.min(1, remaining / total));
-    const bar = timerRail.firstElementChild;
-    bar.style.width = `${fraction * 100}%`;
-    bar.classList.toggle('low', fraction <= 0.2);
+    for (const bar of timerBars) {
+      bar.style.width = `${fraction * 100}%`;
+      bar.classList.toggle('low', fraction <= 0.2);
+    }
+    const allInlineBars = promptBody?.querySelectorAll?.('.inline-timer-bar') ?? [];
+    for (const bar of allInlineBars) {
+      bar.style.width = `${fraction * 100}%`;
+      bar.classList.toggle('low', fraction <= 0.2);
+    }
   }
 
   /** Triggered when the 30s per-prompt timer expires in a lives round (e.g. People Guesser). */
@@ -649,7 +656,99 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     queueMicrotask(() => input.focus());
 
+    const isNumericPrompt = prompt.kind === 'numeric';
+
+    function toggleMinusSign() {
+      const raw = input.value;
+      const trimmed = raw.trim();
+      if (trimmed.startsWith('-') || trimmed.startsWith('−')) {
+        input.value = trimmed.replace(/^[-−]\s*/, '');
+      } else {
+        input.value = `-${trimmed}`;
+      }
+      input.focus();
+    }
+
+    function insertMathSymbol(symbol) {
+      if (symbol === '±') {
+        toggleMinusSign();
+        return;
+      }
+      if (symbol === '⌫') {
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? input.value.length;
+        if (start !== end) {
+          input.value = input.value.slice(0, start) + input.value.slice(end);
+          input.setSelectionRange?.(start, start);
+        } else if (start > 0) {
+          input.value = input.value.slice(0, start - 1) + input.value.slice(start);
+          input.setSelectionRange?.(start - 1, start - 1);
+        } else {
+          input.value = input.value.slice(0, -1);
+        }
+        input.focus();
+        return;
+      }
+      if (symbol === '-') {
+        // If empty or already has a leading sign, toggle the negative prefix cleanly
+        if (!input.value.trim() || /^[-−]/.test(input.value.trim())) {
+          toggleMinusSign();
+          return;
+        }
+      }
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      input.value = input.value.slice(0, start) + symbol + input.value.slice(end);
+      const nextCursor = start + symbol.length;
+      input.setSelectionRange?.(nextCursor, nextCursor);
+      input.focus();
+    }
+
+    const mathSymbolBar = isNumericPrompt
+      ? el(
+          'div',
+          {
+            class: 'math-symbol-bar',
+            role: 'toolbar',
+            'aria-label': 'Math symbols for mobile input',
+          },
+          [
+            { symbol: '-', label: '− Negative', title: 'Insert or toggle negative sign (-)' },
+            { symbol: '±', label: '+/− Sign', title: 'Toggle positive or negative sign' },
+            { symbol: '/', label: '/ Fraction', title: 'Insert fraction slash (/)' },
+            { symbol: '.', label: '. Decimal', title: 'Insert decimal point (.)' },
+            { symbol: '⌫', label: '⌫', title: 'Backspace' },
+          ].map((item) =>
+            el(
+              'button',
+              {
+                type: 'button',
+                class: 'math-symbol-btn',
+                title: item.title,
+                'aria-label': item.title,
+                dataset: { mathSymbol: item.symbol },
+                onMousedown: (e) => {
+                  // Keep mobile virtual keyboard open when tapping symbol buttons
+                  e.preventDefault();
+                },
+                onClick: () => insertMathSymbol(item.symbol),
+              },
+              [el('span', { class: 'math-symbol-glyph', text: item.label })],
+            ),
+          ),
+        )
+      : null;
+
+    const hasActiveTimer = Boolean(timerRail);
+    const inlineTimerRail = hasActiveTimer
+      ? el('div', { class: 'timer-rail inline-timer-rail', 'aria-hidden': 'true' }, [
+          el('span', { class: 'timer-bar inline-timer-bar', style: 'width: 100%;' }),
+        ])
+      : null;
+
     return el('div', { class: 'answer-box-wrap' }, [
+      inlineTimerRail,
+      mathSymbolBar,
       el('div', { class: 'answer-row' }, [
         input,
         el('button', {
@@ -1936,11 +2035,11 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       const hasPromptTimer =
         typeof activeRound.promptTimeLimitSeconds === 'number' &&
         activeRound.promptTimeLimitSeconds > 0;
+      const topTimerBar = el('span', { class: 'timer-bar', style: 'width: 100%;' });
+      timerBars = [topTimerBar];
       timerRail =
         activeRound.roundMode === 'timed' || hasPromptTimer
-          ? el('div', { class: 'timer-rail', 'aria-hidden': 'true' }, [
-              el('span', { class: 'timer-bar', style: 'width: 100%;' }),
-            ])
+          ? el('div', { class: 'timer-rail', 'aria-hidden': 'true' }, [topTimerBar])
           : null;
 
       render(
@@ -1955,8 +2054,8 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
             round.isPractice ? el('span', { class: 'badge badge-practice', text: 'Practice' }) : null,
             el('button', { type: 'button', class: 'ghost', text: 'Leave round', onClick: leave }),
           ]),
+          timerRail,
         ]),
-        timerRail,
         promptBody,
         feedbackBar,
       );

@@ -871,7 +871,10 @@ export function resultsView({
 
   const allTimeBoard =
     hasLeaderboard && leaderboard
-      ? leaderboard.allTimeLeaderboard({ trainerId: leaderboardTrainerId })
+      ? leaderboard.allTimeLeaderboard({
+          trainerId: leaderboardTrainerId,
+          today: result.puzzleDate,
+        })
       : null;
 
   const miniLeaderboardSection = dailyBoard
@@ -1058,6 +1061,71 @@ const LEADERBOARD_MODES = {
     allTimeCaption:
       'Cumulative people guessed and single-run personal bests across all daily People Guesser challenges.',
   },
+  'connection-grid': {
+    title: 'ConnectionGrid',
+    heading: 'ConnectionGrid Leaderboards',
+    subtitle: 'Ranked by the most hidden 4-word categories solved today and all-time.',
+    playButton: 'Play Today’s ConnectionGrid',
+    variantKey: 'daily',
+    dailyTab: 'Most Groups Solved Today',
+    allTimeTab: 'All-Time Groups Solved',
+    dailyCol: 'Groups Solved',
+    allTimeCol: 'Total Groups',
+    allTimeCaption:
+      'Cumulative 4-word groups solved and single-run personal bests across all daily ConnectionGrid challenges.',
+  },
+  'flag-guesser': {
+    title: 'Flag Guesser',
+    heading: 'Flag Guesser Leaderboards',
+    subtitle: 'Ranked by daily flag identification accuracy, speed, and all-time flags solved.',
+    playButton: 'Play Today’s Flag Guesser',
+    variantKey: 'daily',
+    dailyTab: 'Today’s Flag Solvers',
+    allTimeTab: 'All-Time Flags Solved',
+    dailyCol: 'Score',
+    allTimeCol: 'Total Solved',
+    allTimeCaption:
+      'Cumulative daily flags identified across all Flag Guesser challenges.',
+  },
+  'outline-guesser': {
+    title: 'Country Guesser',
+    heading: 'Country Guesser Leaderboards',
+    subtitle: 'Ranked by daily country outline solves and fastest completion times.',
+    playButton: 'Play Today’s Country Guesser',
+    variantKey: 'daily',
+    dailyTab: 'Today’s Country Solvers',
+    allTimeTab: 'All-Time Countries Solved',
+    dailyCol: 'Score',
+    allTimeCol: 'Total Solved',
+    allTimeCaption:
+      'Cumulative country outlines identified across all daily Country Guesser challenges.',
+  },
+  'capital-guesser': {
+    title: 'Capital Guesser',
+    heading: 'Capital Guesser Leaderboards',
+    subtitle: 'Ranked by daily capital city solves and fastest completion times.',
+    playButton: 'Play Today’s Capital Guesser',
+    variantKey: 'daily',
+    dailyTab: 'Today’s Capital Solvers',
+    allTimeTab: 'All-Time Capitals Solved',
+    dailyCol: 'Score',
+    allTimeCol: 'Total Solved',
+    allTimeCaption:
+      'Cumulative capital cities identified across all daily Capital Guesser challenges.',
+  },
+  'border-hop': {
+    title: 'Border Hop',
+    heading: 'Border Hop Leaderboards',
+    subtitle: 'Ranked by the most overland border crossings connected today and all-time.',
+    playButton: 'Play Today’s Border Hop',
+    variantKey: 'daily',
+    dailyTab: 'Today’s Route Solvers',
+    allTimeTab: 'All-Time Hops Connected',
+    dailyCol: 'Hops Connected',
+    allTimeCol: 'Total Hops',
+    allTimeCaption:
+      'Cumulative border hops connected and personal bests across all daily Border Hop challenges.',
+  },
 };
 
 function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = 'word-rush') {
@@ -1175,7 +1243,7 @@ export function leaderboardView({
     trainerId,
     maxPossible: challenge?.validWords?.length ?? 25,
   });
-  const allTimeRows = leaderboard.allTimeLeaderboard({ trainerId });
+  const allTimeRows = leaderboard.allTimeLeaderboard({ trainerId, today });
 
   // Last 7 days quick date selector for daily leaderboard
   const recentDates = Array.from({ length: 7 }, (_, i) => {

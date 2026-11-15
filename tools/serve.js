@@ -15,6 +15,7 @@ import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import githubAuthHandler from '../api/github-auth.js';
 import githubConfigHandler from '../api/github-config.js';
+import leaderboardHandler from '../api/leaderboard.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT ?? 8080);
@@ -64,6 +65,26 @@ function wrapRes(response) {
   };
 }
 
+function readJsonBody(request) {
+  return new Promise((resolve) => {
+    const chunks = [];
+    request.on('data', (chunk) => chunks.push(chunk));
+    request.on('end', () => {
+      const raw = Buffer.concat(chunks).toString('utf8');
+      if (!raw) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(raw));
+      } catch {
+        resolve({});
+      }
+    });
+    request.on('error', () => resolve({}));
+  });
+}
+
 const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://localhost:${PORT}`);
 
@@ -76,6 +97,17 @@ const server = createServer(async (request, response) => {
   if (url.pathname === '/api/github-auth') {
     const reqObj = { method: request.method, query: Object.fromEntries(url.searchParams) };
     await githubAuthHandler(reqObj, wrapRes(response));
+    return;
+  }
+
+  if (url.pathname === '/api/leaderboard') {
+    const body = request.method === 'POST' ? await readJsonBody(request) : {};
+    const reqObj = {
+      method: request.method,
+      query: Object.fromEntries(url.searchParams),
+      body,
+    };
+    await leaderboardHandler(reqObj, wrapRes(response));
     return;
   }
 

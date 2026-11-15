@@ -1,5 +1,6 @@
 # Next.js / Node
 node_modules/
+.data/
 .next/
 out/
 dist/

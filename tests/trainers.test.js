@@ -38,12 +38,14 @@ import {
   checkAnswer,
   matchSuggestions,
   matchWordRushEntry,
+  parseNumeric,
   resolveClosestMatch,
 } from '../src/core/answer.js';
 import { verifyWordRushCandidateOnline } from '../src/trainers/word-rush/index.js';
 import { BANDS, modeParamFor } from '../src/core/variants.js';
 import { buildGitHubAuthorizeUrl, createAuthStore, isAdminUser } from '../src/core/auth.js';
 import { createLeaderboardStore } from '../src/core/leaderboard.js';
+import { mergeLeaderboardEntries } from '../api/leaderboard.js';
 import { createPreferencesStore } from '../src/core/preferences.js';
 import { createStorage, createMemoryBackend } from '../src/core/storage.js';
 import { createRound } from '../src/core/round.js';
@@ -1094,4 +1096,84 @@ test('every JavaScript file in src/ and api/ passes node --check syntax validati
   for (const file of allJsFiles) {
     execFileSync(process.execPath, ['--check', file]);
   }
+});
+
+test('multi-user leaderboard sync merges entries across all users for daily and all-time leaderboards, and parseNumeric handles mobile math symbols', async () => {
+  const sharedServerEntries = [
+    {
+      login: 'S3lDan1PS',
+      name: 'Dan',
+      avatarUrl: 'https://github.com/S3lDan1PS.png?size=120',
+      puzzleDate: '2026-11-15',
+      trainerId: 'mental-math',
+      variantKey: 'daily',
+      score: 24,
+      elapsedMs: 42000,
+    },
+    {
+      login: 'bipa',
+      name: 'Bipa',
+      avatarUrl: 'https://github.com/bipa.png?size=120',
+      puzzleDate: '2026-11-15',
+      trainerId: 'mental-math',
+      variantKey: 'daily',
+      score: 19,
+      elapsedMs: 39000,
+    },
+  ];
+
+  const mockFetch = async (_url, options = {}) => {
+    if (options.method === 'POST' && options.body) {
+      const parsed = JSON.parse(options.body);
+      const incoming = Array.isArray(parsed.entries)
+        ? parsed.entries
+        : parsed.entry
+          ? [parsed.entry]
+          : [];
+      const merged = mergeLeaderboardEntries(sharedServerEntries, incoming);
+      return {
+        ok: true,
+        json: async () => ({ entries: merged }),
+      };
+    }
+    return {
+      ok: true,
+      json: async () => ({ entries: sharedServerEntries }),
+    };
+  };
+
+  const storage = createStorage({ backend: createMemoryBackend() });
+  const lb = createLeaderboardStore({ storage, fetchImpl: mockFetch });
+
+  await lb.syncWithServer();
+
+  const daily = lb.dailyLeaderboard('2026-11-15', { trainerId: 'mental-math' });
+  assert.equal(daily.length, 2, 'Both users appear in daily leaderboard after sync');
+  assert.equal(daily[0].login, 'S3lDan1PS');
+  assert.equal(daily[1].login, 'bipa');
+
+  const allTime = lb.allTimeLeaderboard({ trainerId: 'mental-math' });
+  assert.equal(allTime.length, 2, 'Both users appear in all-time leaderboard after sync');
+
+  // Verify includeCommunity populates other players in daily and all-time leaderboards immediately
+  const communityLb = createLeaderboardStore({
+    storage: createStorage({ backend: createMemoryBackend() }),
+    includeCommunity: true,
+  });
+  const communityDaily = communityLb.dailyLeaderboard('2026-11-15', { trainerId: 'word-rush' });
+  assert.ok(communityDaily.length >= 4, 'Community players appear in daily leaderboard');
+  const communityAllTime = communityLb.allTimeLeaderboard({
+    trainerId: 'word-rush',
+    today: '2026-11-15',
+  });
+  assert.ok(communityAllTime.length >= 5, 'Community players appear in all-time leaderboard');
+
+  // Verify parseNumeric handles negative signs (including Unicode minus from mobile symbol bar), fractions, and decimals
+  assert.equal(parseNumeric('-8'), -8);
+  assert.equal(parseNumeric('−8'), -8);
+  assert.equal(parseNumeric('–12'), -12);
+  assert.equal(parseNumeric('-3/4'), -0.75);
+  assert.equal(parseNumeric('3÷4'), 0.75);
+  assert.equal(checkAnswer({ kind: 'numeric', answer: -8 }, '−8'), 'correct');
+  assert.equal(checkAnswer({ kind: 'numeric', answer: -8 }, '-8'), 'correct');
 });

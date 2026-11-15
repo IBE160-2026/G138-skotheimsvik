@@ -39,7 +39,7 @@ const clock = createClock();
 const storage = createStorage();
 const progress = createProgressStore({ storage });
 const auth = createAuthStore({ storage });
-const leaderboard = createLeaderboardStore({ storage });
+const leaderboard = createLeaderboardStore({ storage, includeCommunity: true });
 const preferences = createPreferencesStore({ storage });
 
 let registry = null;
@@ -281,11 +281,28 @@ const LEADERBOARD_TRAINER_IDS = new Set([
   'word-rush',
   'word-chain',
   'timeline-sort',
+  'connection-grid',
   'mental-math',
   'pattern-memory',
   'figure-pairs',
+  'flag-guesser',
+  'outline-guesser',
+  'capital-guesser',
+  'border-hop',
   'famous-people',
 ]);
+
+function backfillUserLeaderboardFromProgress() {
+  const user = auth.getUser();
+  if (!user || !registry) return;
+  for (const trainer of registry.listTrainers()) {
+    if (!LEADERBOARD_TRAINER_IDS.has(trainer.id)) continue;
+    const attempts = progress.fullHistory(trainer.id);
+    for (const result of attempts) {
+      leaderboard.recordEntry({ user, result });
+    }
+  }
+}
 
 function goTrainer(trainerId) {
   requireAuth(() => {
@@ -333,28 +350,39 @@ function goLeaderboard(nextState = {}) {
       trainerId: nextState.trainerId ?? leaderboardState.trainerId ?? 'word-rush',
     };
     const wordRushTrainer = registry.listTrainers().find((t) => t.id === 'word-rush');
-    show(
-      leaderboardView({
-        today: clock.today(),
-        selectedDate: leaderboardState.selectedDate,
-        tab: leaderboardState.tab,
-        trainerId: leaderboardState.trainerId,
-        leaderboard,
-        wordRushTrainer,
-        currentUser: auth.getUser(),
-        progress,
-        onSelectTab: (tab) => goLeaderboard({ tab }),
-        onSelectTrainer: (trainerId) => goLeaderboard({ trainerId }),
-        onSelectDate: (selectedDate) => goLeaderboard({ selectedDate }),
-        onPlayToday: (targetTrainerId = leaderboardState.trainerId) =>
-          goBriefing(
-            targetTrainerId,
-            targetTrainerId === 'famous-people' ? 'all' : 'daily',
-            clock.today(),
-          ),
-        onBack: goHome,
-      }),
-    );
+    const renderCurrentLeaderboard = () => {
+      show(
+        leaderboardView({
+          today: clock.today(),
+          selectedDate: leaderboardState.selectedDate,
+          tab: leaderboardState.tab,
+          trainerId: leaderboardState.trainerId,
+          leaderboard,
+          wordRushTrainer,
+          currentUser: auth.getUser(),
+          progress,
+          onSelectTab: (tab) => goLeaderboard({ tab }),
+          onSelectTrainer: (trainerId) => goLeaderboard({ trainerId }),
+          onSelectDate: (selectedDate) => goLeaderboard({ selectedDate }),
+          onPlayToday: (targetTrainerId = leaderboardState.trainerId) =>
+            goBriefing(
+              targetTrainerId,
+              targetTrainerId === 'famous-people' ? 'all' : 'daily',
+              clock.today(),
+            ),
+          onBack: goHome,
+        }),
+      );
+    };
+
+    currentViewRefresh = renderCurrentLeaderboard;
+    renderCurrentLeaderboard();
+
+    leaderboard.syncWithServer().then(() => {
+      if (currentViewRefresh === renderCurrentLeaderboard && !activeRound) {
+        renderCurrentLeaderboard();
+      }
+    });
   }, 'leaderboard');
 }
 
@@ -514,25 +542,37 @@ function finishRound(round) {
     leaderboard.recordEntry({ user: currentUser, result });
   }
 
-  show(
-    resultsView({
-      result,
-      trainer: activeTrainer,
-      comparison,
-      isPractice: false,
-      leaderboard,
-      currentUser,
-      onBack: () => goTrainer(activeTrainer.id),
-      onArchive: goArchive,
-      onLeaderboard: hasModeLeaderboard
-        ? () =>
-            goLeaderboard({
-              selectedDate: result.puzzleDate,
-              trainerId: activeTrainer.id,
-            })
-        : null,
-    }),
-  );
+  const finishedTrainer = activeTrainer;
+  const renderFinishedResults = () => {
+    show(
+      resultsView({
+        result,
+        trainer: finishedTrainer,
+        comparison,
+        isPractice: false,
+        leaderboard,
+        currentUser,
+        onBack: () => goTrainer(finishedTrainer.id),
+        onArchive: goArchive,
+        onLeaderboard: hasModeLeaderboard
+          ? () =>
+              goLeaderboard({
+                selectedDate: result.puzzleDate,
+                trainerId: finishedTrainer.id,
+              })
+          : null,
+      }),
+    );
+  };
+
+  currentViewRefresh = renderFinishedResults;
+  renderFinishedResults();
+
+  leaderboard.syncWithServer().then(() => {
+    if (currentViewRefresh === renderFinishedResults && !activeRound) {
+      renderFinishedResults();
+    }
+  });
 }
 
 // --- chrome -----------------------------------------------------------------
@@ -658,6 +698,12 @@ async function boot() {
     const oauthCode = params.get('code');
     const nextRoute = params.get('state') || params.get('next');
 
+    backfillUserLeaderboardFromProgress();
+    leaderboard.syncWithServer().then(() => {
+      if (!activeRound && typeof currentViewRefresh === 'function') {
+        currentViewRefresh();
+      }
+    });
     if (oauthCode) {
       globalThis.history?.replaceState?.({}, '', globalThis.location.pathname);
       try {
