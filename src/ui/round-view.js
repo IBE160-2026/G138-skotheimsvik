@@ -9,10 +9,53 @@
  */
 
 import { el, render, stat, formatClock } from './dom.js';
-import { checkAnswer } from '../core/answer.js';
+import { checkAnswer, matchSuggestions, resolveClosestMatch } from '../core/answer.js';
 
 const FEEDBACK_MS = 700;
 const PAIR_REVEAL_MS = 850;
+
+/**
+ * Derive 2-letter ISO code from a flag prompt (uses `prompt.code` or decodes regional indicator symbols).
+ */
+function resolveFlagCode(prompt) {
+  if (prompt?.code) return String(prompt.code).toLowerCase();
+  if (typeof prompt?.key === 'string' && prompt.key.startsWith('flag:')) {
+    return prompt.key.slice(5).toLowerCase();
+  }
+  if (typeof prompt?.flag === 'string' && prompt.flag.length >= 4) {
+    const cp1 = prompt.flag.codePointAt(0);
+    const cp2 = prompt.flag.codePointAt(2);
+    if (cp1 >= 0x1f1e6 && cp1 <= 0x1f1ff && cp2 >= 0x1f1e6 && cp2 <= 0x1f1ff) {
+      return String.fromCharCode(cp1 - 0x1f1e6 + 97, cp2 - 0x1f1e6 + 97);
+    }
+  }
+  return null;
+}
+
+/**
+ * Generate a crisp SVG data URI fallback portrait so a person card is never without a picture.
+ */
+function buildFallbackPortraitDataUri(name = 'Famous Person', category = '') {
+  const parts = String(name).trim().split(/\s+/);
+  const initials =
+    parts.length >= 2
+      ? `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
+      : String(name).slice(0, 2).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" width="320" height="400">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+    </defs>
+    <rect width="320" height="400" fill="url(#bg)"/>
+    <circle cx="160" cy="145" r="56" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+    <path d="M72 340 C72 268 248 268 248 340" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+    <text x="160" y="162" text-anchor="middle" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="42" font-weight="700">${initials}</text>
+    <text x="160" y="372" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="14" letter-spacing="2">${String(category || 'PORTRAIT').toUpperCase()}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
 
 /**
  * @param {object} options
@@ -90,6 +133,52 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     // guesses are judged here and never reach the engine, so the round still
     // sees exactly one graded answer per country.
     const prompt = round.prompt;
+
+    // Word Rush is rapid-fire: no word help or autocorrect — you must type the word right.
+    if (prompt?.kind === 'word-rush') {
+      const status = checkAnswer(prompt, value);
+      if (status === 'ignored') return;
+      if (status === 'duplicate') {
+        render(
+          feedbackBar,
+          el('p', {
+            class: 'feedback feedback-life',
+            text: `Already found "${value}" — keep going!`,
+          }),
+        );
+        announce(`Already found ${value}`);
+        return;
+      }
+      if (status === 'incorrect') {
+        render(
+          feedbackBar,
+          el('p', {
+            class: 'feedback feedback-wrong',
+            text: `"${value}" is not on the ${prompt.topicLabel} (${prompt.letter}) list.`,
+          }),
+        );
+        announce(`Not in list: ${value}`);
+        return;
+      }
+
+      const feedback = round.submit(value);
+      renderStatus();
+      render(
+        feedbackBar,
+        el('p', {
+          class: 'feedback feedback-correct',
+          text: `✓ +1 "${value}" (${round.score()} / ${prompt.totalPossible})`,
+        }),
+      );
+      announce(`Found ${value}`);
+      if (feedback.ended) {
+        finish();
+        return;
+      }
+      drawPrompt();
+      return;
+    }
+
     const maxGuesses = prompt?.maxGuesses ?? 1;
     if (prompt?.hintable && maxGuesses > 1 && guessesUsed < maxGuesses - 1) {
       const status = checkAnswer(prompt, value);
@@ -171,28 +260,6 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
   // --- renderers ------------------------------------------------------------
 
-  /** Free-entry answer box, used by numeric and text prompts. */
-  function answerInput(prompt) {
-    const input = el('input', {
-      class: 'answer-input',
-      type: prompt.kind === 'numeric' ? 'text' : 'text',
-      inputmode: prompt.kind === 'numeric' ? 'decimal' : 'text',
-      autocomplete: 'off',
-      autocapitalize: 'off',
-      spellcheck: 'false',
-      'aria-label': 'Your answer',
-      onKeydown: (event) => {
-        if (event.key !== 'Enter') return;
-        event.preventDefault();
-        const value = input.value;
-        input.value = '';
-        lastValue = value;
-        handleSubmit(value);
-      },
-    });
-    return input;
-  }
-
   /** Remembered so an outline hint knows what was guessed. */
   let lastValue = null;
 
@@ -227,24 +294,177 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     }
   }
 
+  /**
+   * Build the text/numeric answer area with live prefix autocomplete suggestions
+   * (e.g. typing "AL" shows "Albania", "Algeria", etc.) and automatic closest-word
+   * autocorrect before submitting so the player never submits a non-existent word.
+   */
   function answerArea(prompt) {
     if (prompt.kind === 'choice') return choiceButtons(prompt);
-    const input = answerInput(prompt);
+
+    const hasSuggestions =
+      prompt.kind !== 'word-rush' &&
+      Array.isArray(prompt.suggestions) &&
+      prompt.suggestions.length > 0;
+    const alreadyFoundSet = new Set(
+      (prompt.foundWords ?? []).map((w) => String(w).toLocaleLowerCase()),
+    );
+    const activePool = hasSuggestions
+      ? prompt.suggestions.filter((entry) => {
+          const label = typeof entry === 'string' ? entry : entry.label;
+          return !alreadyFoundSet.has(label.toLocaleLowerCase());
+        })
+      : [];
+
+    let currentMatches = [];
+    let selectedIndex = 0;
+
+    const suggestionList = hasSuggestions
+      ? el('ul', {
+          class: 'autocomplete-list',
+          role: 'listbox',
+          'aria-label': 'Matching words',
+          hidden: true,
+        })
+      : null;
+
+    function resolveAndSubmit(raw) {
+      const trimmed = String(raw ?? '').trim();
+      if (!trimmed) return;
+      let finalValue = trimmed;
+      if (hasSuggestions) {
+        if (currentMatches.length > 0 && selectedIndex >= 0 && currentMatches[selectedIndex]) {
+          finalValue = currentMatches[selectedIndex].label;
+        } else {
+          finalValue = resolveClosestMatch(trimmed, activePool);
+        }
+      }
+      input.value = '';
+      if (suggestionList) {
+        suggestionList.hidden = true;
+        render(suggestionList);
+      }
+      currentMatches = [];
+      lastValue = finalValue;
+      input.focus();
+      handleSubmit(finalValue);
+    }
+
+    function updateSuggestions() {
+      if (!hasSuggestions || !suggestionList) return;
+      const query = input.value.trim();
+      if (!query) {
+        suggestionList.hidden = true;
+        render(suggestionList);
+        currentMatches = [];
+        return;
+      }
+
+      currentMatches = matchSuggestions(query, activePool, 7);
+      selectedIndex = 0;
+
+      if (currentMatches.length === 0) {
+        suggestionList.hidden = true;
+        render(suggestionList);
+        return;
+      }
+
+      suggestionList.hidden = false;
+      drawSuggestionItems();
+    }
+
+    function drawSuggestionItems() {
+      if (!suggestionList) return;
+      render(
+        suggestionList,
+        ...currentMatches.map((item, idx) =>
+          el(
+            'li',
+            {
+              class: `autocomplete-item${idx === selectedIndex ? ' is-active' : ''}`,
+              role: 'option',
+              'aria-selected': String(idx === selectedIndex),
+              onMousedown: (e) => {
+                // Prevent input blur before click registers
+                e.preventDefault();
+                selectedIndex = idx;
+                resolveAndSubmit(item.label);
+              },
+            },
+            [
+              el('span', { class: 'autocomplete-label', text: item.label }),
+              el('span', {
+                class: 'autocomplete-badge',
+                text:
+                  idx === selectedIndex
+                    ? 'Enter ↵'
+                    : item.matchType === 'fuzzy'
+                      ? 'Closest match'
+                      : '',
+              }),
+            ],
+          ),
+        ),
+      );
+    }
+
+    const input = el('input', {
+      class: 'answer-input',
+      type: 'text',
+      inputmode: prompt.kind === 'numeric' ? 'decimal' : 'text',
+      placeholder:
+        prompt.kind === 'word-rush'
+          ? `Type a ${prompt.topicLabel} word starting with ${prompt.letter}...`
+          : hasSuggestions
+            ? 'Start typing (e.g. AL for Albania)...'
+            : 'Your answer...',
+      autocomplete: 'off',
+      autocapitalize: 'off',
+      spellcheck: 'false',
+      'aria-label': 'Your answer',
+      onInput: () => updateSuggestions(),
+      onKeydown: (event) => {
+        if (hasSuggestions && currentMatches.length > 0) {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            selectedIndex = (selectedIndex + 1) % currentMatches.length;
+            drawSuggestionItems();
+            return;
+          }
+          if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            selectedIndex = (selectedIndex - 1 + currentMatches.length) % currentMatches.length;
+            drawSuggestionItems();
+            return;
+          }
+          if (event.key === 'Tab') {
+            event.preventDefault();
+            if (currentMatches[selectedIndex]) {
+              input.value = currentMatches[selectedIndex].label;
+              updateSuggestions();
+            }
+            return;
+          }
+        }
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        resolveAndSubmit(input.value);
+      },
+    });
+
     queueMicrotask(() => input.focus());
-    return el('div', { class: 'answer-row' }, [
-      input,
-      el('button', {
-        type: 'button',
-        class: 'primary',
-        text: 'Submit',
-        onClick: () => {
-          const value = input.value;
-          input.value = '';
-          lastValue = value;
-          input.focus();
-          handleSubmit(value);
-        },
-      }),
+
+    return el('div', { class: 'answer-box-wrap' }, [
+      el('div', { class: 'answer-row' }, [
+        input,
+        el('button', {
+          type: 'button',
+          class: 'primary',
+          text: 'Submit',
+          onClick: () => resolveAndSubmit(input.value),
+        }),
+      ]),
+      suggestionList,
     ]);
   }
 
@@ -279,9 +499,32 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   }
 
   function renderFlag(prompt) {
+    const code = resolveFlagCode(prompt);
+    const flagNode = code
+      ? el('div', { class: 'flag-display', role: 'img', 'aria-label': 'Flag to identify' }, [
+          el('img', {
+            class: 'flag-image',
+            src: `https://flagcdn.com/w320/${code}.png`,
+            srcset: `https://flagcdn.com/w640/${code}.png 2x`,
+            alt: 'Country flag to identify',
+            loading: 'eager',
+            decoding: 'async',
+            onError: (e) => {
+              const parent = e.currentTarget.parentElement;
+              if (parent) parent.textContent = prompt.flag ?? '';
+            },
+          }),
+        ])
+      : el('div', {
+          class: 'flag-display',
+          role: 'img',
+          'aria-label': 'Flag to identify',
+          text: prompt.flag,
+        });
+
     render(
       promptBody,
-      el('div', { class: 'flag-display', role: 'img', 'aria-label': 'Flag to identify', text: prompt.flag }),
+      flagNode,
       el('p', { class: 'question', text: prompt.question }),
       answerArea(prompt),
     );
@@ -502,25 +745,32 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     queueMicrotask(() => cards.find((card) => !card.disabled)?.focus());
   }
 
-  /** Famous People — a portrait where one exists, plus the clue. */
+  /** Famous People — every person gets a portrait (local WebP, Wikimedia Commons, or fallback SVG), plus the clue. */
   function renderPortrait(prompt) {
-    const figure = prompt.image
-      ? el('figure', { class: 'portrait' }, [
-          el('img', {
-            class: 'portrait-image',
-            src: prompt.image,
-            alt: 'Portrait of the person to identify',
-            loading: 'eager',
-            decoding: 'async',
-          }),
-          prompt.imageCredit
-            ? el('figcaption', {
-                class: 'portrait-credit',
-                text: `${prompt.imageCredit.artist} · ${prompt.imageCredit.licence}`,
-              })
-            : null,
-        ])
-      : null;
+    const fallbackUri = buildFallbackPortraitDataUri(prompt.answer, prompt.topicLabel);
+    const imgSrc = prompt.image || fallbackUri;
+
+    const figure = el('figure', { class: 'portrait' }, [
+      el('img', {
+        class: 'portrait-image',
+        src: imgSrc,
+        alt: 'Portrait of the person to identify',
+        loading: 'eager',
+        decoding: 'async',
+        onError: (e) => {
+          const img = e.currentTarget;
+          if (img.dataset.fallbackApplied) return;
+          img.dataset.fallbackApplied = 'true';
+          img.src = fallbackUri;
+        },
+      }),
+      prompt.imageCredit
+        ? el('figcaption', {
+            class: 'portrait-credit',
+            text: `${prompt.imageCredit.artist} · ${prompt.imageCredit.licence}`,
+          })
+        : null,
+    ]);
 
     render(
       promptBody,
@@ -535,6 +785,63 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     );
   }
 
+  /**
+   * Word Rush (2-Minute Daily Category + Letter Challenge).
+   */
+  function renderWordRush(prompt) {
+    const foundWords = prompt.foundWords ?? [];
+    render(
+      promptBody,
+      el('div', { class: 'word-rush-header' }, [
+        el('div', { class: 'word-rush-brand-row' }, [
+          el('span', {
+            class: 'word-rush-logo',
+            'aria-hidden': 'true',
+            html: `<svg viewBox="0 0 40 40" width="38" height="38" fill="none">
+              <rect x="2" y="2" width="36" height="36" rx="9" fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="2.2"/>
+              <path d="M22 7L11 21.5h8.2L17.8 33 29 18.5h-8.2L22 7Z" fill="currentColor"/>
+            </svg>`,
+          }),
+          el('h2', { class: 'word-rush-title', text: 'Word Rush' }),
+        ]),
+        el('div', { class: 'word-rush-prompt-pills' }, [
+          el('div', { class: 'word-rush-pill' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Category' }),
+            el('strong', { class: 'word-rush-pill-value', text: prompt.topicLabel }),
+          ]),
+          el('div', { class: 'word-rush-pill word-rush-pill-letter' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Starts with' }),
+            el('strong', { class: 'word-rush-pill-value', text: prompt.letter }),
+          ]),
+          el('div', { class: 'word-rush-pill' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Found' }),
+            el('strong', {
+              class: 'word-rush-pill-value',
+              text: `${foundWords.length} / ${prompt.totalPossible}`,
+            }),
+          ]),
+        ]),
+      ]),
+      answerArea(prompt),
+      el('div', { class: 'word-rush-found-panel' }, [
+        el('h3', {
+          class: 'word-rush-found-title',
+          text: `Words Found (${foundWords.length} / ${prompt.totalPossible})`,
+        }),
+        foundWords.length === 0
+          ? el('p', {
+              class: 'muted',
+              text: `No words guessed yet — type a word starting with "${prompt.letter}" and press Enter.`,
+            })
+          : el(
+              'ul',
+              { class: 'word-rush-chips', 'aria-label': 'Words found so far' },
+              foundWords.map((word) => el('li', { class: 'word-rush-chip is-found', text: `✓ ${word}` })),
+            ),
+      ]),
+    );
+  }
+
   const RENDERERS = {
     prompt: renderPrompt,
     portrait: renderPortrait,
@@ -542,6 +849,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     outline: renderOutline,
     grid: renderGrid,
     pairs: renderPairs,
+    'word-rush': renderWordRush,
   };
 
   function drawPrompt() {

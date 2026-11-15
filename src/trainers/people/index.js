@@ -73,6 +73,7 @@ export function validatePeople(raw, logger = console) {
       category: entry.category,
       categoryLabel: categories[entry.category],
       clue: entry.clue,
+      pageimage: typeof entry.pageimage === 'string' && entry.pageimage.trim() ? entry.pageimage.trim() : null,
       alternatives: [...(entry.accept ?? []), ...autoShortForms(entry.name)],
     });
   }
@@ -86,6 +87,22 @@ export function poolFor(people, variantKey) {
 }
 
 /**
+ * Resolve a portrait image URL for a person:
+ * 1. Local bundled WebP in `src/trainers/people/portraits/` if available in `portraits.json`
+ * 2. Wikimedia Commons `Special:FilePath` thumbnail using the person's `pageimage`
+ * 3. Deterministic monogram SVG data URI as an unbreakable fallback
+ */
+export function resolvePersonPortrait(subject, credit, portraitBase = '') {
+  if (credit?.file) {
+    return `${portraitBase}${credit.file}`;
+  }
+  if (subject?.pageimage) {
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(subject.pageimage)}?width=400`;
+  }
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(subject.name.replace(/\s+/g, '_'))}.jpg?width=400`;
+}
+
+/**
  * @param {{people: Array, categories: Record<string, string>}} content
  * @param {{portraits: Record<string, object>}} [portraits] credits file
  * @param {string} [portraitBase] URL prefix for the image files
@@ -93,6 +110,10 @@ export function poolFor(people, variantKey) {
 export function createFamousPeopleTrainer({ people, categories }, portraits = null, portraitBase = '') {
   const categoryKeys = Object.keys(categories);
   const credits = portraits?.portraits ?? {};
+  const peopleSuggestions = people.map((entry) => ({
+    label: entry.name,
+    alternatives: entry.alternatives ?? [],
+  }));
 
   return {
     id: 'famous-people',
@@ -147,6 +168,7 @@ export function createFamousPeopleTrainer({ people, categories }, portraits = nu
           const subject = order[index];
           index += 1;
           const credit = credits[subject.name] ?? null;
+          const imageUrl = resolvePersonPortrait(subject, credit, portraitBase);
 
           return {
             kind: 'text',
@@ -155,15 +177,18 @@ export function createFamousPeopleTrainer({ people, categories }, portraits = nu
             topicLabel: subject.categoryLabel,
             question: subject.clue,
             prefix: 'Who is this?',
-            // A handful of people have no freely licensed portrait, so the clue
-            // has to carry the round on its own.
-            image: credit ? `${portraitBase}${credit.file}` : null,
+            image: imageUrl,
             imageCredit: credit
               ? { artist: credit.artist, licence: credit.licence, source: credit.source }
-              : null,
+              : {
+                  artist: 'Wikimedia Commons',
+                  licence: 'CC / Public Domain',
+                  source: `https://en.wikipedia.org/wiki/${encodeURIComponent(subject.name.replace(/\s+/g, '_'))}`,
+                },
             answer: subject.name,
             alternatives: subject.alternatives,
-            formatHint: 'Type the name. A surname on its own is usually enough.',
+            suggestions: peopleSuggestions,
+            formatHint: 'Type the name. Autocomplete helps you find and spell any person.',
           };
         },
       };

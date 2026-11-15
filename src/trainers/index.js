@@ -17,8 +17,15 @@ import {
   createOutlineTrainer,
 } from './geography/index.js';
 import { createFamousPeopleTrainer, validatePeople } from './people/index.js';
+import { createWordRushTrainer } from './word-rush/index.js';
 
 export const CATEGORIES = [
+  {
+    id: 'word-rush',
+    name: 'Word Rush',
+    tagline: '2 minutes. Daily category & starting letter. Name as many as you can.',
+    icon: '⚡',
+  },
   {
     id: 'math',
     name: 'Math',
@@ -59,6 +66,14 @@ export function buildRegistry({ countries, outlines, people, portraits, portrait
   for (const category of CATEGORIES) registry.registerCategory(category);
 
   const validated = validateCountries(countries, logger);
+  const validatedPeople = people ? validatePeople(people, logger) : { people: [], categories: {} };
+
+  registry.registerTrainer(
+    createWordRushTrainer({
+      countries: validated,
+      people: validatedPeople.people,
+    }),
+  );
 
   registry.registerTrainer(mentalMathTrainer);
   registry.registerTrainer(patternMemoryTrainer);
@@ -70,9 +85,11 @@ export function buildRegistry({ countries, outlines, people, portraits, portrait
   registry.registerTrainer(createOutlineTrainer(validated, outlines));
   registry.registerTrainer(createCapitalTrainer(validated));
 
-  registry.registerTrainer(
-    createFamousPeopleTrainer(validatePeople(people, logger), portraits, portraitBase),
-  );
+  if (people) {
+    registry.registerTrainer(
+      createFamousPeopleTrainer(validatedPeople, portraits, portraitBase),
+    );
+  }
 
   return registry;
 }

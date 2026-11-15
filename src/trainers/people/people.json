@@ -341,7 +341,8 @@
   {
    "name": "Usain Bolt",
    "category": "sport",
-   "clue": "Jamaican sprinter who holds the 100m and 200m world records and celebrated by striking an archer's pose."
+   "clue": "Jamaican sprinter who holds the 100m and 200m world records and celebrated by striking an archer's pose.",
+   "pageimage": "Usain_Bolt_smiling_Berlin_2009.JPG"
   },
   {
    "name": "Lionel Messi",
@@ -2585,7 +2586,8 @@
    "clue": "Was a Colombian singer of vallenato music. He was one of the major representatives of Colombian popular folk music and was lead singer and co-founder, alongside fellow accordionist Israel Romero, of the vallenato group Binomio de Oro de América, which was very popular in Colombia, Mexico and Venezuela.",
    "accept": [
     "Maestre"
-   ]
+   ],
+   "pageimage": "Tumba_Rafael_Orozco_2.jpg"
   },
   {
    "name": "John Quincy Adams",
@@ -3870,7 +3872,8 @@
   {
    "name": "Brahmagupta",
    "category": "science",
-   "clue": "Was an Indian mathematician and astronomer who is credited as the first person to understand and formalize the concept of the number zero for nothing in mathematics."
+   "clue": "Was an Indian mathematician and astronomer who is credited as the first person to understand and formalize the concept of the number zero for nothing in mathematics.",
+   "pageimage": "Bas-relief_of_Brahmagupta.jpg"
   },
   {
    "name": "Fibonacci",
@@ -4517,7 +4520,8 @@
   {
    "name": "Hypatia",
    "category": "science",
-   "clue": "Was a Neoplatonist philosopher, astronomer, and mathematician who lived in Alexandria, at that time in the province of Egypt and a major city of the Roman Empire."
+   "clue": "Was a Neoplatonist philosopher, astronomer, and mathematician who lived in Alexandria, at that time in the province of Egypt and a major city of the Roman Empire.",
+   "pageimage": "Hypatia_(Charles_Mitchell).jpg"
   },
   {
    "name": "Edward Jenner",
@@ -6188,7 +6192,8 @@
   {
    "name": "Psy",
    "category": "music",
-   "clue": "Is a South Korean singer, songwriter, and record producer. He has received numerous accolades, including an American Music Award, a World Music Award, and 10 MAMA Awards."
+   "clue": "Is a South Korean singer, songwriter, and record producer. He has received numerous accolades, including an American Music Award, a World Music Award, and 10 MAMA Awards.",
+   "pageimage": "PSY_EMTV_logo_27_(8198008711).jpg"
   },
   {
    "name": "Alicia Keys",
@@ -6742,7 +6747,8 @@
    "clue": "Was an Iranian mathematician and a professor of mathematics at Stanford University. Her research focused on hyperbolic geometry, dynamical systems, complex analysis, and topology.",
    "accept": [
     "Mirzakhani"
-   ]
+   ],
+   "pageimage": "Maryam_Mirzakhani_in_Seoul_2014.jpg"
   },
   {
    "name": "Pedro Almodóvar",
@@ -8394,7 +8400,8 @@
    "clue": "Is a Peruvian professional footballer who plays as a winger for Czech club Sparta Prague and the Peru national team.",
    "accept": [
     "Grimaldo"
-   ]
+   ],
+   "pageimage": "Joao_Grimaldo.jpg"
   },
   {
    "name": "Anna Kournikova",
@@ -8515,7 +8522,8 @@
    "clue": "Is a Peruvian professional footballer who plays as a forward for Peruvian Primera División club Melgar. Born and raised in the city of Chimbote, at the age of 17 he settled in Lima, where Sporting Cristal agreed to discipline him after his transfer to the capital.",
    "accept": [
     "Liza"
-   ]
+   ],
+   "pageimage": "Joao_Grimaldo.jpg"
   },
   {
    "name": "Martina Hingis",

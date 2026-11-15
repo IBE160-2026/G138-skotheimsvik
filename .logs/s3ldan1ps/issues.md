@@ -10,7 +10,7 @@
 - [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — personlista i Famous People er vestlig-tung; bør utvides for bredere bruk (løst 2026-11-02: utvidet til 134 personer med internasjonal dekning)
 - [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — portrettene er 3,9 MB og lastes per oppgave; usette bilder er ikke tilgjengelige offline (NFR-8a)
 - [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — portrettene er ikke ansiktsbeskåret; noen kan bli uheldig beskåret av object-position: center top (løst 2026-11-02: justert til 50% 22%)
-- [ ] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — Famous People er ikke med i tilgjengelighetsrevisjonen (kjørt før treneren fantes)
+- [x] 2026-11-02 [redesign-v2](998-2026-11-02-19-08-00-redesign-v2-kategorier-og-nivaaer.md) — Famous People er ikke med i tilgjengelighetsrevisjonen (kjørt før treneren fantes) (løst 2026-11-15: revidert i nettleser for både mørkt og lyst tema, `--text-faint` hevet til >= 5.9:1 kontrast)
 
 - [x] 2026-11-02 [vercel-publisering-og-prd-ferdigstilling](999-2026-11-02-17-33-01-vercel-publisering-og-prd-ferdigstilling.md) — Vercel-prosjektet må opprettes, og adressen fylles inn i README-seksjonen «Publisering» (løst 2026-11-02: live på <https://g138-skotheimsvik.vercel.app/>)
 - [x] 2026-11-02 [vercel-publisering-og-prd-ferdigstilling](999-2026-11-02-17-33-01-vercel-publisering-og-prd-ferdigstilling.md) — `gh auth login` er ikke kjørt; GitHub CLI er installert, men ikke autentisert (løst 2026-11-02: innlogget som `S3lDan1PS`)

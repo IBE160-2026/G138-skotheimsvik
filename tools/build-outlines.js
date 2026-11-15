@@ -19,17 +19,14 @@ import { dirname, join } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 
-const TOPO_PATH = join(here, 'data', 'countries-110m.topo.json');
+const TOPO_50M_PATH = join(here, 'data', 'countries-50m.topo.json');
+const TOPO_10M_PATH = join(here, 'data', 'countries-10m.topo.json');
+const TOPO_110M_PATH = join(here, 'data', 'countries-110m.topo.json');
 const COUNTRIES_PATH = join(root, 'src', 'trainers', 'geography', 'countries.json');
 const OUT_PATH = join(root, 'src', 'trainers', 'geography', 'outlines.json');
 
 /**
  * Natural Earth abbreviates long names, so ours have to be translated.
- *
- * Anything not listed here and not found upstream simply has no outline: the
- * 110m dataset leaves out microstates and small island nations, which is why
- * Malta, Singapore and most of the Caribbean are absent. Those countries still
- * appear in the Flag and Capital trainers — only the Outline Guesser skips them.
  */
 const NAME_ALIASES = new Map([
   ['United States', 'United States of America'],
@@ -44,16 +41,25 @@ const NAME_ALIASES = new Map([
   ['North Macedonia', 'Macedonia'],
   ['Solomon Islands', 'Solomon Is.'],
   ['South Sudan', 'S. Sudan'],
+  ['Antigua and Barbuda', 'Antigua and Barb.'],
+  ['Marshall Islands', 'Marshall Is.'],
+  ['Saint Kitts and Nevis', 'St. Kitts and Nevis'],
+  ['Saint Vincent and the Grenadines', 'St. Vin. and Gren.'],
+  ['Sao Tome and Principe', 'São Tomé and Principe'],
+  ['Vatican City', 'Vatican'],
 ]);
 
 /** Every silhouette is normalised into this square (FR-147). */
 const VIEWBOX = 100;
 
-/** Douglas-Peucker tolerance, in normalised units. */
-const SIMPLIFY_EPSILON = 0.28;
+/** Padding inside the viewBox so stroke and glow never clip at the edge. */
+const PADDING = 4;
+
+/** Douglas-Peucker tolerance, in normalised units — fine enough to preserve authentic coastlines. */
+const SIMPLIFY_EPSILON = 0.08;
 
 /** Islands smaller than this share of the biggest ring are dropped as specks. */
-const MIN_RING_AREA_RATIO = 0.004;
+const MIN_RING_AREA_RATIO = 0.0012;
 
 /**
  * Rings further apart than this (in degrees) are treated as separate landmasses.
@@ -65,7 +71,7 @@ const MIN_RING_AREA_RATIO = 0.004;
  * player would actually recognise. Alaska survives, because it genuinely does
  * sit within a few degrees of the lower 48.
  */
-const CLUSTER_GAP_DEGREES = 5;
+const CLUSTER_GAP_DEGREES = 6.5;
 
 // --- TopoJSON decoding -----------------------------------------------------
 
@@ -182,21 +188,42 @@ function pointSegmentDistance(p, a, b) {
 }
 
 function simplify(points, epsilon) {
-  if (points.length < 4) return points;
-  let maxDistance = 0;
-  let index = 0;
-  for (let i = 1; i < points.length - 1; i += 1) {
-    const distance = pointSegmentDistance(points[i], points[0], points[points.length - 1]);
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      index = i;
+  // Preserve closed rings: simplify open chain + re-close so 3-vertex polygons survive.
+  const closed =
+    points.length > 2 &&
+    points[0][0] === points[points.length - 1][0] &&
+    points[0][1] === points[points.length - 1][1];
+  const work = closed ? points.slice(0, -1) : points;
+  if (work.length <= 4) return work;
+
+  function rdp(pts) {
+    if (pts.length < 3) return pts;
+    let maxDistance = 0;
+    let index = 0;
+    for (let i = 1; i < pts.length - 1; i += 1) {
+      const distance = pointSegmentDistance(pts[i], pts[0], pts[pts.length - 1]);
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        index = i;
+      }
+    }
+    if (maxDistance <= epsilon) return [pts[0], pts[pts.length - 1]];
+    return [...rdp(pts.slice(0, index + 1)).slice(0, -1), ...rdp(pts.slice(index))];
+  }
+
+  // Split closed ring at furthest vertex from start so RDP doesn't collapse start==end
+  let farIdx = 1;
+  let farDist = 0;
+  for (let i = 1; i < work.length; i += 1) {
+    const d = Math.hypot(work[i][0] - work[0][0], work[i][1] - work[0][1]);
+    if (d > farDist) {
+      farDist = d;
+      farIdx = i;
     }
   }
-  if (maxDistance <= epsilon) return [points[0], points[points.length - 1]];
-  return [
-    ...simplify(points.slice(0, index + 1), epsilon).slice(0, -1),
-    ...simplify(points.slice(index), epsilon),
-  ];
+  const half1 = rdp(work.slice(0, farIdx + 1));
+  const half2 = rdp([...work.slice(farIdx), work[0]]);
+  return [...half1.slice(0, -1), ...half2.slice(0, -1)];
 }
 
 function ringBbox(ring) {
@@ -270,9 +297,10 @@ function toPath(rings, centroidLat) {
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
-  const scale = VIEWBOX / Math.max(maxX - minX, maxY - minY, 1e-9);
-  const offsetX = (VIEWBOX - (maxX - minX) * scale) / 2;
-  const offsetY = (VIEWBOX - (maxY - minY) * scale) / 2;
+  const usable = VIEWBOX - PADDING * 2;
+  const scale = usable / Math.max(maxX - minX, maxY - minY, 1e-9);
+  const offsetX = PADDING + (usable - (maxX - minX) * scale) / 2;
+  const offsetY = PADDING + (usable - (maxY - minY) * scale) / 2;
 
   const normalised = projected.map((ring) =>
     ring.map(([x, y]) => [(x - minX) * scale + offsetX, (y - minY) * scale + offsetY]),
@@ -286,7 +314,7 @@ function toPath(rings, centroidLat) {
     if (areas[index] / biggest < MIN_RING_AREA_RATIO) return;
     const reduced = simplify(ring, SIMPLIFY_EPSILON);
     if (reduced.length < 3) return;
-    const coords = reduced.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`);
+    const coords = reduced.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
     parts.push(`M${coords.join('L')}Z`);
   });
 
@@ -295,23 +323,83 @@ function toPath(rings, centroidLat) {
 
 // --- Main ------------------------------------------------------------------
 
-const topology = JSON.parse(readFileSync(TOPO_PATH, 'utf8'));
-const decodedArcs = topology.arcs.map((arc) => decodeArc(arc, topology.transform));
-const byName = new Map(
-  topology.objects.countries.geometries.map((geometry) => [geometry.properties.name, geometry]),
-);
+function loadTopo(path) {
+  const topology = JSON.parse(readFileSync(path, 'utf8'));
+  const decodedArcs = topology.arcs.map((arc) => decodeArc(arc, topology.transform));
+  const byName = new Map(
+    topology.objects.countries.geometries.map((geometry) => [geometry.properties.name, geometry]),
+  );
+  return { decodedArcs, byName };
+}
+
+const topo10 = loadTopo(TOPO_10M_PATH);
+const topo50 = loadTopo(TOPO_50M_PATH);
+const topo110 = loadTopo(TOPO_110M_PATH);
+
+/**
+ * Exact municipal border of Vatican City (OSM / official boundary coords [lon, lat]),
+ * because 10m quantization collapses a 0.49 km² enclave to a single grid step.
+ */
+const OVERRIDE_RINGS = new Map([
+  [
+    'Vatican City',
+    [
+      [
+        [12.4457, 41.9031],
+        [12.4465, 41.9019],
+        [12.4478, 41.9012],
+        [12.4501, 41.9008],
+        [12.4525, 41.9004],
+        [12.4545, 41.9003],
+        [12.4567, 41.9011],
+        [12.4576, 41.9019],
+        [12.4583, 41.9029],
+        [12.4577, 41.9038],
+        [12.4565, 41.9045],
+        [12.4557, 41.9059],
+        [12.4546, 41.9068],
+        [12.4531, 41.9065],
+        [12.4513, 41.9061],
+        [12.4494, 41.9052],
+        [12.4475, 41.9043],
+        [12.4457, 41.9031],
+      ],
+    ],
+  ],
+]);
 
 const { countries } = JSON.parse(readFileSync(COUNTRIES_PATH, 'utf8'));
 const outlines = {};
 const missing = [];
 
 for (const country of countries) {
-  const geometry = byName.get(NAME_ALIASES.get(country.name) ?? country.name);
-  if (!geometry) {
-    missing.push(country.name);
-    continue;
+  const targetName = NAME_ALIASES.get(country.name) ?? country.name;
+
+  let rawRings = OVERRIDE_RINGS.get(country.name) ?? null;
+  if (!rawRings) {
+    // Use 50m for large/medium countries, and 10m for smaller countries or when 50m is missing/coarse
+    let source = topo50.byName.has(targetName) ? topo50 : topo10;
+    let geometry = source.byName.get(targetName);
+    if (!geometry) {
+      source = topo10.byName.has(targetName) ? topo10 : topo110;
+      geometry = source.byName.get(targetName);
+    }
+    if (!geometry) {
+      missing.push(country.name);
+      continue;
+    }
+
+    rawRings = geometryRings(geometry, source.decodedArcs);
+    // If 50m has few vertices, upgrade to 10m for crisp authentic detail
+    const totalVerts = rawRings.reduce((sum, r) => sum + r.length, 0);
+    if (source === topo50 && totalVerts < 120 && topo10.byName.has(targetName)) {
+      source = topo10;
+      geometry = topo10.byName.get(targetName);
+      rawRings = geometryRings(geometry, source.decodedArcs);
+    }
   }
-  const rings = mainCluster(geometryRings(geometry, decodedArcs));
+
+  const rings = mainCluster(rawRings);
   const centroid = sphericalCentroid(rings);
   if (!centroid || rings.length === 0) {
     missing.push(country.name);
@@ -327,7 +415,7 @@ for (const country of countries) {
 
 const output = {
   schemaVersion: 1,
-  source: 'world-atlas@2.0.2 countries-110m, derived from Natural Earth',
+  source: 'world-atlas@2.0.2 countries-50m & countries-10m, derived from Natural Earth',
   licence: 'Public domain — https://www.naturalearthdata.com/about/terms-of-use/',
   note: 'Generated by tools/build-outlines.js. Do not edit by hand. Outlines are normalised into a 0 0 100 100 viewBox so relative area gives nothing away (FR-147). Centroids are [lat, lon] and drive the distance hints (FR-151).',
   viewBox: `0 0 ${VIEWBOX} ${VIEWBOX}`,

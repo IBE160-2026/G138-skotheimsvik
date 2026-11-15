@@ -22,8 +22,11 @@ import {
   proximityPercent,
 } from '../src/trainers/geography/geo.js';
 import { createRng } from '../src/core/rng.js';
-import { checkAnswer } from '../src/core/answer.js';
+import { checkAnswer, matchSuggestions, resolveClosestMatch } from '../src/core/answer.js';
 import { BANDS, modeParamFor } from '../src/core/variants.js';
+import { createAuthStore } from '../src/core/auth.js';
+import { createLeaderboardStore } from '../src/core/leaderboard.js';
+import { createStorage, createMemoryBackend } from '../src/core/storage.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -62,12 +65,13 @@ function pull(trainer, variantKey, count, options = {}) {
 
 // --- catalogue --------------------------------------------------------------
 
-test('seven trainers register across four categories (FR-6, S21)', () => {
-  assert.equal(registry.size, 7);
+test('eight trainers register across five categories (FR-6, S21)', () => {
+  assert.equal(registry.size, 8);
   assert.deepEqual(
     registry.listCategories().map((c) => c.id),
-    ['math', 'memory', 'geography', 'people'],
+    ['word-rush', 'math', 'memory', 'geography', 'people'],
   );
+  assert.deepEqual(registry.trainersIn('word-rush').map((t) => t.id), ['word-rush']);
   assert.deepEqual(registry.trainersIn('memory').map((t) => t.id), [
     'pattern-memory',
     'figure-pairs',
@@ -496,9 +500,88 @@ test('a person without a portrait still produces a playable prompt (FR-167)', ()
   const trainer = registry.getTrainer('famous-people');
   for (const prompt of pull(trainer, 'all', 15)) {
     assert.ok(prompt.question.length > 20, 'the clue must carry the prompt on its own');
-    if (prompt.image) {
-      assert.ok(prompt.imageCredit?.artist, `${prompt.answer} has an image but no credit`);
-      assert.ok(prompt.imageCredit?.licence, `${prompt.answer} has an image but no licence`);
-    }
+    assert.ok(prompt.image && prompt.image.length > 0, `${prompt.answer} must have a portrait URL`);
+    assert.ok(prompt.imageCredit?.artist, `${prompt.answer} has an image but no credit`);
+    assert.ok(prompt.imageCredit?.licence, `${prompt.answer} has an image but no licence`);
   }
+});
+
+test('all 195 countries have high-resolution outlines in outlines.json', () => {
+  for (const country of countries) {
+    const entry = outlines.outlines[country.name];
+    assert.ok(entry && entry.d && entry.d.length > 10, `Missing outline for ${country.name}`);
+    assert.ok(Array.isArray(entry.centroid) && entry.centroid.length === 2);
+  }
+});
+
+test('autocomplete and autocorrect suggest prefix matches (like AL -> Albania) and snap typos', () => {
+  const pool = countries.map((c) => ({ label: c.name, alternatives: c.alternatives }));
+  const alMatches = matchSuggestions('AL', pool, 10).map((m) => m.label);
+  assert.ok(alMatches.includes('Albania'), 'typing AL should suggest Albania');
+  assert.ok(alMatches.includes('Algeria'), 'typing AL should suggest Algeria');
+
+  // Autocorrect minor typos to closest valid entry
+  assert.equal(resolveClosestMatch('Albani', pool), 'Albania');
+  assert.equal(resolveClosestMatch('Norwy', pool), 'Norway');
+});
+
+test('word-rush never picks an impossible letter, disables word help, and is titled Word Rush', () => {
+  const wr = registry.getTrainer('word-rush');
+  assert.equal(wr.name, 'Word Rush');
+  const c1 = wr.getChallenge('2026-10-15', 'daily');
+  const c2 = wr.getChallenge('2026-10-15', 'daily');
+  assert.equal(c1.categoryId, c2.categoryId);
+  assert.equal(c1.letter, c2.letter);
+  assert.ok(c1.validWords.length >= 5, `expected >= 5 valid words, got ${c1.validWords.length}`);
+
+  const gen = wr.createGenerator({ puzzleDate: '2026-10-15', variantKey: 'daily' });
+  const prompt = gen.next({ index: 0 });
+  assert.equal(prompt.kind, 'word-rush');
+  assert.equal(prompt.suggestions, undefined, 'Word Rush must not expose autocomplete suggestions');
+});
+
+test('GitHub auth and daily/all-time leaderboards record only real players with zero fake baselines', async () => {
+  const storage = createStorage({ backend: createMemoryBackend() });
+  const auth = createAuthStore({ storage });
+  const lb = createLeaderboardStore({ storage });
+
+  // Before any player plays, leaderboards must be completely empty (no fake players).
+  assert.equal(lb.dailyLeaderboard('2026-10-15', { trainerId: 'word-rush' }).length, 0);
+  assert.equal(lb.allTimeLeaderboard({ trainerId: 'word-rush' }).length, 0);
+
+  const user = await auth.loginWithGitHub('octocat', async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      login: 'octocat',
+      id: 583231,
+      name: 'The Octocat',
+      avatar_url: 'https://avatars.githubusercontent.com/u/583231?v=4',
+    }),
+  }));
+
+  assert.equal(auth.isAuthenticated(), true);
+  assert.equal(user.login, 'octocat');
+
+  lb.recordEntry({
+    user,
+    result: {
+      puzzleDate: '2026-10-15',
+      trainerId: 'word-rush',
+      variantKey: 'daily',
+      score: 42,
+      elapsedMs: 118000,
+      wordRush: { categoryLabel: 'Food', letter: 'C' },
+    },
+  });
+
+  const daily = lb.dailyLeaderboard('2026-10-15', { trainerId: 'word-rush', maxPossible: 50 });
+  assert.equal(daily.length, 1);
+  assert.equal(daily[0].login, 'octocat');
+  assert.equal(daily[0].score, 42);
+
+  const allTime = lb.allTimeLeaderboard({ trainerId: 'word-rush' });
+  assert.equal(allTime.length, 1);
+  assert.equal(allTime[0].login, 'octocat');
+  assert.equal(allTime[0].bestScore, 42);
 });

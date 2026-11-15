@@ -108,6 +108,22 @@ export function checkAnswer(prompt, submitted) {
       return faces[first] !== undefined && faces[first] === faces[second] ? 'correct' : 'incorrect';
     }
 
+    case 'word-rush': {
+      const value = normaliseText(submitted);
+      if (!value) return 'ignored';
+      const validPool = prompt.validWords ?? [];
+      const foundSet = new Set((prompt.foundWords ?? []).map(normaliseText));
+      for (const entry of validPool) {
+        const label = typeof entry === 'string' ? entry : entry.label;
+        const forms = [label, ...(entry.alternatives ?? [])].map(normaliseText);
+        if (forms.includes(value)) {
+          if (foundSet.has(normaliseText(label))) return 'ignored';
+          return 'correct';
+        }
+      }
+      return 'incorrect';
+    }
+
     case 'choice':
     case 'text':
     default: {
@@ -132,4 +148,141 @@ export function formatExpected(prompt) {
     return 'not a pair';
   }
   return String(prompt.displayAnswer ?? prompt.answer);
+}
+
+/**
+ * Damerau-Levenshtein edit distance between two normalised strings.
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+export function editDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i += 1) dp[i][0] = i;
+  for (let j = 0; j <= n; j += 1) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i += 1) {
+    for (let j = 1; j <= n; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost,
+      );
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+/**
+ * Rank and return matching suggestions from a vocabulary list for a typed query.
+ *
+ * Prioritises:
+ * 1. Exact matches (canonical or alternative)
+ * 2. Starts-with matches (e.g. "AL" -> "Albania", "Algeria")
+ * 3. Word-boundary starts-with matches (e.g. "Mercury" -> "Freddie Mercury")
+ * 4. Substring matches
+ * 5. Closest edit-distance matches (fuzzy autocorrect)
+ *
+ * @param {string} query
+ * @param {Array<string|{label: string, alternatives?: string[]}>} pool
+ * @param {number} [limit]
+ * @returns {Array<{label: string, score: number}>}
+ */
+export function matchSuggestions(query, pool, limit = 8) {
+  const q = normaliseText(query);
+  if (!q || !Array.isArray(pool) || pool.length === 0) return [];
+
+  const scored = [];
+  const seen = new Set();
+
+  for (const item of pool) {
+    const label = typeof item === 'string' ? item : item?.label;
+    if (!label || seen.has(label)) continue;
+    seen.add(label);
+
+    const alts = typeof item === 'object' && Array.isArray(item.alternatives) ? item.alternatives : [];
+    const forms = [label, ...alts].map(normaliseText).filter(Boolean);
+    const normLabel = forms[0];
+
+    let bestScore = Infinity;
+
+    for (const form of forms) {
+      if (form === q) {
+        bestScore = Math.min(bestScore, 0);
+        break;
+      }
+      if (form.startsWith(q)) {
+        // Prefer canonical label starting with query over an alias starting with query
+        const bonus = form === normLabel ? 0 : 0.5;
+        bestScore = Math.min(bestScore, 1 + bonus + (form.length - q.length) * 0.01);
+        continue;
+      }
+      const words = form.split(' ');
+      if (words.some((w) => w.startsWith(q))) {
+        bestScore = Math.min(bestScore, 2 + (form.length - q.length) * 0.01);
+        continue;
+      }
+      if (form.includes(q)) {
+        bestScore = Math.min(bestScore, 3 + (form.length - q.length) * 0.01);
+        continue;
+      }
+      // Fuzzy edit distance against full form or prefix of form
+      const prefix = form.slice(0, Math.min(form.length, q.length + 2));
+      const dFull = editDistance(q, form);
+      const dPrefix = editDistance(q, prefix);
+      const d = Math.min(dFull, dPrefix + 0.5);
+      const maxAllowed = Math.max(2, Math.ceil(q.length * 0.45));
+      if (d <= maxAllowed) {
+        bestScore = Math.min(bestScore, 10 + d + Math.abs(form.length - q.length) * 0.05);
+      }
+    }
+
+    if (bestScore < Infinity) {
+      scored.push({ label, score: bestScore });
+    }
+  }
+
+  // If the user typed something bizarre that didn't hit the threshold, still find the absolute closest match
+  if (scored.length === 0) {
+    let closest = null;
+    let closestDist = Infinity;
+    for (const item of pool) {
+      const label = typeof item === 'string' ? item : item?.label;
+      if (!label) continue;
+      const norm = normaliseText(label);
+      const d = editDistance(q, norm);
+      if (d < closestDist) {
+        closestDist = d;
+        closest = label;
+      }
+    }
+    if (closest) scored.push({ label: closest, score: 100 + closestDist });
+  }
+
+  scored.sort((a, b) => a.score - b.score || a.label.localeCompare(b.label));
+  return scored.slice(0, limit);
+}
+
+/**
+ * Autocorrect a typed submission to the closest valid item in the vocabulary pool,
+ * so a player can never submit a word that does not exist.
+ *
+ * @param {string} submitted
+ * @param {Array<string|{label: string, alternatives?: string[]}>} pool
+ * @returns {string}
+ */
+export function resolveClosestMatch(submitted, pool) {
+  const raw = String(submitted ?? '').trim();
+  if (!raw || !Array.isArray(pool) || pool.length === 0) return raw;
+  const matches = matchSuggestions(raw, pool, 1);
+  return matches.length > 0 ? matches[0].label : raw;
 }

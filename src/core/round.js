@@ -56,6 +56,8 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
   /** What the player last submitted, so stateful boards can update themselves. */
   let lastSubmission = null;
   let lastCorrect = null;
+  /** Optional metadata carried from multi-answer prompts (e.g. Word Rush). */
+  let roundMeta = null;
 
   const durationMs = roundMode === 'timed' ? modeParam * 1000 : null;
 
@@ -119,6 +121,17 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
     }
     promptIndex += 1;
     currentPrompt = next;
+    if (next.kind === 'word-rush') {
+      roundMeta = {
+        letter: next.letter,
+        categoryId: next.topicId,
+        categoryLabel: next.topicLabel,
+        categoryGroup: next.categoryGroup,
+        validWords: next.validWords?.map((w) => (typeof w === 'string' ? w : w.label)) ?? [],
+        foundWords: [...(next.foundWords ?? [])],
+        totalPossible: next.totalPossible ?? 0,
+      };
+    }
     promptShownAtMs = clock.now();
   }
 
@@ -215,6 +228,17 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
       scoreboard.record(prompt, isCorrect, clock.now() - promptShownAtMs);
       lastSubmission = value;
       lastCorrect = isCorrect;
+      if (prompt?.kind === 'word-rush' && isCorrect && roundMeta) {
+        const subNorm = String(value ?? '').trim().toLocaleLowerCase();
+        const match = (prompt.validWords ?? []).find((w) => {
+          const label = typeof w === 'string' ? w : w.label;
+          return label.toLocaleLowerCase() === subNorm;
+        });
+        const canonical = match ? (typeof match === 'string' ? match : match.label) : String(value);
+        if (!roundMeta.foundWords.includes(canonical)) {
+          roundMeta.foundWords.push(canonical);
+        }
+      }
 
       let lifeLost = false;
       if (roundMode === 'lives' && !isCorrect) {
@@ -306,6 +330,7 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
         livesRemaining: roundMode === 'lives' ? Math.max(0, livesRemaining) : null,
         maxLevel: trainer.headlineScore === 'maxLevel' ? summary.correctCount : null,
         mistakes: roundMode === 'completion' ? summary.mistakes : null,
+        wordRush: roundMeta,
         ...summary,
       };
     },

@@ -20,6 +20,7 @@ Innholdet er delt i tre nivåer: **kategori → trener → tema**.
 
 | Kategori | Trenere |
 |---|---|
+| **Word Rush** | Word Rush |
 | **Math** | Mental Math Sprint |
 | **Memory** | Pattern Memory, Figure Pairs |
 | **Geography** | Flag Guesser, Outline Guesser, Capital Guesser |
@@ -31,19 +32,25 @@ Hver trener tilbyr fire vanskelighetsgrader — Beginner, Intermediate, Advanced
 
 Innenfor én grad er oppgaven **den samme for alle i hele verden den dagen**. Det er det som gjør en poengsum verdt å ha. Oppgavene genereres deterministisk fra treneren, nivået og datoen.
 
-Hukommelse er unntaket: et tilfeldig mønster kan ikke meningsfullt forfattes som «intermediate», så der velger du **brettstørrelse** i stedet. Hver størrelse er sin egen dagsoppgave med sin egen rekord.
+**Word Rush** gir deg 2 minutter til å gjette så mange ord som mulig i dagens kategori som begynner på dagens startbokstav (eller innenfor 12 spesifikke kategorier som Sport, Video Games, Weapons & Items in Fortnite, Rockstar Games, Food, Music, Movies, Countries, Capitals, Actors, Musicians og Athletes). Startbokstaven er alltid garantert å ha minst 5 gyldige svar i kategorien, ordhjelp/autocomplete er deaktivert slik at du må stave riktig selv, og etter at tiden er ute vises hele fasiten med alle mulige svar.
 
-Famous People er det andre unntaket: der velger du **emne** — alt, musikk, film, sport, vitenskap eller historie. Hvert emne er sin egen dagsoppgave, så å være god på musikk telles for seg. Lista er på 1134 personer, og de mest kjente vises med **portrett** i tillegg til hintet.
+Hukommelse er et annet unntak: et tilfeldig mønster kan ikke meningsfullt forfattes som «intermediate», så der velger du **brettstørrelse** i stedet. Hver størrelse er sin egen dagsoppgave med sin egen rekord.
+
+Famous People lar deg velge **emne** — alt, musikk, film, sport, vitenskap eller historie. Hvert emne er sin egen dagsoppgave, så å være god på musikk telles for seg. Lista er på 1134 personer, og **100 % av personene** vises med portrettbilde (enten bundlet WebP eller Wikimedia Commons `Special:FilePath` med SVG-monogram som nettverks-fallback) i tillegg til hintet.
 
 ### Rundene slutter på tre måter
 
 | Modus | Slutter når | Brukes av |
 |---|---|---|
-| **Timed** | Tiden går ut | Mental Math Sprint |
+| **Timed** | Tiden går ut | Word Rush (120 s), Mental Math Sprint |
 | **Lives** | Du er tom for liv | Geografi-trenerne (3 liv), Famous People (3 liv), Pattern Memory (1 liv) |
 | **Completion** | Brettet er tomt | Figure Pairs |
 
-Figure Pairs scorer **feil**, ikke riktige — der er lavest best. Famous People gir deg 15 personer per dag: gjetter du feil, får du se navnet før du går videre.
+Figure Pairs scorer **feil**, ikke riktige — der er lavest best. Famous People gir deg 15 personer per dag: gjetter du feil, får du se navnet før du går videre. I Geografi og Famous People får du i fritekst-modus en live **autocomplete-liste** (skriv f.eks. `AL` for å se `Albania`, `Algeria`) og **autokorrektur** som retter små tastefeil til nærmeste gyldige svar ved innsending.
+
+### GitHub-innlogging og Leaderboards
+
+Før man spiller logger man inn med GitHub-brukernavnet sitt (`src/core/auth.js`). Innloggingen henter profil og avatar fra GitHub API (med offline-fallback) og knytter rundene dine til **Daily** og **All-Time Leaderboards** (`src/core/leaderboard.js`), der kun ekte spilte runder rangeres.
 
 ### Å starte en runde forbruker forsøket
 
@@ -95,7 +102,7 @@ npm run serve
 npm test
 ```
 
-87 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `each level adds exactly one tile (FR-117, S15)`. Testmatrisen i `tests/matrix.test.js` spiller alle trener- og variantkombinasjoner til en naturlig slutt.
+104 tester kjører med Node sin innebygde test runner (`node --test`) — ingen testrammeverk å installere. Hver test er navngitt etter kravet og brukerhistorien den verifiserer, for eksempel `each level adds exactly one tile (FR-117, S15)`. Testmatrisen i `tests/matrix.test.js` spiller alle 43 trener- og variantkombinasjoner til en naturlig slutt.
 
 ## Publisering
 
@@ -131,8 +138,11 @@ src/core/               Drill Engine — ren logikk, ingen DOM
   weak-areas.js         Analyse av svake temaer
   archive.js            Arkiv over tidligere dager
   registry.js           Registreringskontrakt for kategorier og trenere
+  auth.js               GitHub-innlogging og sesjonslagring
+  leaderboard.js        Daily og All-Time Leaderboards for ekte spillere
 src/trainers/           En mappe per kategori
   index.js              Eneste sted som kjenner hele katalogen
+  word-rush/            Word Rush (2-minutters ordjakt med daglig kategori og startbokstav)
   math/                 Mental Math Sprint
   memory/               Pattern Memory og Figure Pairs
   geography/            Delt innhold, geo-matematikk og de tre trenerne
@@ -146,20 +156,20 @@ tools/serve.js          Lokal statisk server
 vercel.json             Publiseringsoppsett
 ```
 
-Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å teste ligger i `core` og kan kjøres uten DOM (NFR-15). `src/core/` importerer aldri en trener — bare motsatt vei. Alle seks trenerne ble lagt til uten å endre en eneste fil i `src/core/`.
+Skillet mellom `src/core/` og `src/ui/` er bevisst: all logikk som er verdt å teste ligger i `core` og kan kjøres uten DOM (NFR-15). `src/core/` importerer aldri en trener — bare motsatt vei.
 
 ## Status
 
 | Fase | Status |
 |---|---|
 | Product brief | Ferdig (v5) — [product-brief.md](product-brief.md) |
-| PRD | Ferdig (v4.5) — [docs/PRD.md](docs/PRD.md) |
+| PRD | Ferdig (v4.6) — [docs/PRD.md](docs/PRD.md) |
 | Arkitektur | Avklart i koden — se §9-beslutningene nedenfor |
 | Epics og stories | Definert i PRD |
-| Implementasjon | v1 implementert — motor, sju trenere, arkiv, practice mode, progresjon og UI |
+| Implementasjon | Implementert — motor, åtte trenere i fem kategorier, GitHub-innlogging, leaderboards, arkiv, practice mode, progresjon og UI |
 | Publisering | Publisert — <https://g138-skotheimsvik.vercel.app/> |
 
-PRD-en inneholder 174 funksjonelle krav, 23 ikke-funksjonelle krav, 11 epics og 93 brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot de 23 suksesskriteriene i briefen.
+PRD-en inneholder funksjonelle og ikke-funksjonelle krav, epics og brukerhistorier med akseptansekriterier, samt en sporbarhetsmatrise mot suksesskriteriene i briefen.
 
 ### Arkitekturvalg (PRD §9)
 
@@ -175,14 +185,14 @@ PRD-en inneholder 174 funksjonelle krav, 23 ikke-funksjonelle krav, 11 epics og 
 | 8 | Brettstørrelse i Hukommelse | Valgt av spilleren og fast gjennom runden. Starter på 2 ruter, og mønsteret kan dekke maks 67 % av brettet — tallene er hentet fra **Corsi block-tapping-testen**, som bruker ni ruter, starter på to og rapporterer et snittspenn på fem til seks |
 | 9 | Grafer | Håndskrevet SVG, ingen tredjepartsbibliotek |
 | 10 | Registreringskontrakt for trenere | Kategori, rundemodus, variantakse, score-retning, temaer, generator og renderer — se `src/core/registry.js` |
-| 11 | Lisens for geografiinnhold og flagg | Land og hovedsteder er faktaopplysninger vi har skrevet selv. Flagg utledes fra ISO-koden som Unicode-tegn. Omriss kommer fra Natural Earth, som er public domain |
+| 11 | Lisens for geografiinnhold og flagg | Land og hovedsteder er faktaopplysninger vi har skrevet selv. Flagg rendres som PNG fra `flagcdn.com` via ISO-2-koden (med Unicode-fallback) slik at de vises riktig på Windows/PC. Omriss kommer fra Natural Earth (50m/10m), som er public domain |
 | 12 | Endelig produktnavn | **LearningHub** |
 
 ### Om kartdataene og portrettene
 
-Landomrissene i Outline Guesser er avledet fra **Natural Earth**, som er public domain, konvertert til rene SVG-baner av `tools/build-outlines.js` og committet til repoet. 166 av 195 land har omriss — de 29 uten er mikrostater og småøystater som ikke finnes i datasettet.
+Landomrissene i Outline Guesser er avledet fra **Natural Earth** (50m og 10m), som er public domain, konvertert til høyoppløselige SVG-baner av `tools/build-outlines.js` og committet til repoet. **Alle 195 land** har autentiske omriss i `src/trainers/geography/outlines.json`.
 
-Portrettene i Famous People hentes fra Wikimedia av `tools/build-people-images.js`, som **bare laster ned bilder med lisens som tillater gjenbruk** — public domain, CC0, CC BY, CC BY-SA, OGL. Alt annet hoppes over, og personen blir hintebasert i stedet. Fotograf, lisens og kildefil lagres i `portraits.json` og vises ved siden av bildet. 400 av 1134 personer har portrett; taket er satt bevisst, siden 1134 bilder ville lagt rundt 29 MB i repoet for et spill som viser femten personer om dagen. Personene er sortert etter hvor kjent de er, så de du oftest møter er de som har bilde.
+Portrettene i Famous People dekker **alle 1134 personer (100 %)**. De 400 mest kjente er bundlet lokalt som WebP i `src/trainers/people/portraits/` via `tools/build-people-images.js`, som **bare laster ned bilder med lisens som tillater gjenbruk** — public domain, CC0, CC BY, CC BY-SA, OGL. De resterende 734 personene har verifisert Wikimedia Commons `pageimage` i `people.json` og lastes via `Special:FilePath` med et deterministisk SVG-monogram som nettverks-fallback. Fotograf, lisens og kilde vises ved siden av bildet.
 
 Selve personlista bygges av `tools/build-people.js`. 134 av hintene er håndskrevne og ligger i `people.curated.json` — de har alltid forrang. De øvrige 1000 er generert: Wikidata rangerer folk etter hvor mange Wikipedia-utgaver som har en artikkel om dem, som er et rimelig mål på hvor kjent noen er og som ikke favoriserer étt lands presse. Ingressen fra Wikipedia blir hintet etter at alle former av navnet er sladdet bort. Kategorien avgjøres av hvordan artikkelen beskriver personen, ikke av yrkeskoden som fant dem — Wikidata har Shakespeare som skuespiller og Nietzsche som komponist, som er riktig, men ikke der en spiller ville lett etter dem.
 

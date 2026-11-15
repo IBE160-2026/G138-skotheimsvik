@@ -73,6 +73,11 @@ function makeRng(trainerId, { puzzleDate, variantKey, practice }) {
 // --- Flag Guesser -----------------------------------------------------------
 
 export function createFlagTrainer(countries) {
+  const countrySuggestions = countries.map((entry) => ({
+    label: entry.name,
+    alternatives: entry.alternatives ?? [],
+  }));
+
   return {
     ...baseTrainer(countries),
     id: 'flag-guesser',
@@ -98,8 +103,10 @@ export function createFlagTrainer(countries) {
             topicLabel: subject.continent,
             question: 'Which country does this flag belong to?',
             flag: subject.flag,
+            code: subject.code,
             answer: subject.name,
             alternatives: subject.alternatives,
+            suggestions: choices ? null : countrySuggestions,
             options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
           };
         },
@@ -115,6 +122,10 @@ export function createOutlineTrainer(countries, outlines) {
   const withOutline = countries.filter((entry) => outlines.outlines?.[entry.name]);
   const byName = new Map(countries.map((entry) => [entry.name, entry]));
   const normalise = (value) => String(value ?? '').trim().toLocaleLowerCase();
+  const countrySuggestions = countries.map((entry) => ({
+    label: entry.name,
+    alternatives: entry.alternatives ?? [],
+  }));
 
   return {
     ...baseTrainer(withOutline),
@@ -162,6 +173,7 @@ export function createOutlineTrainer(countries, outlines) {
             viewBox: outlines.viewBox,
             answer: subject.name,
             alternatives: subject.alternatives,
+            suggestions: choices ? null : countrySuggestions,
             options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
             // Hints only make sense where the player types a country name (FR-152),
             // and only help if there is another guess left to spend on them.
@@ -177,6 +189,15 @@ export function createOutlineTrainer(countries, outlines) {
 // --- Capital Guesser --------------------------------------------------------
 
 export function createCapitalTrainer(countries) {
+  const countrySuggestions = countries.map((entry) => ({
+    label: entry.name,
+    alternatives: entry.alternatives ?? [],
+  }));
+  const capitalSuggestions = countries.map((entry) => ({
+    label: entry.capital,
+    alternatives: [],
+  }));
+
   return {
     ...baseTrainer(countries),
     id: 'capital-guesser',
@@ -207,6 +228,7 @@ export function createCapitalTrainer(countries) {
               topicLabel: 'Country → capital',
               question: `What is the capital of ${subject.name}?`,
               answer: subject.capital,
+              suggestions: choices ? null : capitalSuggestions,
               options: choices ? buildChoices(rng, pool, subject, (entry) => entry.capital) : null,
             };
           }
@@ -219,6 +241,7 @@ export function createCapitalTrainer(countries) {
             question: `${subject.capital} is the capital of which country?`,
             answer: subject.name,
             alternatives: subject.alternatives,
+            suggestions: choices ? null : countrySuggestions,
             options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
           };
         },

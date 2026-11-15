@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="LearningHub — daily skill drills. One shared puzzle a day, one attempt per trainer.">
+  <meta name="description" content="LearningHub — Daily competitive skill drills, Word Rush, Geography, Memory, and Famous People.">
   <title>LearningHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="src/ui/styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23111315'/><path d='M55 18L28 54h20l-4 28 28-36H52l3-28z' fill='%23ff5a1f'/></svg>">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -14,14 +17,21 @@
   <header class="app-header">
     <nav class="app-nav" aria-label="Main">
       <button type="button" class="brand" data-route="home">
-        <span aria-hidden="true">🎯</span> LearningHub
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M13.5 3L5.5 13.5h5.8L10.2 21l8.3-10.5h-5.8L13.5 3Z" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="brand-text">LearningHub</span>
       </button>
       <div class="nav-actions">
-        <button type="button" data-route="home">Today</button>
-        <button type="button" data-route="archive">Archive</button>
-        <button type="button" data-route="progress">Progress</button>
-        <button type="button" id="theme-toggle" aria-label="Switch colour theme">
-          <span id="theme-icon" aria-hidden="true">🌙</span>
+        <button type="button" class="nav-btn" data-route="home">Today</button>
+        <button type="button" class="nav-btn" data-route="leaderboard">Leaderboards</button>
+        <button type="button" class="nav-btn" data-route="archive">Archive</button>
+        <button type="button" class="nav-btn" data-route="progress">Progress</button>
+        <div id="user-badge-slot" class="user-badge-slot"></div>
+        <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch colour theme">
+          <span id="theme-icon" aria-hidden="true">Dark</span>
         </button>
       </div>
     </nav>
@@ -36,11 +46,12 @@
   <div id="live-region" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <footer class="app-footer">
-    <p>
-      Pick your level — everyone playing that level today gets the same puzzle. One attempt each,
-      kept in your browser and not enforced, so clearing your storage will reset it.
-    </p>
-    <p><button type="button" id="clear-progress" class="link-button">Clear all progress</button></p>
+    <div class="footer-inner">
+      <p>
+        Shared daily seeds across all levels &amp; categories. Sign in with GitHub to track your rounds and compete on the Daily &amp; All-Time Leaderboards.
+      </p>
+      <p><button type="button" id="clear-progress" class="link-button">Reset local data</button></p>
+    </div>
   </footer>
 
   <script type="module" src="src/ui/app.js"></script>
