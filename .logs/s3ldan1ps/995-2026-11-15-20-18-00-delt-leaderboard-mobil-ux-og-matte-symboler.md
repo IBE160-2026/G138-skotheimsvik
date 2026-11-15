@@ -13,8 +13,9 @@ Oppdatere Daily og All-Time Leaderboards slik at alle brukere ser hverandres res
 
 ### Resultat
 - Opprettet `api/leaderboard.js` og oppdatert `tools/serve.js`, `src/core/leaderboard.js`, `src/ui/app.js` og `src/ui/views.js`:
-  - Ingen falske eller pre-seedede spillere (`COMMUNITY_PLAYERS` fjernet) — kun ekte brukere som faktisk besøker nettsiden, logger inn og spiller vises på Daily og All-Time Leaderboards.
-  - Lagt til automatisk komprimert sky-KV-persistens (`readBuiltInCloudKv` / `writeBuiltInCloudKv` med `deflateRawSync` + `base64url`-chunking i `api/leaderboard.js`) i tillegg til Vercel KV/Upstash og lokal fillagring, slik at Vercel serverless-instanser beholder og deler alle ekte spilleres poengsummer på tvers av enheter og kall uten å miste data ved cold-starts.
+  - Ingen falske eller pre-seedede spillere (`COMMUNITY_PLAYERS` fjernet + automatisk rensing av eventuelle mellomlagrede falske oppføringer i `localStorage`) — kun ekte brukere som faktisk besøker nettsiden, logger inn og spiller vises på Daily og All-Time Leaderboards.
+  - Hentet og sikret alle 37 ekte spilte runder fra produksjonsserveren (`S3lDan1PS` og `SimonSkotheimsvik`) inn i `.data/leaderboard.json`, og endret `readFileStore` / `writeFileStore` til å flette både `.data/leaderboard.json` og `/tmp/learninghub-leaderboard.json`.
+  - Fikset `503 Service Unavailable`-feil mot sky-KV ved å gjøre chunk-kall sekvensielle med `fetchKvWithRetry` (retry + backoff) og legge til `Cache-Control: no-store` på både server og klient (`cache: 'no-store'`).
   - Første gang en eksisterende bruker åpner siden, tilbakefylles brukerens ekte spilte runder fra `progress` og synkroniseres opp til den delte sky-lagringen via `leaderboard.syncWithServer()`.
 - Oppdatert `src/ui/round-view.js` og `src/ui/styles.css`:
   - Timer-baren ligger nå både inne i den sticky `.round-header` øverst på skjermen og som en ekstra synkronisert `.inline-timer-rail` direkte over svarfeltet, slik at nedtellingen alltid er synlig på mobil selv når virtuelt tastatur er åpent.

@@ -222,12 +222,27 @@ function unpackCompactEntry(row) {
   });
 }
 
+async function fetchKvWithRetry(url, options = {}, retries = 3) {
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
+    } catch {
+      /* retry */
+    }
+    if (attempt < retries - 1) {
+      await new Promise((r) => setTimeout(r, 80 * (attempt + 1)));
+    }
+  }
+  return null;
+}
+
 async function readBuiltInCloudKv() {
   try {
-    const metaRes = await fetch(
+    const metaRes = await fetchKvWithRetry(
       `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_meta`,
     );
-    if (!metaRes.ok) return [];
+    if (!metaRes) return [];
     const metaRaw = JSON.parse(await metaRes.text());
     if (!metaRaw || typeof metaRaw !== 'string') return [];
     const chunkCount = Number(metaRaw);
@@ -235,16 +250,16 @@ async function readBuiltInCloudKv() {
       return [];
     }
 
-    const chunks = await Promise.all(
-      Array.from({ length: chunkCount }, async (_, idx) => {
-        const res = await fetch(
-          `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_c${idx}`,
-        );
-        if (!res.ok) return '';
-        const val = JSON.parse(await res.text());
-        return typeof val === 'string' ? val : '';
-      }),
-    );
+    const chunks = [];
+    for (let idx = 0; idx < chunkCount; idx += 1) {
+      const res = await fetchKvWithRetry(
+        `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_c${idx}`,
+      );
+      if (!res) return [];
+      const val = JSON.parse(await res.text());
+      if (typeof val !== 'string' || !val) return [];
+      chunks.push(val);
+    }
 
     const joined = chunks.join('');
     if (!joined) return [];
@@ -269,20 +284,19 @@ async function writeBuiltInCloudKv(entries) {
     }
     if (chunks.length === 0 || chunks.length > MAX_CLOUD_CHUNKS) return false;
 
-    await Promise.all(
-      chunks.map((chunk, idx) =>
-        fetch(
-          `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_c${idx}/${chunk}`,
-          { method: 'POST' },
-        ),
-      ),
-    );
+    for (let idx = 0; idx < chunks.length; idx += 1) {
+      const res = await fetchKvWithRetry(
+        `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_c${idx}/${chunks[idx]}`,
+        { method: 'POST' },
+      );
+      if (!res) return false;
+    }
 
-    const metaRes = await fetch(
+    const metaRes = await fetchKvWithRetry(
       `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_meta/${chunks.length}`,
       { method: 'POST' },
     );
-    return metaRes.ok;
+    return Boolean(metaRes?.ok);
   } catch {
     return false;
   }

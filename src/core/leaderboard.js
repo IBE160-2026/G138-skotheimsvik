@@ -8,6 +8,14 @@
 
 import { STORAGE_KEYS } from './storage.js';
 
+const LEGACY_SIMULATED_LOGINS = new Set([
+  'torvalds',
+  'gaearon',
+  'sindresorhus',
+  'yyx990803',
+  'addyosmani',
+]);
+
 function isLowerBetter(trainerId) {
   return trainerId === 'figure-pairs';
 }
@@ -20,6 +28,14 @@ export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }
   let state = storage.read(STORAGE_KEYS.leaderboard, { entries: [] });
   if (!Array.isArray(state?.entries)) {
     state = { entries: [] };
+  } else {
+    const filtered = state.entries.filter(
+      (e) => e?.login && !LEGACY_SIMULATED_LOGINS.has(String(e.login).toLowerCase()),
+    );
+    if (filtered.length !== state.entries.length) {
+      state = { entries: filtered };
+      storage.write(STORAGE_KEYS.leaderboard, state);
+    }
   }
 
   function persist() {
@@ -81,6 +97,7 @@ export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }
       const hasLocal = state.entries.length > 0;
       const response = await fetchImpl('/api/leaderboard', {
         method: hasLocal ? 'POST' : 'GET',
+        cache: 'no-store',
         headers: hasLocal
           ? { 'Content-Type': 'application/json', Accept: 'application/json' }
           : { Accept: 'application/json' },
@@ -151,6 +168,7 @@ export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }
     if (sync && typeof fetchImpl === 'function') {
       fetchImpl('/api/leaderboard', {
         method: 'POST',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ entry: record, entries: state.entries }),
       })
