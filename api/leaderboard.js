@@ -104,33 +104,35 @@ export function mergeLeaderboardEntries(existing = [], incoming = []) {
 }
 
 function readFileStore() {
+  let combined = [];
   for (const candidate of [LOCAL_DATA_FILE, TMP_DATA_FILE]) {
     try {
       if (existsSync(candidate)) {
         const parsed = JSON.parse(readFileSync(candidate, 'utf8'));
         if (Array.isArray(parsed?.entries)) {
-          return parsed.entries;
+          combined = mergeLeaderboardEntries(combined, parsed.entries);
         }
       }
     } catch {
       /* ignore and try next */
     }
   }
-  return [];
+  return combined;
 }
 
 function writeFileStore(entries) {
   const payload = JSON.stringify({ entries, updatedAt: Date.now() }, null, 2);
+  let wroteAny = false;
   for (const candidate of [LOCAL_DATA_FILE, TMP_DATA_FILE]) {
     try {
       mkdirSync(dirname(candidate), { recursive: true });
       writeFileSync(candidate, payload, 'utf8');
-      return true;
+      wroteAny = true;
     } catch {
       /* try fallback path */
     }
   }
-  return false;
+  return wroteAny;
 }
 
 async function readKvStore() {
@@ -326,6 +328,10 @@ export async function saveSharedEntries(incomingEntries) {
 }
 
 export default async function handler(req, res) {
+  if (typeof res.setHeader === 'function') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  }
+
   if (req.method === 'GET') {
     const entries = await loadSharedEntries();
     res.status(200).json({ entries });
