@@ -227,7 +227,10 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
       }),
     ),
   ]);
-}Leaderboard, onBack }) {
+}
+
+/** A trainer's variants, marking what has already been spent (FR-3). */
+export function trainerView({ today, trainer, progress, onPlay, onPractice, onLeaderboard, onBack }) {
   const variants = variantsFor(trainer);
   const spentList = progress.spentVariants(trainer.id, today);
   const spent = new Set(spentList);
@@ -309,10 +312,7 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
             onClick: onLeaderboard,
           })
         : null,
-    ])onClick: onPractice,
-          }),
-        ])
-      : null,
+    ]),
   ]);
 }
 

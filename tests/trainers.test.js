@@ -35,6 +35,9 @@ import { createLeaderboardStore } from '../src/core/leaderboard.js';
 import { createStorage, createMemoryBackend } from '../src/core/storage.js';
 import { createRound } from '../src/core/round.js';
 import { createFixedClock } from '../src/core/clock.js';
+import * as views from '../src/ui/views.js';
+import { createRoundView } from '../src/ui/round-view.js';
+import { formatDate } from '../src/ui/dom.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -804,4 +807,13 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   const cgNext = cgGen.next({ index: 1, lastCorrect: true, lastSubmission: cgPrompt.answer });
   assert.equal(cgNext.solvedGroups.length, 1);
   assert.equal(cgNext.remainingCells.length, 12);
+});
+
+test('UI views and date formatting load cleanly and format dates in English', () => {
+  assert.equal(typeof views.categoriesView, 'function');
+  assert.equal(typeof views.trainerView, 'function');
+  assert.equal(typeof views.leaderboardView, 'function');
+  assert.equal(typeof createRoundView, 'function');
+  const formatted = formatDate('2026-11-15');
+  assert.match(formatted, /Sun.*15.*Nov.*2026/);
 });
