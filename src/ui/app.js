@@ -279,9 +279,12 @@ function goCategory(categoryId) {
 
 const LEADERBOARD_TRAINER_IDS = new Set([
   'word-rush',
-  'famous-people',
+  'word-chain',
+  'timeline-sort',
+  'mental-math',
   'pattern-memory',
   'figure-pairs',
+  'famous-people',
 ]);
 
 function goTrainer(trainerId) {
@@ -476,6 +479,7 @@ function finishRound(round) {
   }
 
   const currentUser = auth.getUser();
+  const hasModeLeaderboard = LEADERBOARD_TRAINER_IDS.has(activeTrainer.id);
 
   // Practice never reaches the progress store at all (FR-47, FR-48).
   if (round.isPractice) {
@@ -489,14 +493,13 @@ function finishRound(round) {
         currentUser,
         onBack: () => goTrainer(activeTrainer.id),
         onArchive: goArchive,
-        onProgress: () => goProgress(),
-        onLeaderboard: () =>
-          goLeaderboard({
-            selectedDate: result.puzzleDate,
-            trainerId: LEADERBOARD_TRAINER_IDS.has(activeTrainer.id)
-              ? activeTrainer.id
-              : 'word-rush',
-          }),
+        onLeaderboard: hasModeLeaderboard
+          ? () =>
+              goLeaderboard({
+                selectedDate: result.puzzleDate,
+                trainerId: activeTrainer.id,
+              })
+          : null,
       }),
     );
     return;
@@ -507,7 +510,7 @@ function finishRound(round) {
     showNotice('Your progress could not be saved — this browser is blocking storage.');
   }
 
-  if (currentUser) {
+  if (currentUser && hasModeLeaderboard) {
     leaderboard.recordEntry({ user: currentUser, result });
   }
 
@@ -521,15 +524,13 @@ function finishRound(round) {
       currentUser,
       onBack: () => goTrainer(activeTrainer.id),
       onArchive: goArchive,
-      onProgress: () =>
-        goProgress({ trainerId: activeTrainer.id, variantKey: result.variantKey }),
-      onLeaderboard: () =>
-        goLeaderboard({
-          selectedDate: result.puzzleDate,
-          trainerId: LEADERBOARD_TRAINER_IDS.has(activeTrainer.id)
-            ? activeTrainer.id
-            : 'word-rush',
-        }),
+      onLeaderboard: hasModeLeaderboard
+        ? () =>
+            goLeaderboard({
+              selectedDate: result.puzzleDate,
+              trainerId: activeTrainer.id,
+            })
+        : null,
     }),
   );
 }

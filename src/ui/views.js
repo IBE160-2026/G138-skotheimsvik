@@ -465,13 +465,13 @@ export function categoriesView({
       el('div', { class: 'hero-text' }, [
         el('h1', { text: 'Daily Drills' }),
         el('p', { class: 'muted' }, [
-          `${formatDate(today)} — same daily puzzle seed for everyone.`,
+          `${formatDate(today)} — 12 daily brain challenges across geography, history, math, memory & words.`,
         ]),
       ]),
       el('div', { class: 'hero-meter' }, [
         el('p', {
           class: 'hero-count',
-          text: `${allTotal - allSpent} of ${allTotal} left today`,
+          text: `${allSpent} out of ${allTotal} gamemodes played today`,
         }),
         meter(allSpent, allTotal),
       ]),
@@ -856,11 +856,9 @@ export function resultsView({
     : null;
 
   const activeTrainerId = result.trainerId ?? trainer?.id ?? 'word-rush';
-  const isPeopleGuesser = activeTrainerId === 'famous-people';
-  const isPatternMemory = activeTrainerId === 'pattern-memory';
+  const modeLeaderboardMeta = LEADERBOARD_MODES[activeTrainerId] ?? null;
   const isFigurePairs = activeTrainerId === 'figure-pairs';
-  const hasLeaderboard =
-    (wr && !isWordChain) || isPeopleGuesser || isPatternMemory || isFigurePairs;
+  const hasLeaderboard = Boolean(modeLeaderboardMeta);
   const leaderboardTrainerId = activeTrainerId;
 
   const dailyBoard =
@@ -872,7 +870,7 @@ export function resultsView({
       : null;
 
   const allTimeBoard =
-    (isPeopleGuesser || isPatternMemory || isFigurePairs) && leaderboard
+    hasLeaderboard && leaderboard
       ? leaderboard.allTimeLeaderboard({ trainerId: leaderboardTrainerId })
       : null;
 
@@ -881,13 +879,7 @@ export function resultsView({
         el('div', { class: 'word-rush-reveal-header' }, [
           el('h2', {
             class: 'section-label',
-            text: isPeopleGuesser
-              ? `Most Guesses Today (${formatDate(result.puzzleDate)})`
-              : isFigurePairs
-                ? `Fewest Tries Today (${formatDate(result.puzzleDate)})`
-                : isPatternMemory
-                  ? `Highest Level Today (${formatDate(result.puzzleDate)})`
-                  : `Today’s Leaderboard (${formatDate(result.puzzleDate)})`,
+            text: `${modeLeaderboardMeta.dailyTab} (${formatDate(result.puzzleDate)})`,
           }),
           onLeaderboard
             ? el('button', {
@@ -904,11 +896,7 @@ export function resultsView({
               el('div', { class: 'word-rush-reveal-header' }, [
                 el('h2', {
                   class: 'section-label',
-                  text: isPeopleGuesser
-                    ? 'All-Time Most Guesses (People Guesser)'
-                    : isFigurePairs
-                      ? 'All-Time Fewest Tries (Figure Pairs)'
-                      : 'All-Time Levels Cleared (Pattern Memory)',
+                  text: `${modeLeaderboardMeta.allTimeTab} (${modeLeaderboardMeta.title})`,
                 }),
               ]),
               renderLeaderboardTable(allTimeBoard.slice(0, 8), currentUser, 'all-time', leaderboardTrainerId),
@@ -974,7 +962,6 @@ export function resultsView({
         ? el('button', { type: 'button', class: 'ghost', text: 'Leaderboards', onClick: onLeaderboard })
         : null,
       el('button', { type: 'button', class: 'ghost', text: 'Archive', onClick: onArchive }),
-      el('button', { type: 'button', class: 'ghost', text: 'Progress', onClick: onProgress }),
     ]),
   ]);
 }
@@ -993,23 +980,49 @@ const LEADERBOARD_MODES = {
     allTimeCaption:
       'Cumulative words discovered and single-round personal bests across all daily Word Rush challenges.',
   },
-  'famous-people': {
-    title: 'People Guesser',
-    heading: 'People Guesser Leaderboards',
-    subtitle: 'Ranked by most people guessed today and all-time in People Guesser.',
-    playButton: 'Play Today’s People Guesser',
-    variantKey: 'all',
-    dailyTab: 'Most Guesses Today',
-    allTimeTab: 'All-Time Most Guesses',
-    dailyCol: 'People Guessed',
-    allTimeCol: 'Total Guesses',
+  'word-chain': {
+    title: 'Word Chain',
+    heading: 'Word Chain Leaderboards',
+    subtitle: 'Ranked by the longest last-letter word chain built today and all-time.',
+    playButton: 'Play Today’s Word Chain',
+    variantKey: 'daily',
+    dailyTab: 'Longest Chain Today',
+    allTimeTab: 'All-Time Words Chained',
+    dailyCol: 'Chain Length',
+    allTimeCol: 'Total Chained',
     allTimeCaption:
-      'Cumulative people guessed and single-run personal bests across all daily People Guesser challenges.',
+      'Cumulative words chained and single-round personal bests across all daily Word Chain challenges.',
+  },
+  'timeline-sort': {
+    title: 'Timeline Sort',
+    heading: 'Timeline Sort Leaderboards',
+    subtitle: 'Ranked by the most historical events placed in chronological order before 3 mistakes.',
+    playButton: 'Play Today’s Timeline Sort',
+    variantKey: 'daily',
+    dailyTab: 'Most Events Today',
+    allTimeTab: 'All-Time Events Placed',
+    dailyCol: 'Events Placed',
+    allTimeCol: 'Total Placed',
+    allTimeCaption:
+      'Cumulative historical events placed and single-run personal bests across all daily Timeline Sort challenges.',
+  },
+  'mental-math': {
+    title: 'Math Blitz',
+    heading: 'Math Blitz Leaderboards',
+    subtitle: 'Ranked by the longest daily math streak solved under the 20s-per-question clock.',
+    playButton: 'Play Today’s Math Blitz',
+    variantKey: 'daily',
+    dailyTab: 'Highest Score Today',
+    allTimeTab: 'All-Time Correct Solved',
+    dailyCol: 'Problems Solved',
+    allTimeCol: 'Total Solved',
+    allTimeCaption:
+      'Cumulative problems solved and single-run personal bests across all daily Math Blitz challenges.',
   },
   'pattern-memory': {
     title: 'Pattern Memory',
     heading: 'Pattern Memory Leaderboards',
-    subtitle: 'Ranked by highest pattern level memorized with zero mistakes allowed.',
+    subtitle: 'Ranked by highest sequential pattern level memorized with zero mistakes allowed.',
     playButton: 'Play Today’s Pattern Memory',
     variantKey: 'daily',
     dailyTab: 'Highest Level Today',
@@ -1031,6 +1044,19 @@ const LEADERBOARD_MODES = {
     allTimeCol: 'Best Run (Tries)',
     allTimeCaption:
       'Ranked by fewest attempts used in a completed daily board and total rounds completed.',
+  },
+  'famous-people': {
+    title: 'People Guesser',
+    heading: 'People Guesser Leaderboards',
+    subtitle: 'Ranked by most people guessed today and all-time in People Guesser.',
+    playButton: 'Play Today’s People Guesser',
+    variantKey: 'all',
+    dailyTab: 'Most Guesses Today',
+    allTimeTab: 'All-Time Most Guesses',
+    dailyCol: 'People Guessed',
+    allTimeCol: 'Total Guesses',
+    allTimeCaption:
+      'Cumulative people guessed and single-run personal bests across all daily People Guesser challenges.',
   },
 };
 

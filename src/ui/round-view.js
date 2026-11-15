@@ -13,6 +13,7 @@ import {
   checkAnswer,
   matchSuggestions,
   matchWordRushEntry,
+  normaliseText,
   resolveClosestMatch,
 } from '../core/answer.js';
 
@@ -83,8 +84,28 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   let hints = [];
   let guessesUsed = 0;
   let busy = false;
+  let pendingTimeouts = [];
+  /** Track the most recently placed timeline event title so it animates in when dropped. */
+  let lastPlacedTimelineTitle = null;
+
+  function clearPendingTimeouts() {
+    for (const id of pendingTimeouts) {
+      clearTimeout(id);
+    }
+    pendingTimeouts = [];
+  }
+
+  function scheduleTimeout(fn, delayMs) {
+    const id = setTimeout(() => {
+      pendingTimeouts = pendingTimeouts.filter((t) => t !== id);
+      fn();
+    }, delayMs);
+    pendingTimeouts.push(id);
+    return id;
+  }
 
   function stopTimer() {
+    clearPendingTimeouts();
     if (timer) {
       clearInterval(timer);
       timer = null;
@@ -148,12 +169,12 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     if (feedback.ended) {
       busy = true;
-      setTimeout(finish, FEEDBACK_MS);
+      scheduleTimeout(finish, FEEDBACK_MS);
       return;
     }
 
     busy = true;
-    setTimeout(() => {
+    scheduleTimeout(() => {
       busy = false;
       hints = [];
       guessesUsed = 0;
@@ -976,14 +997,14 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     sequence.forEach((tileIdx, orderIdx) => {
       const startAt = initialDelayMs + orderIdx * (stepBlinkMs + stepGapMs);
-      setTimeout(() => {
+      scheduleTimeout(() => {
         const target = tiles[tileIdx];
         if (!target) return;
         target.classList.add('tile-lit');
         target.textContent = String(orderIdx + 1);
       }, startAt);
 
-      setTimeout(() => {
+      scheduleTimeout(() => {
         const target = tiles[tileIdx];
         if (!target) return;
         target.classList.remove('tile-lit');
@@ -992,7 +1013,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     });
 
     const unlockAt = initialDelayMs + sequence.length * (stepBlinkMs + stepGapMs) + 60;
-    setTimeout(() => {
+    scheduleTimeout(() => {
       for (const tile of tiles) {
         tile.classList.remove('tile-lit');
         tile.textContent = '';
@@ -1079,7 +1100,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       const pair = [...turned];
       // Both faces stay visible long enough to be remembered, whether or not
       // they matched — that is the whole game.
-      setTimeout(() => {
+      scheduleTimeout(() => {
         lastValue = pair;
         handleSubmit(pair);
         turned.length = 0;
@@ -1461,8 +1482,18 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     const timeline = prompt.timeline ?? [];
     const card = prompt.card;
     let activeDropSlot = null;
+    let dragGhostChip = null;
+
+    function removeDragGhostChip() {
+      if (dragGhostChip) {
+        dragGhostChip.remove();
+        dragGhostChip = null;
+      }
+    }
 
     function submitSlot(slotIndex) {
+      removeDragGhostChip();
+      lastPlacedTimelineTitle = card?.title ?? null;
       lastValue = String(slotIndex);
       handleSubmit(String(slotIndex));
     }
@@ -1533,9 +1564,23 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
           if (e.dataTransfer) {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', card.title);
+            removeDragGhostChip();
+            dragGhostChip = el(
+              'div',
+              { class: 'timeline-drag-chip' },
+              [
+                el('span', { class: 'timeline-drag-chip-badge', text: card.category }),
+                el('span', { class: 'timeline-drag-chip-title', text: card.title }),
+              ],
+            );
+            document.body.append(dragGhostChip);
+            if (typeof e.dataTransfer.setDragImage === 'function') {
+              e.dataTransfer.setDragImage(dragGhostChip, 54, 24);
+            }
           }
         },
         onDragend: () => {
+          removeDragGhostChip();
           candidateEl.classList.remove('is-dragging');
           candidateEl.setAttribute('aria-grabbed', 'false');
           promptBody?.querySelector('.timeline-track')?.classList.remove('is-dragging-active');
@@ -1550,7 +1595,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         el('h2', { class: 'timeline-candidate-title', text: card.title }),
         el('p', {
           class: 'muted small timeline-candidate-sub',
-          text: 'Drag this statement card to the right point on the timeline below (or tap a time slot).',
+          text: 'Drag this statement card into a slot on the timeline below (or tap a slot).',
         }),
       ],
     );
@@ -1568,11 +1613,17 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       candidateEl.classList.add('is-dragging');
       promptBody?.querySelector('.timeline-track')?.classList.add('is-dragging-active');
 
-      ghostEl = el('div', {
-        class: 'timeline-drag-ghost',
-        text: card.title,
-        style: `left: ${e.clientX}px; top: ${e.clientY}px;`,
-      });
+      ghostEl = el(
+        'div',
+        {
+          class: 'timeline-drag-ghost',
+          style: `left: ${e.clientX}px; top: ${e.clientY}px;`,
+        },
+        [
+          el('span', { class: 'timeline-drag-chip-badge', text: card.category }),
+          el('span', { class: 'timeline-drag-chip-title', text: card.title }),
+        ],
+      );
       document.body.append(ghostEl);
 
       const onMove = (moveEvent) => {
@@ -1621,14 +1672,19 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     for (let i = 0; i < timeline.length; i += 1) {
       const ev = timeline[i];
       const positionSide = i % 2 === 0 ? 'is-above' : 'is-below';
-      const eventBox = el('div', { class: 'timeline-placed-card' }, [
-        el('span', { class: 'timeline-year-badge', text: ev.formattedYear }),
-        el('strong', { class: 'timeline-placed-title', text: ev.title }),
-        el('span', { class: 'muted small timeline-placed-category', text: ev.category }),
-      ]);
+      const isJustPlaced = lastPlacedTimelineTitle && ev.title === lastPlacedTimelineTitle;
+      const eventBox = el(
+        'div',
+        { class: `timeline-placed-card${isJustPlaced ? ' is-just-placed' : ''}` },
+        [
+          el('span', { class: 'timeline-year-badge', text: ev.formattedYear }),
+          el('strong', { class: 'timeline-placed-title', text: ev.title }),
+          el('span', { class: 'muted small timeline-placed-category', text: ev.category }),
+        ],
+      );
 
       trackItems.push(
-        el('div', { class: `timeline-h-node ${positionSide}` }, [
+        el('div', { class: `timeline-h-node ${positionSide}${isJustPlaced ? ' is-just-placed-node' : ''}` }, [
           el(
             'div',
             { class: 'timeline-branch timeline-branch-top' },
@@ -1663,6 +1719,9 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       }
     }
 
+    const railEl = el('div', { class: 'timeline-h-rail' }, trackItems);
+    const scrollEl = el('div', { class: 'timeline-h-scroll' }, [railEl]);
+
     render(
       promptBody,
       candidateEl,
@@ -1682,12 +1741,17 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
             }),
             el('span', { class: 'muted small', text: 'Most Recent →' }),
           ]),
-          el('div', { class: 'timeline-h-scroll' }, [
-            el('div', { class: 'timeline-h-rail' }, trackItems),
-          ]),
+          scrollEl,
         ],
       ),
     );
+
+    if (lastPlacedTimelineTitle) {
+      const placedNode = scrollEl.querySelector('.is-just-placed-node');
+      if (placedNode && typeof placedNode.scrollIntoView === 'function') {
+        placedNode.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
   }
 
   /**
@@ -1863,6 +1927,8 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       guessesUsed = 0;
       busy = false;
       lastValue = null;
+      lastPlacedTimelineTitle = null;
+      clearPendingTimeouts();
 
       statusBar = el('div', { class: 'round-status' });
       feedbackBar = el('div', { class: 'round-feedback', role: 'status' });
