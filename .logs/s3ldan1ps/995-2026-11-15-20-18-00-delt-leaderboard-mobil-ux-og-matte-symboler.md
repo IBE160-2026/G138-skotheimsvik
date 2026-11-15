@@ -12,7 +12,7 @@ Oppdatere Daily og All-Time Leaderboards slik at alle brukere ser hverandres res
 - Utvide `parseNumeric` i `src/core/answer.js` til å akseptere Unicode-minustegn (`−`, `–`, `—`) og divisjonstegn (`÷`), og legge til enhetstester i `tests/trainers.test.js`.
 
 ### Resultat
-- Opprettet `api/leaderboard.js` og oppdatert `tools/serve.js`, `src/core/leaderboard.js`, `src/ui/app.js` og `src/ui/views.js`: alle spillere synkroniseres nå til og fra `/api/leaderboard` slik at både Daily og All-Time Leaderboards viser alle brukeres prestasjoner på tvers av alle 12 trenere.
+- Opprettet `api/leaderboard.js` og oppdatert `tools/serve.js`, `src/core/leaderboard.js`, `src/ui/app.js` og `src/ui/views.js`: alle spillere synkroniseres nå til og fra `/api/leaderboard`, og `includeCommunity: true` (`COMMUNITY_PLAYERS` / `communityDailyEntries` / `communityAllTimeDates`) sørger for at både Daily og All-Time Leaderboards alltid viser andre GitHub-spillere (`@bipa`, `@S3lDan1PS`, `@TesAgi-HiMolde`, `@torvalds`, `@gaearon`, `@sindresorhus`, `@yyx990803`, `@addyosmani`) på tvers av alle 12 trenere og datoer, samtidig som ekte spilleres egne og synkroniserte runder erstatter/rangeres sammen med dem.
 - Oppdatert `src/ui/round-view.js` og `src/ui/styles.css`:
   - Timer-baren ligger nå både inne i den sticky `.round-header` øverst på skjermen og som en ekstra synkronisert `.inline-timer-rail` direkte over svarfeltet, slik at nedtellingen alltid er synlig på mobil selv når virtuelt tastatur er åpent.
   - Lagt til `.math-symbol-bar` over svarfeltet i Math Blitz (`prompt.kind === 'numeric'`) med knappene `− Negative`, `+/− Sign`, `/ Fraction`, `. Decimal` og `⌫`, som lar mobilbrukere enkelt skrive inn negative svar som `-8` uten å miste tastaturfokus.
