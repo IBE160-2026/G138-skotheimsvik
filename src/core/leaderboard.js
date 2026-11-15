@@ -1,158 +1,21 @@
 /**
  * Daily & All-Time Leaderboard Store.
  *
- * Tracks real player scores across days and syncs with the shared `/api/leaderboard`
- * endpoint so every user sees everyone else's performances in both Daily and
- * All-Time leaderboards across all supported trainers.
+ * Tracks ONLY real player scores across days and syncs with the shared
+ * `/api/leaderboard` endpoint so every user who visits the website and plays
+ * sees each other's real performances in both Daily and All-Time leaderboards.
  */
 
 import { STORAGE_KEYS } from './storage.js';
-import { createRng, hashString } from './rng.js';
 
 function isLowerBetter(trainerId) {
   return trainerId === 'figure-pairs';
 }
 
 /**
- * Community GitHub players whose daily and all-time performances appear alongside
- * any signed-in players and synced `/api/leaderboard` entries.
+ * @param {{storage: object, fetchImpl?: typeof fetch}} options
  */
-export const COMMUNITY_PLAYERS = Object.freeze([
-  {
-    login: 'bipa',
-    name: 'Bård Pettersen',
-    avatarUrl: 'https://github.com/bipa.png?size=120',
-    skill: 0.88,
-  },
-  {
-    login: 'S3lDan1PS',
-    name: 'Daniel Skotheimsvik',
-    avatarUrl: 'https://github.com/S3lDan1PS.png?size=120',
-    skill: 0.92,
-  },
-  {
-    login: 'TesAgi-HiMolde',
-    name: 'Tesfaye Agi',
-    avatarUrl: 'https://github.com/TesAgi-HiMolde.png?size=120',
-    skill: 0.81,
-  },
-  {
-    login: 'torvalds',
-    name: 'Linus Torvalds',
-    avatarUrl: 'https://github.com/torvalds.png?size=120',
-    skill: 0.94,
-  },
-  {
-    login: 'gaearon',
-    name: 'Dan Abramov',
-    avatarUrl: 'https://github.com/gaearon.png?size=120',
-    skill: 0.85,
-  },
-  {
-    login: 'sindresorhus',
-    name: 'Sindre Sorhus',
-    avatarUrl: 'https://github.com/sindresorhus.png?size=120',
-    skill: 0.89,
-  },
-  {
-    login: 'yyx990803',
-    name: 'Evan You',
-    avatarUrl: 'https://github.com/yyx990803.png?size=120',
-    skill: 0.83,
-  },
-  {
-    login: 'addyosmani',
-    name: 'Addy Osmani',
-    avatarUrl: 'https://github.com/addyosmani.png?size=120',
-    skill: 0.78,
-  },
-]);
-
-const TRAINER_SCORE_RANGES = {
-  'word-rush': { min: 7, max: 24, minMs: 95000, maxMs: 120000 },
-  'word-chain': { min: 5, max: 18, minMs: 32000, maxMs: 88000 },
-  'timeline-sort': { min: 4, max: 15, minMs: 28000, maxMs: 75000 },
-  'mental-math': { min: 8, max: 29, minMs: 34000, maxMs: 95000 },
-  'pattern-memory': { min: 4, max: 13, minMs: 22000, maxMs: 68000 },
-  'figure-pairs': { min: 8, max: 22, minMs: 20000, maxMs: 64000, lowerBetter: true },
-  'famous-people': { min: 5, max: 21, minMs: 30000, maxMs: 90000 },
-  'connection-grid': { min: 2, max: 4, minMs: 26000, maxMs: 82000 },
-  'flag-guesser': { min: 1, max: 1, minMs: 6000, maxMs: 29000 },
-  'outline-guesser': { min: 1, max: 1, minMs: 9000, maxMs: 42000 },
-  'capital-guesser': { min: 1, max: 1, minMs: 8000, maxMs: 38000 },
-  'border-hop': { min: 2, max: 6, minMs: 18000, maxMs: 65000 },
-};
-
-/**
- * Deterministic daily performances for community players on a given date and trainer.
- */
-export function communityDailyEntries(puzzleDate, trainerId = 'word-rush') {
-  if (!puzzleDate || !/^\d{4}-\d{2}-\d{2}$/.test(puzzleDate)) return [];
-  const cfg = TRAINER_SCORE_RANGES[trainerId] ?? TRAINER_SCORE_RANGES['word-rush'];
-  const variantKey = trainerId === 'famous-people' ? 'all' : 'daily';
-  const entries = [];
-
-  for (const player of COMMUNITY_PLAYERS) {
-    const rng = createRng(hashString(`community:${player.login}:${trainerId}:${puzzleDate}`));
-    // Most community players participate each day (~85% participation rate)
-    if (rng.float() < 0.12) continue;
-
-    let score;
-    if (cfg.lowerBetter) {
-      const span = cfg.max - cfg.min;
-      const raw = cfg.max - Math.round(span * (player.skill * 0.65 + rng.float() * 0.35));
-      score = Math.max(cfg.min, Math.min(cfg.max, raw));
-    } else if (cfg.min === cfg.max) {
-      score = cfg.max;
-    } else {
-      const span = cfg.max - cfg.min;
-      const raw = cfg.min + Math.round(span * (player.skill * 0.6 + rng.float() * 0.4));
-      score = Math.max(cfg.min, Math.min(cfg.max, raw));
-    }
-
-    const elapsedMs = rng.int(cfg.minMs, cfg.maxMs);
-    entries.push({
-      login: player.login,
-      name: player.name,
-      avatarUrl: player.avatarUrl,
-      puzzleDate,
-      trainerId,
-      variantKey,
-      score,
-      mistakes: 0,
-      totalAnswered: score,
-      elapsedMs,
-      categoryLabel: null,
-      letter: null,
-    });
-  }
-
-  return entries;
-}
-
-/**
- * Deterministic multi-day history for community players so All-Time leaderboards
- * are populated across all users.
- */
-function communityAllTimeDates(referenceDate = '2026-11-15', days = 10) {
-  const base = /^\d{4}-\d{2}-\d{2}$/.test(referenceDate) ? referenceDate : '2026-11-15';
-  const dates = [];
-  for (let i = 0; i < days; i += 1) {
-    const d = new Date(`${base}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() - i);
-    dates.push(d.toISOString().slice(0, 10));
-  }
-  return dates;
-}
-
-/**
- * @param {{storage: object, fetchImpl?: typeof fetch, includeCommunity?: boolean}} options
- */
-export function createLeaderboardStore({
-  storage,
-  fetchImpl = globalThis.fetch,
-  includeCommunity = false,
-}) {
+export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }) {
   // Stored shape: { entries: Array<{login, name, avatarUrl, puzzleDate, trainerId, variantKey, score, elapsedMs, categoryLabel, letter}> }
   let state = storage.read(STORAGE_KEYS.leaderboard, { entries: [] });
   if (!Array.isArray(state?.entries)) {
@@ -237,7 +100,7 @@ export function createLeaderboardStore({
   /**
    * Record a user's round score onto the leaderboard and push it to the shared server.
    */
-  function recordEntry({ user, result }) {
+  function recordEntry({ user, result, sync = true }) {
     if (!user?.login || !result) return null;
 
     const isFigurePairs = isLowerBetter(result.trainerId);
@@ -285,7 +148,7 @@ export function createLeaderboardStore({
 
     persist();
 
-    if (typeof fetchImpl === 'function') {
+    if (sync && typeof fetchImpl === 'function') {
       fetchImpl('/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -308,16 +171,9 @@ export function createLeaderboardStore({
    */
   function dailyLeaderboard(puzzleDate, { trainerId = 'word-rush' } = {}) {
     const lowerBetter = isLowerBetter(trainerId);
-    const realEntries = state.entries.filter(
+    const userEntries = state.entries.filter(
       (e) => e.puzzleDate === puzzleDate && e.trainerId === trainerId,
     );
-    const realLogins = new Set(realEntries.map((e) => e.login.toLowerCase()));
-    const communityEntries = includeCommunity
-      ? communityDailyEntries(puzzleDate, trainerId).filter(
-          (e) => !realLogins.has(e.login.toLowerCase()),
-        )
-      : [];
-    const userEntries = [...realEntries, ...communityEntries];
     const byLogin = new Map();
 
     for (const entry of userEntries) {
@@ -342,30 +198,9 @@ export function createLeaderboardStore({
   /**
    * Get the all-time leaderboard across all users for a given trainer.
    */
-  function allTimeLeaderboard({ trainerId = 'word-rush', today = null } = {}) {
+  function allTimeLeaderboard({ trainerId = 'word-rush' } = {}) {
     const lowerBetter = isLowerBetter(trainerId);
-    const realEntries = state.entries.filter((e) => e.trainerId === trainerId);
-    const latestRealDate =
-      today ||
-      realEntries.reduce((max, e) => (e.puzzleDate > max ? e.puzzleDate : max), '') ||
-      new Date().toISOString().slice(0, 10);
-
-    const realDateLoginKeys = new Set(
-      realEntries.map((e) => `${e.login.toLowerCase()}|${e.puzzleDate}`),
-    );
-
-    const communityEntries = [];
-    if (includeCommunity) {
-      for (const d of communityAllTimeDates(latestRealDate, 10)) {
-        for (const ce of communityDailyEntries(d, trainerId)) {
-          if (!realDateLoginKeys.has(`${ce.login.toLowerCase()}|${ce.puzzleDate}`)) {
-            communityEntries.push(ce);
-          }
-        }
-      }
-    }
-
-    const userEntries = [...realEntries, ...communityEntries];
+    const userEntries = state.entries.filter((e) => e.trainerId === trainerId);
     const aggregatedUsers = new Map();
 
     for (const entry of userEntries) {

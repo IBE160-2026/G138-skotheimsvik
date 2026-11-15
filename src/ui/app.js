@@ -39,7 +39,7 @@ const clock = createClock();
 const storage = createStorage();
 const progress = createProgressStore({ storage });
 const auth = createAuthStore({ storage });
-const leaderboard = createLeaderboardStore({ storage, includeCommunity: true });
+const leaderboard = createLeaderboardStore({ storage });
 const preferences = createPreferencesStore({ storage });
 
 let registry = null;
@@ -299,7 +299,7 @@ function backfillUserLeaderboardFromProgress() {
     if (!LEADERBOARD_TRAINER_IDS.has(trainer.id)) continue;
     const attempts = progress.fullHistory(trainer.id);
     for (const result of attempts) {
-      leaderboard.recordEntry({ user, result });
+      leaderboard.recordEntry({ user, result, sync: false });
     }
   }
 }
@@ -698,12 +698,6 @@ async function boot() {
     const oauthCode = params.get('code');
     const nextRoute = params.get('state') || params.get('next');
 
-    backfillUserLeaderboardFromProgress();
-    leaderboard.syncWithServer().then(() => {
-      if (!activeRound && typeof currentViewRefresh === 'function') {
-        currentViewRefresh();
-      }
-    });
     if (oauthCode) {
       globalThis.history?.replaceState?.({}, '', globalThis.location.pathname);
       try {
@@ -712,6 +706,13 @@ async function boot() {
         showNotice(err.message || 'Could not complete GitHub sign-in.');
       }
     }
+
+    backfillUserLeaderboardFromProgress();
+    leaderboard.syncWithServer().then(() => {
+      if (!activeRound && typeof currentViewRefresh === 'function') {
+        currentViewRefresh();
+      }
+    });
 
     setupChrome();
     watchForNewDay();

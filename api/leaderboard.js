@@ -1,23 +1,31 @@
 /**
  * Shared Daily & All-Time Leaderboard API (`GET /api/leaderboard` & `POST /api/leaderboard`).
  *
- * Persists leaderboard entries across all signed-in GitHub users so every
- * player sees everyone else's daily and all-time performances across devices.
+ * Persists real player leaderboard entries across all signed-in GitHub users so
+ * every player sees everyone else's daily and all-time performances across devices.
+ * Zero fake or pre-seeded players.
  *
- * Storage tiers (automatic fallback):
+ * Storage tiers (automatic multi-tier sync):
  *   1. Upstash Redis / Vercel KV REST API (`KV_REST_API_URL` & `KV_REST_API_TOKEN`
  *      or `UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN`) when configured.
- *   2. GitHub Gist JSON store (`GITHUB_GIST_ID` & `GITHUB_GIST_TOKEN`) when configured.
+ *   2. Built-in compressed cloud KV store (`keyvalue.immanuel.co` with deflate +
+ *      base64url chunking) so serverless deployments on Vercel persist scores
+ *      globally out-of-the-box with zero external setup required.
  *   3. Local JSON file (`.data/leaderboard.json` or `/tmp/learninghub-leaderboard.json`)
- *      plus in-memory cache so local development and serverless instances share state.
+ *      plus in-memory cache for fast local development and warm serverless instances.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deflateRawSync, inflateRawSync } from 'node:zlib';
 
 const KV_KEY = 'learninghub:v2:leaderboard';
-const MAX_ENTRIES = 5000;
+const CLOUD_KV_APP_KEY = process.env.LEADERBOARD_KV_APP_KEY || 'xsmx36lv';
+const CLOUD_KV_PREFIX = 'lh_v2_real';
+const CLOUD_CHUNK_SIZE = 180;
+const MAX_CLOUD_CHUNKS = 25;
+const MAX_ENTRIES = 500;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const LOCAL_DATA_FILE = join(HERE, '..', '.data', 'leaderboard.json');
@@ -164,12 +172,131 @@ async function writeKvStore(entries) {
   }
 }
 
+function packCompactEntry(e) {
+  return [
+    e.login,
+    e.name && e.name !== e.login ? e.name : '',
+    e.puzzleDate,
+    e.trainerId,
+    e.variantKey === 'daily' ? '' : e.variantKey,
+    e.score,
+    e.mistakes || 0,
+    e.totalAnswered ?? e.score,
+    e.elapsedMs || 0,
+    e.categoryLabel || '',
+    e.letter || '',
+    e.playedAt || 0,
+  ];
+}
+
+function unpackCompactEntry(row) {
+  if (!Array.isArray(row) || row.length < 6) return sanitizeEntry(row);
+  const [
+    login,
+    name,
+    puzzleDate,
+    trainerId,
+    variantKey,
+    score,
+    mistakes,
+    totalAnswered,
+    elapsedMs,
+    categoryLabel,
+    letter,
+    playedAt,
+  ] = row;
+  return sanitizeEntry({
+    login,
+    name: name || login,
+    avatarUrl: `https://github.com/${encodeURIComponent(login)}.png?size=120`,
+    puzzleDate,
+    trainerId,
+    variantKey: variantKey || 'daily',
+    score,
+    mistakes,
+    totalAnswered,
+    elapsedMs,
+    categoryLabel: categoryLabel || null,
+    letter: letter || null,
+    playedAt: playedAt || Date.now(),
+  });
+}
+
+async function readBuiltInCloudKv() {
+  try {
+    const metaRes = await fetch(
+      `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_meta`,
+    );
+    if (!metaRes.ok) return [];
+    const metaRaw = JSON.parse(await metaRes.text());
+    if (!metaRaw || typeof metaRaw !== 'string') return [];
+    const chunkCount = Number(metaRaw);
+    if (!Number.isInteger(chunkCount) || chunkCount <= 0 || chunkCount > MAX_CLOUD_CHUNKS) {
+      return [];
+    }
+
+    const chunks = await Promise.all(
+      Array.from({ length: chunkCount }, async (_, idx) => {
+        const res = await fetch(
+          `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_c${idx}`,
+        );
+        if (!res.ok) return '';
+        const val = JSON.parse(await res.text());
+        return typeof val === 'string' ? val : '';
+      }),
+    );
+
+    const joined = chunks.join('');
+    if (!joined) return [];
+    const decompressed = inflateRawSync(Buffer.from(joined, 'base64url')).toString('utf8');
+    const rows = JSON.parse(decompressed);
+    if (!Array.isArray(rows)) return [];
+    return rows.map(unpackCompactEntry).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function writeBuiltInCloudKv(entries) {
+  try {
+    const compactRows = entries.map(packCompactEntry);
+    const compressed = deflateRawSync(Buffer.from(JSON.stringify(compactRows))).toString(
+      'base64url',
+    );
+    const chunks = [];
+    for (let i = 0; i < compressed.length; i += CLOUD_CHUNK_SIZE) {
+      chunks.push(compressed.slice(i, i + CLOUD_CHUNK_SIZE));
+    }
+    if (chunks.length === 0 || chunks.length > MAX_CLOUD_CHUNKS) return false;
+
+    await Promise.all(
+      chunks.map((chunk, idx) =>
+        fetch(
+          `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_c${idx}/${chunk}`,
+          { method: 'POST' },
+        ),
+      ),
+    );
+
+    const metaRes = await fetch(
+      `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${CLOUD_KV_PREFIX}_meta/${chunks.length}`,
+      { method: 'POST' },
+    );
+    return metaRes.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function loadSharedEntries() {
-  const kvEntries = await readKvStore();
+  const [kvEntries, cloudEntries] = await Promise.all([readKvStore(), readBuiltInCloudKv()]);
   const fileEntries = readFileStore();
   const combined = mergeLeaderboardEntries(
     memoryEntries ?? [],
-    mergeLeaderboardEntries(fileEntries, kvEntries ?? []),
+    mergeLeaderboardEntries(
+      fileEntries,
+      mergeLeaderboardEntries(kvEntries ?? [], cloudEntries ?? []),
+    ),
   );
   memoryEntries = combined;
   return combined;
@@ -180,7 +307,7 @@ export async function saveSharedEntries(incomingEntries) {
   const merged = mergeLeaderboardEntries(current, incomingEntries);
   memoryEntries = merged;
   writeFileStore(merged);
-  await writeKvStore(merged);
+  await Promise.all([writeKvStore(merged), writeBuiltInCloudKv(merged)]);
   return merged;
 }
 

@@ -1155,19 +1155,6 @@ test('multi-user leaderboard sync merges entries across all users for daily and 
   const allTime = lb.allTimeLeaderboard({ trainerId: 'mental-math' });
   assert.equal(allTime.length, 2, 'Both users appear in all-time leaderboard after sync');
 
-  // Verify includeCommunity populates other players in daily and all-time leaderboards immediately
-  const communityLb = createLeaderboardStore({
-    storage: createStorage({ backend: createMemoryBackend() }),
-    includeCommunity: true,
-  });
-  const communityDaily = communityLb.dailyLeaderboard('2026-11-15', { trainerId: 'word-rush' });
-  assert.ok(communityDaily.length >= 4, 'Community players appear in daily leaderboard');
-  const communityAllTime = communityLb.allTimeLeaderboard({
-    trainerId: 'word-rush',
-    today: '2026-11-15',
-  });
-  assert.ok(communityAllTime.length >= 5, 'Community players appear in all-time leaderboard');
-
   // Verify parseNumeric handles negative signs (including Unicode minus from mobile symbol bar), fractions, and decimals
   assert.equal(parseNumeric('-8'), -8);
   assert.equal(parseNumeric('−8'), -8);
