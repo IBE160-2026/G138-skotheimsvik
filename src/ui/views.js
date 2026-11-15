@@ -243,35 +243,37 @@ export function trainerView({ today, trainer, progress, onPlay, onPractice, onBa
 
 /** Pre-round briefing: no controls, and a warning that starting commits (FR-4, FR-5, FR-10d). */
 export function briefingView({ trainer, variantKey, puzzleDate, isArchive, onStart, onBack }) {
-  const wordRushChallenge =
-    trainer.id === 'word-rush' && trainer.getChallenge
-      ? trainer.getChallenge(puzzleDate, variantKey)
-      : null;
+  const isWordRush = trainer.id === 'word-rush';
 
   return el('section', { class: 'briefing' }, [
     el('button', { type: 'button', class: 'ghost back', text: '← Back', onClick: onBack }),
     el('div', { class: 'trainer-heading-row' }, [
-      trainer.id === 'word-rush' ? wordRushLogoMark(42) : null,
+      isWordRush ? wordRushLogoMark(42) : null,
       el('h1', { text: trainer.name }),
     ]),
     el('p', { class: 'muted', text: trainer.description }),
-    wordRushChallenge
-      ? el('div', { class: 'word-rush-brief-card' }, [
+    isWordRush
+      ? el('div', { class: 'word-rush-brief-card word-rush-hidden-notice' }, [
           el('div', { class: 'word-rush-letter-badge' }, [
             el('span', { class: 'word-rush-letter-caption', text: 'Letter' }),
-            el('strong', { class: 'word-rush-letter', text: wordRushChallenge.letter }),
+            el('strong', { class: 'word-rush-letter', text: '?' }),
           ]),
           el('div', { class: 'word-rush-meta' }, [
-            el('span', { class: 'badge', text: wordRushChallenge.categoryGroup }),
+            el('span', { class: 'badge', text: 'Hidden until start' }),
             el('p', { class: 'word-rush-category-line' }, [
-              el('strong', { text: wordRushChallenge.categoryLabel }),
+              el('strong', {
+                text: 'Category and starting letter are revealed once the 2-minute timer starts.',
+              }),
             ]),
           ]),
         ])
       : null,
     el('div', { class: 'brief-stats' }, [
       stat('Date', formatDate(puzzleDate)),
-      stat(VARIANT_AXIS_LABEL[trainer.variantKind] ?? 'Level', labelFor(trainer, variantKey)),
+      stat(
+        VARIANT_AXIS_LABEL[trainer.variantKind] ?? 'Level',
+        isWordRush && variantKey === 'daily' ? 'Daily Mystery' : labelFor(trainer, variantKey),
+      ),
       stat('Round ends', ROUND_MODE_LABEL[trainer.roundMode]),
     ]),
     el('p', { class: 'brief-mode', text: describeRound(trainer, variantKey) }),
@@ -546,6 +548,7 @@ export function leaderboardView({
   leaderboard,
   wordRushTrainer,
   currentUser,
+  progress,
   onSelectTab,
   onSelectDate,
   onPlayToday,
@@ -553,6 +556,9 @@ export function leaderboardView({
 }) {
   const activeDate = selectedDate || today;
   const challenge = wordRushTrainer?.getChallenge?.(activeDate, 'daily') ?? null;
+  const hasPlayedActiveDate = Boolean(
+    progress?.hasAttempt?.('word-rush', 'daily', activeDate),
+  );
   const dailyRows = leaderboard.dailyLeaderboard(activeDate, {
     trainerId: 'word-rush',
     maxPossible: challenge?.validWords?.length ?? 25,
@@ -616,10 +622,14 @@ export function leaderboardView({
               ),
             ),
             challenge
-              ? el('div', { class: 'daily-challenge-pill' }, [
-                  el('span', { class: 'badge badge-accent', text: `Letter "${challenge.letter}"` }),
-                  el('span', { text: challenge.categoryLabel }),
-                ])
+              ? hasPlayedActiveDate
+                ? el('div', { class: 'daily-challenge-pill' }, [
+                    el('span', { class: 'badge badge-accent', text: `Letter "${challenge.letter}"` }),
+                    el('span', { text: challenge.categoryLabel }),
+                  ])
+                : el('div', { class: 'daily-challenge-pill' }, [
+                    el('span', { class: 'badge', text: 'Hidden until played' }),
+                  ])
               : null,
           ]),
           renderLeaderboardTable(dailyRows, currentUser, 'daily'),

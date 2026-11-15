@@ -267,6 +267,7 @@ function goLeaderboard(nextState = {}) {
         leaderboard,
         wordRushTrainer,
         currentUser: auth.getUser(),
+        progress,
         onSelectTab: (tab) => goLeaderboard({ tab }),
         onSelectDate: (selectedDate) => goLeaderboard({ selectedDate }),
         onPlayToday: () => goBriefing('word-rush', 'daily', clock.today()),

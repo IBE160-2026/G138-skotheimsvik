@@ -1261,6 +1261,15 @@ select:hover { border-color: var(--border-strong); }
   text-align: left;
   box-shadow: var(--shadow-1);
 }
+.word-rush-brief-card.word-rush-hidden-notice {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.word-rush-category-line {
+  margin: 0.35rem 0 0;
+  font-size: 0.94rem;
+}
 .word-rush-brand-row {
   display: flex;
   align-items: center;
