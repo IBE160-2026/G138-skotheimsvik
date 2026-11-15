@@ -8,6 +8,6 @@
 
 export default function handler(req, res) {
   res.status(200).json({
-    clientId: process.env.GITHUB_CLIENT_ID || null,
+    clientId: process.env.GITHUB_CLIENT_ID || process.env.GITHUB_CLIENT_KEY || null,
   });
 }

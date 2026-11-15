@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientId = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_CLIENT_KEY;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
