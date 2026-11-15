@@ -8,8 +8,10 @@
  */
 
 import { createRng, seedFor, practiceSeed } from '../../core/rng.js';
+import { normaliseText } from '../../core/answer.js';
 import { buildChoices, continentsIn, poolFor, usesChoices } from './content.js';
 import { describeGuess } from './geo.js';
+import { buildBorderGraph, findShortestBorderPath, findRoutePairs } from './borders.js';
 
 const LIVES = 3;
 
@@ -243,6 +245,167 @@ export function createCapitalTrainer(countries) {
             alternatives: subject.alternatives,
             suggestions: choices ? null : countrySuggestions,
             options: choices ? buildChoices(rng, pool, subject, (entry) => entry.name) : null,
+          };
+        },
+      };
+    },
+  };
+}
+
+// --- Border Hop -------------------------------------------------------------
+
+const HOP_RANGE_BY_BAND = Object.freeze({
+  beginner: [1, 1],
+  intermediate: [1, 2],
+  advanced: [2, 3],
+  expert: [2, 4],
+});
+
+export function createBorderHopTrainer(countries, outlines) {
+  const validCountryNames = new Set(countries.map((c) => c.name));
+  const byName = new Map(countries.map((c) => [c.name, c]));
+  const graph = buildBorderGraph(validCountryNames);
+  const countrySuggestions = countries
+    .filter((entry) => graph.has(entry.name))
+    .map((entry) => ({
+      label: entry.name,
+      alternatives: entry.alternatives ?? [],
+    }));
+
+  // Resolve any country name or alias to canonical country name in the border graph
+  function resolveCountryName(input) {
+    const norm = normaliseText(input);
+    if (!norm) return null;
+    for (const c of countries) {
+      if (!graph.has(c.name)) continue;
+      if (normaliseText(c.name) === norm) return c.name;
+      if ((c.alternatives ?? []).some((alt) => normaliseText(alt) === norm)) {
+        return c.name;
+      }
+    }
+    return null;
+  }
+
+  return {
+    ...baseTrainer(countries),
+    id: 'border-hop',
+    name: 'Border Hop',
+    description:
+      'Travel overland from the starting country to the target country by naming bordering countries step by step.',
+    renderer: 'border-hop',
+    scoreLabel: 'Border hops',
+    topics: continentsIn(countries).map((id) => ({ id, label: id })),
+
+    createGenerator(context) {
+      const rng = makeRng('border-hop', context);
+      const { variantKey = 'beginner', practice = false, filters = null } = context;
+      const [minInter, maxInter] = HOP_RANGE_BY_BAND[variantKey] ?? [1, 2];
+
+      let routePairs = findRoutePairs(graph, minInter, maxInter);
+      if (practice && Array.isArray(filters?.continents) && filters.continents.length > 0) {
+        const allowed = new Set(filters.continents);
+        const filtered = routePairs.filter((pair) => {
+          const s = byName.get(pair.start);
+          const t = byName.get(pair.target);
+          return s && t && (allowed.has(s.continent) || allowed.has(t.continent));
+        });
+        if (filtered.length > 0) routePairs = filtered;
+      }
+
+      let activeRoute = null;
+      let pathTaken = [];
+
+      function startNewRoute() {
+        if (routePairs.length === 0) return false;
+        const picked = rng.pick(routePairs);
+        const swap = rng.float() < 0.5;
+        const start = swap ? picked.target : picked.start;
+        const target = swap ? picked.start : picked.target;
+        const shortest = findShortestBorderPath(graph, start, target) ?? [start, target];
+        activeRoute = {
+          start,
+          target,
+          optimalSteps: shortest.length - 1,
+        };
+        pathTaken = [start];
+        return true;
+      }
+
+      return {
+        next(turnContext) {
+          if (turnContext?.lastCorrect && turnContext?.lastSubmission && activeRoute) {
+            const resolved = resolveCountryName(turnContext.lastSubmission);
+            if (resolved && resolved !== pathTaken[pathTaken.length - 1]) {
+              pathTaken.push(resolved);
+            }
+          }
+
+          const current = pathTaken[pathTaken.length - 1];
+          // Check if the previous step reached a neighbor of target (or target itself)
+          if (!activeRoute || current === activeRoute.target) {
+            if (!startNewRoute()) return null;
+          } else {
+            const currentNeighbors = graph.get(current) ?? new Set();
+            if (currentNeighbors.has(activeRoute.target)) {
+              // Automatically complete the route and start a fresh one!
+              if (!startNewRoute()) return null;
+            }
+          }
+
+          const currentCountry = pathTaken[pathTaken.length - 1];
+          const visited = new Set(pathTaken);
+          const neighbors = [...(graph.get(currentCountry) ?? [])].filter(
+            (n) => !visited.has(n) && n !== activeRoute.target,
+          );
+
+          // If player walked into a dead-end peninsula with no unvisited neighbors, allow all neighbors
+          const validNextCountries =
+            neighbors.length > 0
+              ? neighbors
+              : [...(graph.get(currentCountry) ?? [])].filter((n) => n !== activeRoute.target);
+
+          const remainingShortest =
+            findShortestBorderPath(graph, currentCountry, activeRoute.target) ?? [
+              currentCountry,
+              activeRoute.target,
+            ];
+          const optimalNext = remainingShortest[1] ?? validNextCountries[0] ?? activeRoute.target;
+
+          const startMeta = byName.get(activeRoute.start);
+          const targetMeta = byName.get(activeRoute.target);
+          const currentMeta = byName.get(currentCountry);
+
+          // Build accepted answers: any valid bordering country (and its aliases)
+          const acceptedNames = [];
+          for (const name of validNextCountries) {
+            acceptedNames.push(name);
+            const meta = byName.get(name);
+            if (meta?.alternatives) acceptedNames.push(...meta.alternatives);
+          }
+
+          return {
+            kind: 'border-hop',
+            key: `border-hop:${activeRoute.start}->${activeRoute.target}:${pathTaken.length}:${turnContext?.index ?? 0}`,
+            topicId: startMeta?.continent ?? 'Europe',
+            topicLabel: `${activeRoute.start} → ${activeRoute.target}`,
+            question: `Connect ${activeRoute.start} to ${activeRoute.target} overland`,
+            startCountry: activeRoute.start,
+            targetCountry: activeRoute.target,
+            currentCountry,
+            startCode: startMeta?.code ?? '',
+            targetCode: targetMeta?.code ?? '',
+            currentCode: currentMeta?.code ?? '',
+            startOutline: outlines?.outlines?.[activeRoute.start]?.d ?? null,
+            targetOutline: outlines?.outlines?.[activeRoute.target]?.d ?? null,
+            viewBox: outlines?.viewBox ?? '0 0 200 200',
+            pathTaken: [...pathTaken],
+            optimalSteps: activeRoute.optimalSteps,
+            optimalNext,
+            validNextCountries,
+            answer: optimalNext,
+            displayAnswer: `One of: ${validNextCountries.slice(0, 4).join(', ')}`,
+            alternatives: acceptedNames,
+            suggestions: countrySuggestions,
           };
         },
       };

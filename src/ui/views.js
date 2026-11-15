@@ -32,6 +32,24 @@ const CATEGORY_LOGO_SVG = {
     <rect x="2" y="2" width="32" height="32" rx="8" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="2"/>
     <path d="M19.5 7L10 20h7.5l-1 9L26 16h-7.5l1-9z" fill="currentColor"/>
   </svg>`,
+  'word-chain': `<svg viewBox="0 0 36 36" width="28" height="28" fill="none" aria-hidden="true">
+    <rect x="2" y="2" width="32" height="32" rx="8" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="2"/>
+    <path d="M14 22l8-8M12 16l-2 2a4.5 4.5 0 0 0 6.4 6.4l2-2M24 20l2-2a4.5 4.5 0 0 0-6.4-6.4l-2 2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </svg>`,
+  'timeline-sort': `<svg viewBox="0 0 36 36" width="28" height="28" fill="none" aria-hidden="true">
+    <line x1="10" y1="7" x2="10" y2="29" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="10" cy="11" r="2.5" fill="currentColor"/>
+    <circle cx="10" cy="18" r="2.5" fill="currentColor"/>
+    <circle cx="10" cy="25" r="2.5" fill="currentColor"/>
+    <path d="M16 11h11M16 18h8M16 25h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </svg>`,
+  'connection-grid': `<svg viewBox="0 0 36 36" width="28" height="28" fill="none" aria-hidden="true">
+    <rect x="5" y="5" width="11" height="11" rx="2.5" fill="currentColor" fill-opacity="0.25" stroke="currentColor" stroke-width="2"/>
+    <rect x="20" y="5" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="2"/>
+    <rect x="5" y="20" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="2"/>
+    <rect x="20" y="20" width="11" height="11" rx="2.5" fill="currentColor" fill-opacity="0.25" stroke="currentColor" stroke-width="2"/>
+    <path d="M16 10.5h4M10.5 16v4M25.5 16v4M16 25.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`,
   math: `<svg viewBox="0 0 36 36" width="26" height="26" fill="none" aria-hidden="true">
     <path d="M9 12h18M9 24h18M14 7l-3 22M25 7l-3 22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
   </svg>`,

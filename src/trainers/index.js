@@ -12,12 +12,16 @@ import { patternMemoryTrainer } from './memory/pattern.js';
 import { figurePairsTrainer } from './memory/pairs.js';
 import { validateCountries } from './geography/content.js';
 import {
+  createBorderHopTrainer,
   createCapitalTrainer,
   createFlagTrainer,
   createOutlineTrainer,
 } from './geography/index.js';
 import { createFamousPeopleTrainer, validatePeople } from './people/index.js';
 import { createWordRushTrainer } from './word-rush/index.js';
+import { createWordChainTrainer } from './word-chain/index.js';
+import { timelineSortTrainer } from './timeline/index.js';
+import { connectionGridTrainer } from './connections/index.js';
 
 export const CATEGORIES = [
   {
@@ -25,6 +29,24 @@ export const CATEGORIES = [
     name: 'Word Rush',
     tagline: '2 minutes. Daily category & starting letter. Name as many as you can.',
     icon: '⚡',
+  },
+  {
+    id: 'word-chain',
+    name: 'Word Chain',
+    tagline: '90-second last-letter word relay. Chain words together without repeating.',
+    icon: '⛓',
+  },
+  {
+    id: 'timeline-sort',
+    name: 'Timeline Sort',
+    tagline: 'Place historical milestones, inventions and releases in chronological order.',
+    icon: '⏳',
+  },
+  {
+    id: 'connection-grid',
+    name: 'ConnectionGrid',
+    tagline: 'Group 16 words into 4 hidden categories of 4 before running out of lives.',
+    icon: '⊞',
   },
   {
     id: 'math',
@@ -41,7 +63,7 @@ export const CATEGORIES = [
   {
     id: 'geography',
     name: 'Geography',
-    tagline: 'Flags, shapes and capitals for all 195 countries.',
+    tagline: 'Flags, shapes, capitals and Border Hop routes across all 195 countries.',
     icon: '◴',
   },
   {
@@ -75,6 +97,16 @@ export function buildRegistry({ countries, outlines, people, portraits, portrait
     }),
   );
 
+  registry.registerTrainer(
+    createWordChainTrainer({
+      countries: validated,
+      people: validatedPeople.people,
+    }),
+  );
+
+  registry.registerTrainer(timelineSortTrainer);
+  registry.registerTrainer(connectionGridTrainer);
+
   registry.registerTrainer(mentalMathTrainer);
   registry.registerTrainer(patternMemoryTrainer);
   registry.registerTrainer(figurePairsTrainer);
@@ -84,6 +116,7 @@ export function buildRegistry({ countries, outlines, people, portraits, portrait
   registry.registerTrainer(createFlagTrainer(validated));
   registry.registerTrainer(createOutlineTrainer(validated, outlines));
   registry.registerTrainer(createCapitalTrainer(validated));
+  registry.registerTrainer(createBorderHopTrainer(validated, outlines));
 
   if (people) {
     registry.registerTrainer(

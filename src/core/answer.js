@@ -223,6 +223,26 @@ export function checkAnswer(prompt, submitted) {
       return res.status;
     }
 
+    case 'connection-grid': {
+      const picks = Array.isArray(submitted) ? submitted : [];
+      if (picks.length !== 4) return 'incorrect';
+      const normPicks = picks.map((w) => normaliseText(w)).sort();
+      // Any unsolved group of 4 words on the board is a valid match
+      const unsolved = prompt.unsolvedGroups ?? prompt.groups ?? [];
+      for (const group of unsolved) {
+        const groupNorm = (group.words ?? []).map((w) => normaliseText(w)).sort();
+        if (
+          groupNorm.length === 4 &&
+          groupNorm.every((val, idx) => val === normPicks[idx])
+        ) {
+          return 'correct';
+        }
+      }
+      return 'incorrect';
+    }
+
+    case 'timeline-sort':
+    case 'border-hop':
     case 'choice':
     case 'text':
     default: {

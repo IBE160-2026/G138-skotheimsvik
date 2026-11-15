@@ -910,6 +910,293 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     );
   }
 
+  /**
+   * Word Chain (90-second Last-Letter Relay).
+   */
+  function renderWordChain(prompt) {
+    const chainWords = prompt.chainWords ?? [prompt.previousWord].filter(Boolean);
+    render(
+      promptBody,
+      el('div', { class: 'word-rush-header' }, [
+        el('div', { class: 'word-rush-brand-row' }, [
+          el('span', {
+            class: 'word-rush-logo',
+            'aria-hidden': 'true',
+            html: `<svg viewBox="0 0 40 40" width="38" height="38" fill="none">
+              <rect x="2" y="2" width="36" height="36" rx="9" fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="2.2"/>
+              <path d="M15 25l10-10M13 18l-2 2a5 5 0 0 0 7 7l2-2M27 22l2-2a5 5 0 0 0-7-7l-2 2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>`,
+          }),
+          el('h2', { class: 'word-rush-title', text: 'Word Chain' }),
+        ]),
+        el('div', { class: 'word-rush-prompt-pills' }, [
+          el('div', { class: 'word-rush-pill' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Category' }),
+            el('strong', { class: 'word-rush-pill-value', text: prompt.topicLabel }),
+          ]),
+          el('div', { class: 'word-rush-pill' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Last word' }),
+            el('strong', { class: 'word-rush-pill-value', text: prompt.previousWord }),
+          ]),
+          el('div', { class: 'word-rush-pill word-rush-pill-letter' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Next starts with' }),
+            el('strong', { class: 'word-rush-pill-value', text: prompt.letter }),
+          ]),
+          el('div', { class: 'word-rush-pill' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Chain' }),
+            el('strong', {
+              class: 'word-rush-pill-value',
+              text: String(Math.max(0, chainWords.length - 1)),
+            }),
+          ]),
+        ]),
+      ]),
+      answerArea(prompt),
+      el('div', { class: 'word-rush-found-panel' }, [
+        el('h3', {
+          class: 'word-rush-found-title',
+          text: `Word Relay (${chainWords.length} in chain)`,
+        }),
+        el(
+          'ul',
+          { class: 'word-rush-chips word-chain-relay', 'aria-label': 'Word chain sequence' },
+          chainWords.map((word, idx) =>
+            el('li', {
+              class: `word-rush-chip ${idx === 0 ? 'is-starter' : 'is-found'}`,
+              text: idx === 0 ? `🏁 ${word}` : `→ ${word}`,
+            }),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  /**
+   * Border Hop — step-by-step overland route between two countries.
+   */
+  function renderBorderHop(prompt) {
+    const pathTaken = prompt.pathTaken ?? [prompt.startCountry];
+
+    function flagBadge(code, name) {
+      const lower = String(code ?? '').toLowerCase();
+      return el('span', { class: 'border-hop-country-chip' }, [
+        lower
+          ? el('img', {
+              src: `https://flagcdn.com/w40/${lower}.png`,
+              alt: '',
+              width: '22',
+              height: '15',
+              class: 'border-hop-mini-flag',
+            })
+          : null,
+        el('strong', { text: name }),
+      ]);
+    }
+
+    render(
+      promptBody,
+      el('div', { class: 'border-hop-header' }, [
+        el('p', { class: 'prompt-prefix', text: 'Overland Border Route' }),
+        el('div', { class: 'border-hop-endpoints' }, [
+          el('div', { class: 'border-hop-endpoint' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Start' }),
+            flagBadge(prompt.startCode, prompt.startCountry),
+          ]),
+          el('span', { class: 'border-hop-arrow', text: '➔' }),
+          el('div', { class: 'border-hop-endpoint' }, [
+            el('span', { class: 'word-rush-pill-label', text: 'Destination' }),
+            flagBadge(prompt.targetCode, prompt.targetCountry),
+          ]),
+        ]),
+        el('p', {
+          class: 'format-hint',
+          text: `Shortest route: ${prompt.optimalSteps} border crossings. Currently in ${prompt.currentCountry} — name a bordering country to move closer to ${prompt.targetCountry}!`,
+        }),
+      ]),
+      el('div', { class: 'border-hop-trail' }, [
+        el('span', { class: 'word-rush-pill-label', text: 'Your Route So Far:' }),
+        el(
+          'div',
+          { class: 'border-hop-steps' },
+          [
+            ...pathTaken.map((countryName, idx) =>
+              el('span', {
+                class: `word-rush-chip is-found${idx === pathTaken.length - 1 ? ' is-current-hop' : ''}`,
+                text: `${idx === 0 ? '📍 ' : '→ '}${countryName}`,
+              }),
+            ),
+            el('span', {
+              class: 'word-rush-chip is-missed',
+              text: `→ ? → 🏁 ${prompt.targetCountry}`,
+            }),
+          ],
+        ),
+      ]),
+      answerArea(prompt),
+    );
+  }
+
+  /**
+   * Timeline Sort — place the event card in the right chronological slot.
+   */
+  function renderTimelineSort(prompt) {
+    const timeline = prompt.timeline ?? [];
+    const card = prompt.card;
+
+    function slotButton(slotIndex, label) {
+      return el('button', {
+        type: 'button',
+        class: 'timeline-slot-btn',
+        onClick: () => {
+          lastValue = String(slotIndex);
+          handleSubmit(String(slotIndex));
+        },
+        text: label,
+      });
+    }
+
+    const items = [];
+    items.push(
+      slotButton(0, `Place Before ${timeline[0]?.formattedYear ?? ''}`),
+    );
+
+    for (let i = 0; i < timeline.length; i += 1) {
+      const ev = timeline[i];
+      items.push(
+        el('div', { class: 'timeline-placed-card' }, [
+          el('span', { class: 'timeline-year-badge', text: ev.formattedYear }),
+          el('div', { class: 'timeline-placed-info' }, [
+            el('strong', { text: ev.title }),
+            el('span', { class: 'muted small', text: ev.category }),
+          ]),
+        ]),
+      );
+
+      if (i < timeline.length - 1) {
+        items.push(
+          slotButton(
+            i + 1,
+            `Place Between ${ev.formattedYear} & ${timeline[i + 1].formattedYear}`,
+          ),
+        );
+      } else {
+        items.push(
+          slotButton(timeline.length, `Place After ${ev.formattedYear}`),
+        );
+      }
+    }
+
+    render(
+      promptBody,
+      el('div', { class: 'timeline-candidate-card' }, [
+        el('span', { class: 'badge', text: card.category }),
+        el('p', { class: 'prompt-prefix', text: 'Where on the timeline does this belong?' }),
+        el('h2', { class: 'timeline-candidate-title', text: card.title }),
+      ]),
+      el(
+        'div',
+        { class: 'timeline-rail', role: 'group', 'aria-label': 'Timeline placement slots' },
+        items,
+      ),
+    );
+  }
+
+  /**
+   * ConnectionGrid — select 4 words that share a hidden category.
+   */
+  function renderConnectionGrid(prompt) {
+    const solvedGroups = prompt.solvedGroups ?? [];
+    const remainingCells = prompt.remainingCells ?? [];
+    const selectedWords = new Set();
+
+    const submitBtn = el('button', {
+      type: 'button',
+      class: 'primary',
+      disabled: true,
+      text: 'Submit 4 Words',
+      onClick: () => {
+        if (selectedWords.size !== 4) return;
+        const pick = [...selectedWords];
+        lastValue = pick;
+        handleSubmit(pick);
+      },
+    });
+
+    const clearBtn = el('button', {
+      type: 'button',
+      class: 'ghost',
+      text: 'Deselect All',
+      onClick: () => {
+        selectedWords.clear();
+        syncTiles();
+      },
+    });
+
+    const tileButtons = remainingCells.map((cell) =>
+      el('button', {
+        type: 'button',
+        class: 'connection-tile',
+        text: cell.word,
+        onClick: () => {
+          if (selectedWords.has(cell.word)) {
+            selectedWords.delete(cell.word);
+          } else if (selectedWords.size < 4) {
+            selectedWords.add(cell.word);
+          }
+          syncTiles();
+        },
+      }),
+    );
+
+    function syncTiles() {
+      for (const btn of tileButtons) {
+        const active = selectedWords.has(btn.textContent);
+        btn.classList.toggle('is-selected', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      }
+      submitBtn.disabled = selectedWords.size !== 4;
+      submitBtn.textContent =
+        selectedWords.size === 4
+          ? 'Submit 4 Words'
+          : `Select ${4 - selectedWords.size} More`;
+    }
+
+    syncTiles();
+
+    render(
+      promptBody,
+      el('p', {
+        class: 'format-hint',
+        text: 'Select four words that share a common thread.',
+      }),
+      solvedGroups.length > 0
+        ? el(
+            'div',
+            { class: 'connection-solved-list' },
+            solvedGroups.map((group) =>
+              el('div', { class: 'connection-solved-banner' }, [
+                el('strong', { class: 'connection-solved-title', text: group.title }),
+                el('span', {
+                  class: 'connection-solved-words',
+                  text: group.words.join(' · '),
+                }),
+              ]),
+            ),
+          )
+        : null,
+      el(
+        'div',
+        {
+          class: 'connection-board',
+          role: 'group',
+          'aria-label': 'ConnectionGrid word tiles',
+        },
+        tileButtons,
+      ),
+      el('div', { class: 'row-actions connection-actions' }, [submitBtn, clearBtn]),
+    );
+  }
+
   const RENDERERS = {
     prompt: renderPrompt,
     portrait: renderPortrait,
@@ -918,6 +1205,10 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     grid: renderGrid,
     pairs: renderPairs,
     'word-rush': renderWordRush,
+    'word-chain': renderWordChain,
+    'border-hop': renderBorderHop,
+    'timeline-sort': renderTimelineSort,
+    'connection-grid': renderConnectionGrid,
   };
 
   function drawPrompt() {

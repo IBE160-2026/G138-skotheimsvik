@@ -203,15 +203,16 @@ function goHome() {
 
 function goCategory(categoryId) {
   requireAuth(() => {
-    if (categoryId === 'word-rush') {
-      goTrainer('word-rush');
+    const trainers = registry.trainersIn(categoryId);
+    if (trainers.length === 1 && trainers[0].id === categoryId) {
+      goTrainer(trainers[0].id);
       return;
     }
     show(
       categoryView({
         today: clock.today(),
         category: registry.getCategory(categoryId),
-        trainers: registry.trainersIn(categoryId),
+        trainers,
         progress,
         onTrainer: goTrainer,
         onBack: goHome,
@@ -223,6 +224,7 @@ function goCategory(categoryId) {
 function goTrainer(trainerId) {
   requireAuth(() => {
     const trainer = registry.getTrainer(trainerId);
+    const isDirectCategory = registry.trainersIn(trainer.categoryId).length === 1 && trainer.id === trainer.categoryId;
     show(
       trainerView({
         today: clock.today(),
@@ -230,7 +232,7 @@ function goTrainer(trainerId) {
         progress,
         onPlay: (variantKey) => goBriefing(trainerId, variantKey, clock.today()),
         onPractice: () => goPractice(trainerId),
-        onBack: () => (trainer.id === 'word-rush' ? goHome() : goCategory(trainer.categoryId)),
+        onBack: () => (isDirectCategory ? goHome() : goCategory(trainer.categoryId)),
       }),
     );
   }, `trainer:${trainerId}`);

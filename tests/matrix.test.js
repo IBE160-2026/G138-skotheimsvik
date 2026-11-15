@@ -70,6 +70,8 @@ function playRound(trainer, variantKey) {
       let first = 0;
       while (matched.has(first)) first += 1;
       answer = [first, prompt.faces.indexOf(prompt.faces[first], first + 1)];
+    } else if (prompt.kind === 'connection-grid') {
+      answer = beCorrect ? prompt.answer : ['wrong1', 'wrong2', 'wrong3', 'wrong4'];
     } else {
       answer = beCorrect ? prompt.answer : '\u0000definitely-not-the-answer';
     }

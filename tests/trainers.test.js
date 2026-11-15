@@ -71,13 +71,25 @@ function pull(trainer, variantKey, count, options = {}) {
 
 // --- catalogue --------------------------------------------------------------
 
-test('eight trainers register across five categories (FR-6, S21)', () => {
-  assert.equal(registry.size, 8);
+test('twelve trainers register across eight categories (FR-6, S21)', () => {
+  assert.equal(registry.size, 12);
   assert.deepEqual(
     registry.listCategories().map((c) => c.id),
-    ['word-rush', 'math', 'memory', 'geography', 'people'],
+    [
+      'word-rush',
+      'word-chain',
+      'timeline-sort',
+      'connection-grid',
+      'math',
+      'memory',
+      'geography',
+      'people',
+    ],
   );
   assert.deepEqual(registry.trainersIn('word-rush').map((t) => t.id), ['word-rush']);
+  assert.deepEqual(registry.trainersIn('word-chain').map((t) => t.id), ['word-chain']);
+  assert.deepEqual(registry.trainersIn('timeline-sort').map((t) => t.id), ['timeline-sort']);
+  assert.deepEqual(registry.trainersIn('connection-grid').map((t) => t.id), ['connection-grid']);
   assert.deepEqual(registry.trainersIn('memory').map((t) => t.id), [
     'pattern-memory',
     'figure-pairs',
@@ -86,6 +98,7 @@ test('eight trainers register across five categories (FR-6, S21)', () => {
     'flag-guesser',
     'outline-guesser',
     'capital-guesser',
+    'border-hop',
   ]);
 });
 
@@ -692,4 +705,58 @@ test('verifyWordRushCandidateOnline approves valid unseen foods and declines non
     fetchImpl: mockFetch,
   });
   assert.equal(declinedWrongLetter.approved, false);
+});
+
+test('Border Hop is registered under Geography and connects bordering countries along valid overland routes', () => {
+  const borderHop = registry.getTrainer('border-hop');
+  assert.ok(borderHop, 'Border Hop trainer should exist');
+  assert.equal(borderHop.categoryId, 'geography');
+
+  const gen = borderHop.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'intermediate' });
+  const p1 = gen.next({ index: 0 });
+  assert.equal(p1.kind, 'border-hop');
+  assert.ok(p1.startCountry && p1.targetCountry);
+  assert.notEqual(p1.startCountry, p1.targetCountry);
+  assert.ok(p1.validNextCountries.length > 0);
+  assert.equal(checkAnswer(p1, p1.answer), 'correct');
+});
+
+test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own categories and grade answers accurately', () => {
+  const timeline = registry.getTrainer('timeline-sort');
+  assert.ok(timeline);
+  assert.equal(timeline.categoryId, 'timeline-sort');
+  const tlGen = timeline.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'beginner' });
+  const tlPrompt = tlGen.next({ index: 0 });
+  assert.equal(tlPrompt.kind, 'timeline-sort');
+  assert.equal(tlPrompt.timeline.length, 1);
+  assert.equal(checkAnswer(tlPrompt, tlPrompt.answer), 'correct');
+  const tlNext = tlGen.next({ index: 1, lastCorrect: true, lastSubmission: tlPrompt.answer });
+  assert.equal(tlNext.timeline.length, 2, 'Timeline grows by 1 card each turn');
+
+  const wordChain = registry.getTrainer('word-chain');
+  assert.ok(wordChain);
+  assert.equal(wordChain.categoryId, 'word-chain');
+  const wcGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'food' });
+  const wcPrompt = wcGen.next({ index: 0 });
+  assert.equal(wcPrompt.isWordChain, true);
+  assert.equal(checkAnswer(wcPrompt, wcPrompt.answer), 'correct');
+  const wcNext = wcGen.next({ index: 1, lastCorrect: true, lastSubmission: wcPrompt.answer });
+  assert.equal(
+    wcNext.previousWord,
+    wcPrompt.answer,
+    'Word Chain advances to the submitted word and requires its last letter next',
+  );
+
+  const connGrid = registry.getTrainer('connection-grid');
+  assert.ok(connGrid);
+  assert.equal(connGrid.categoryId, 'connection-grid');
+  const cgGen = connGrid.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'beginner' });
+  const cgPrompt = cgGen.next({ index: 0 });
+  assert.equal(cgPrompt.kind, 'connection-grid');
+  assert.equal(cgPrompt.remainingCells.length, 16);
+  assert.equal(checkAnswer(cgPrompt, cgPrompt.answer), 'correct');
+  assert.equal(checkAnswer(cgPrompt, ['a', 'b', 'c', 'd']), 'incorrect');
+  const cgNext = cgGen.next({ index: 1, lastCorrect: true, lastSubmission: cgPrompt.answer });
+  assert.equal(cgNext.solvedGroups.length, 1);
+  assert.equal(cgNext.remainingCells.length, 12);
 });
