@@ -384,44 +384,101 @@ export function resultsView({
 }) {
   const weak = analyseWeakAreas(result.topicStats ?? []);
   const wr = result.wordRush ?? null;
+  const isWordChain = Boolean(wr?.isWordChain || result.trainerId === 'word-chain');
+  const chainWords = wr?.chainWords?.length
+    ? wr.chainWords
+    : wr?.starterWord
+      ? [wr.starterWord, ...(wr.foundWords ?? [])]
+      : wr?.foundWords ?? [];
+  const allUsedSet = new Set(chainWords.map((w) => w.toLocaleLowerCase()));
   const foundSet = new Set((wr?.foundWords ?? []).map((w) => w.toLocaleLowerCase()));
 
   const wordRushRevealSection = wr
-    ? el('div', { class: 'word-rush-reveal' }, [
-        el('div', { class: 'word-rush-reveal-header' }, [
-          el('h2', {
-            class: 'section-label',
-            text: `All Possible Answers — ${wr.categoryLabel} ("${wr.letter}")`,
-          }),
-          el('span', {
-            class: 'badge badge-accent',
-            text: `You found ${wr.foundWords.length} of ${wr.validWords.length} (${Math.round((wr.foundWords.length / Math.max(1, wr.validWords.length)) * 100)}%)`,
-          }),
-        ]),
-        el(
-          'ul',
-          { class: 'word-rush-chips word-rush-reveal-grid', 'aria-label': 'All possible answers' },
-          wr.validWords.map((word) => {
-            const isFound = foundSet.has(word.toLocaleLowerCase());
-            return el(
-              'li',
-              {
-                class: `word-rush-chip ${isFound ? 'is-found' : 'is-missed'}`,
-              },
-              [
-                el('span', { class: 'chip-mark', text: isFound ? '✓' : '·' }),
+    ? isWordChain
+      ? el('div', { class: 'word-rush-reveal' }, [
+          el('div', { class: 'word-rush-reveal-header' }, [
+            el('h2', {
+              class: 'section-label',
+              text: `Your Word Chain — ${wr.categoryLabel}`,
+            }),
+            el('span', {
+              class: 'badge badge-accent',
+              text: `${wr.foundWords.length} word${wr.foundWords.length === 1 ? '' : 's'} chained from "${wr.starterWord ?? chainWords[0] ?? ''}"`,
+            }),
+          ]),
+          el(
+            'ul',
+            { class: 'word-rush-chips word-rush-reveal-grid', 'aria-label': 'Completed word chain' },
+            chainWords.map((word, idx) =>
+              el('li', { class: 'word-rush-chip is-found' }, [
+                el('span', { class: 'chip-mark', text: idx === 0 ? '🏁' : `${idx}.` }),
                 el('span', { text: word }),
-              ],
-            );
-          }),
-        ),
-      ])
+              ]),
+            ),
+          ),
+          wr.validWords?.length > 0
+            ? el('div', { class: 'word-rush-reveal-header', style: 'margin-top: 1rem;' }, [
+                el('h3', {
+                  class: 'section-label',
+                  text: `Possible Next Words Starting With "${wr.letter}" (from ${chainWords[chainWords.length - 1] ?? ''})`,
+                }),
+              ])
+            : null,
+          wr.validWords?.length > 0
+            ? el(
+                'ul',
+                { class: 'word-rush-chips word-rush-reveal-grid', 'aria-label': 'Possible next words' },
+                wr.validWords.map((word) => {
+                  const alreadyUsed = allUsedSet.has(word.toLocaleLowerCase());
+                  return el(
+                    'li',
+                    {
+                      class: `word-rush-chip ${alreadyUsed ? 'is-found' : 'is-missed'}`,
+                    },
+                    [
+                      el('span', { class: 'chip-mark', text: alreadyUsed ? '✓' : '→' }),
+                      el('span', { text: word }),
+                    ],
+                  );
+                }),
+              )
+            : null,
+        ])
+      : el('div', { class: 'word-rush-reveal' }, [
+          el('div', { class: 'word-rush-reveal-header' }, [
+            el('h2', {
+              class: 'section-label',
+              text: `All Possible Answers — ${wr.categoryLabel} ("${wr.letter}")`,
+            }),
+            el('span', {
+              class: 'badge badge-accent',
+              text: `You found ${wr.foundWords.length} of ${wr.validWords.length} (${Math.round((wr.foundWords.length / Math.max(1, wr.validWords.length)) * 100)}%)`,
+            }),
+          ]),
+          el(
+            'ul',
+            { class: 'word-rush-chips word-rush-reveal-grid', 'aria-label': 'All possible answers' },
+            wr.validWords.map((word) => {
+              const isFound = foundSet.has(word.toLocaleLowerCase());
+              return el(
+                'li',
+                {
+                  class: `word-rush-chip ${isFound ? 'is-found' : 'is-missed'}`,
+                },
+                [
+                  el('span', { class: 'chip-mark', text: isFound ? '✓' : '·' }),
+                  el('span', { text: word }),
+                ],
+              );
+            }),
+          ),
+        ])
     : null;
 
   const dailyBoard =
-    wr && leaderboard
+    wr && !isWordChain && leaderboard
       ? leaderboard.dailyLeaderboard(result.puzzleDate, {
-          trainerId: 'word-rush',
+          trainerId: result.trainerId ?? 'word-rush',
           maxPossible: wr.validWords.length,
         })
       : null;
@@ -453,10 +510,12 @@ export function resultsView({
     el('div', { class: 'result-stats' }, [
       stat(trainer.scoreLabel ?? 'Score', String(result.score), 'stat-headline'),
       stat(
-        wr ? 'Pool Coverage' : 'Correct',
-        wr
-          ? `${wr.foundWords.length} of ${wr.validWords.length}`
-          : `${result.correctCount} of ${result.totalAnswered}`,
+        isWordChain ? 'Starter word' : wr ? 'Pool Coverage' : 'Correct',
+        isWordChain
+          ? String(wr?.starterWord ?? chainWords[0] ?? '—')
+          : wr
+            ? `${wr.foundWords.length} of ${wr.validWords.length}`
+            : `${result.correctCount} of ${result.totalAnswered}`,
       ),
       stat('Accuracy', `${result.accuracy}%`),
       stat('Average time', `${(result.avgAnswerTimeMs / 1000).toFixed(1)}s`),

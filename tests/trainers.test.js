@@ -33,6 +33,8 @@ import { BANDS, modeParamFor } from '../src/core/variants.js';
 import { buildGitHubAuthorizeUrl, createAuthStore } from '../src/core/auth.js';
 import { createLeaderboardStore } from '../src/core/leaderboard.js';
 import { createStorage, createMemoryBackend } from '../src/core/storage.js';
+import { createRound } from '../src/core/round.js';
+import { createFixedClock } from '../src/core/clock.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -740,12 +742,36 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   const wcPrompt = wcGen.next({ index: 0 });
   assert.equal(wcPrompt.isWordChain, true);
   assert.equal(checkAnswer(wcPrompt, wcPrompt.answer), 'correct');
+  // Starter word is in foundWords so repeating the starter word is rejected as a duplicate
+  assert.equal(matchWordRushEntry(wcPrompt, wcPrompt.starterWord).status, 'duplicate');
   const wcNext = wcGen.next({ index: 1, lastCorrect: true, lastSubmission: wcPrompt.answer });
   assert.equal(
     wcNext.previousWord,
     wcPrompt.answer,
     'Word Chain advances to the submitted word and requires its last letter next',
   );
+
+  // Verify round.result() records isWordChain, starterWord, and chainWords accurately
+  const clock = createFixedClock({ today: '2026-11-15', startMs: 1000 });
+  const wcRoundGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'countries' });
+  const wcRound = createRound({
+    trainer: wordChain,
+    variantKey: 'countries',
+    puzzleDate: '2026-11-15',
+    generator: wcRoundGen,
+    clock,
+  });
+  const firstPrompt = wcRound.start();
+  const firstWord = firstPrompt.answer;
+  wcRound.submit(firstWord);
+  const secondWord = wcRound.prompt.answer;
+  wcRound.submit(secondWord);
+  wcRound.abandon();
+  const wcResult = wcRound.result();
+  assert.equal(wcResult.wordRush.isWordChain, true);
+  assert.equal(wcResult.wordRush.starterWord, firstPrompt.starterWord);
+  assert.deepEqual(wcResult.wordRush.foundWords, [firstWord, secondWord]);
+  assert.deepEqual(wcResult.wordRush.chainWords, [firstPrompt.starterWord, firstWord, secondWord]);
 
   const connGrid = registry.getTrainer('connection-grid');
   assert.ok(connGrid);

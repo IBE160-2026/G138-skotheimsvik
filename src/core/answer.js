@@ -70,8 +70,18 @@ export function matchWordRushEntry(prompt, submitted) {
   if (!valCompact) return { status: 'ignored', matchedEntry: null };
 
   const validPool = prompt?.validWords ?? [];
-  const foundCompactSet = new Set((prompt?.foundWords ?? []).map(compactKey));
-  const foundSingularSet = new Set((prompt?.foundWords ?? []).map(singularKey));
+  const foundList = prompt?.foundWords ?? [];
+  const foundCompactSet = new Set(foundList.map(compactKey));
+  const foundSingularSet = new Set(foundList.map(singularKey));
+
+  // Check if the user repeated a word already in foundWords (including previous Word Chain steps)
+  if (foundCompactSet.has(valCompact) || (valSingular.length >= 3 && foundSingularSet.has(valSingular))) {
+    const matchedExisting =
+      foundList.find(
+        (w) => compactKey(w) === valCompact || (valSingular.length >= 3 && singularKey(w) === valSingular),
+      ) ?? String(submitted).trim();
+    return { status: 'duplicate', matchedEntry: { label: matchedExisting } };
+  }
 
   // Pass 1: Exact, compact (space/hyphen-insensitive), or singular/plural match
   for (const entry of validPool) {

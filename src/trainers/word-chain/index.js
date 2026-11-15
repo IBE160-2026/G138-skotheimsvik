@@ -238,11 +238,12 @@ export function createWordChainTrainer({ countries = [], people = [] } = {}) {
             topicLabel: setup.categoryLabel,
             categoryGroup: setup.categoryGroup,
             question: `Next word must start with "${requiredLetter}" (from ${lastWord})`,
+            starterWord: setup.starterWord,
             previousWord: lastWord,
             letter: requiredLetter,
             answer: firstUnused.label,
             validWords: activeValidWords,
-            foundWords: chain.slice(1),
+            foundWords: [...chain],
             chainWords: [...chain],
             totalPossible: activeValidWords.length,
           };

@@ -122,13 +122,18 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
     promptIndex += 1;
     currentPrompt = next;
     if (next.kind === 'word-rush') {
+      const isChain = Boolean(next.isWordChain);
+      const chainList = Array.isArray(next.chainWords) ? [...next.chainWords] : [];
       roundMeta = {
+        isWordChain: isChain,
+        starterWord: next.starterWord ?? chainList[0] ?? null,
+        chainWords: chainList,
         letter: next.letter,
         categoryId: next.topicId,
         categoryLabel: next.topicLabel,
         categoryGroup: next.categoryGroup,
         validWords: next.validWords?.map((w) => (typeof w === 'string' ? w : w.label)) ?? [],
-        foundWords: [...(next.foundWords ?? [])],
+        foundWords: isChain ? chainList.slice(1) : [...(next.foundWords ?? [])],
         totalPossible: next.totalPossible ?? 0,
       };
     }
@@ -233,6 +238,9 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
         const canonical = matched.matchedEntry?.label ?? String(value).trim();
         if (!roundMeta.foundWords.includes(canonical)) {
           roundMeta.foundWords.push(canonical);
+        }
+        if (roundMeta.isWordChain && !roundMeta.chainWords.includes(canonical)) {
+          roundMeta.chainWords.push(canonical);
         }
       }
 

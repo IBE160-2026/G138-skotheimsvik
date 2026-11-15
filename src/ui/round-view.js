@@ -307,15 +307,42 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       if (hint) hints.push(hint);
     }
 
+    let feedbackText = correct ? '✓ Correct' : `✗ Wrong — ${feedback.expected}`;
+
+    if (prompt?.kind === 'connection-grid' && Array.isArray(lastValue)) {
+      const pickNorm = new Set(lastValue.map((w) => normaliseText(w)));
+      const unsolved = prompt.unsolvedGroups ?? prompt.groups ?? [];
+      if (correct) {
+        const matchedGroup = unsolved.find((g) => {
+          const gWords = (g.words ?? []).map((w) => normaliseText(w));
+          return gWords.length === 4 && gWords.every((w) => pickNorm.has(w));
+        });
+        feedbackText = matchedGroup
+          ? `✓ Solved "${matchedGroup.title}" (${matchedGroup.words.join(' · ')})`
+          : '✓ Correct group!';
+      } else {
+        // Check if 3 of the 4 selected words belong to the same unsolved category ("One away!")
+        const isOneAway = unsolved.some((g) => {
+          const gWords = (g.words ?? []).map((w) => normaliseText(w));
+          const overlap = gWords.filter((w) => pickNorm.has(w)).length;
+          return overlap === 3;
+        });
+        const pickedLabel = lastValue.join(', ');
+        feedbackText = isOneAway
+          ? `✗ One away! 3 of your 4 words (${pickedLabel}) belong to the same category.`
+          : `✗ Not a matching group (${pickedLabel}) — try another combination.`;
+      }
+    }
+
     render(
       feedbackBar,
       el('p', {
         class: `feedback ${correct ? 'feedback-correct' : 'feedback-wrong'}`,
-        text: correct ? '✓ Correct' : `✗ Wrong — ${feedback.expected}`,
+        text: feedbackText,
       }),
       feedback.lifeLost ? el('p', { class: 'feedback-life', text: '♥ You lost a life' }) : null,
     );
-    announce(correct ? 'Correct' : `Wrong. ${feedback.expected}`);
+    announce(feedbackText);
   }
 
   // --- renderers ------------------------------------------------------------
@@ -482,7 +509,12 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       autocapitalize: 'off',
       spellcheck: 'false',
       'aria-label': 'Your answer',
-      onInput: () => updateSuggestions(),
+      onInput: () => {
+        if (feedbackBar?.childNodes.length) {
+          render(feedbackBar);
+        }
+        updateSuggestions();
+      },
       onKeydown: (event) => {
         if (hasSuggestions && currentMatches.length > 0) {
           if (event.key === 'ArrowDown') {
@@ -1138,6 +1170,9 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         class: 'connection-tile',
         text: cell.word,
         onClick: () => {
+          if (feedbackBar?.childNodes.length) {
+            render(feedbackBar);
+          }
           if (selectedWords.has(cell.word)) {
             selectedWords.delete(cell.word);
           } else if (selectedWords.size < 4) {
@@ -1217,7 +1252,6 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       finish();
       return;
     }
-    render(feedbackBar);
     (RENDERERS[trainer.renderer] ?? renderPrompt)(prompt);
     renderStatus();
   }
