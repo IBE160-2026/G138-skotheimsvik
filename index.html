@@ -24,15 +24,35 @@
         </span>
         <span class="brand-text">LearningHub</span>
       </button>
-      <div class="nav-actions">
-        <button type="button" class="nav-btn" data-route="home">Today</button>
-        <button type="button" class="nav-btn" data-route="leaderboard">Leaderboards</button>
-        <button type="button" class="nav-btn" data-route="archive">Archive</button>
-        <button type="button" class="nav-btn" data-route="progress">Progress</button>
-        <div id="user-badge-slot" class="user-badge-slot"></div>
-        <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch colour theme">
-          <span id="theme-icon" aria-hidden="true">Dark</span>
-        </button>
+
+      <div class="nav-right">
+        <div id="nav-links" class="nav-links">
+          <button type="button" class="nav-btn" data-route="home">Today</button>
+          <button type="button" class="nav-btn" data-route="leaderboard">Leaderboards</button>
+          <button type="button" class="nav-btn" data-route="archive">Archive</button>
+          <button type="button" class="nav-btn" data-route="progress">Progress</button>
+        </div>
+
+        <div class="nav-controls">
+          <div id="user-badge-slot" class="user-badge-slot"></div>
+          <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch colour theme">
+            <span id="theme-icon" aria-hidden="true">Dark</span>
+          </button>
+          <button
+            type="button"
+            id="mobile-menu-toggle"
+            class="hamburger-btn"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="nav-links"
+          >
+            <svg class="hamburger-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path class="bar-top" d="M4 7h16"/>
+              <path class="bar-mid" d="M4 12h16"/>
+              <path class="bar-bot" d="M4 17h16"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </nav>
   </header>

@@ -466,8 +466,31 @@ function setupChrome() {
     storage.write(STORAGE_KEYS.settings, { theme: next });
   });
 
+  const navEl = document.querySelector('.app-nav');
+  const mobileMenuToggle = document.querySelector('#mobile-menu-toggle');
+  const closeMobileMenu = () => {
+    if (!navEl || !mobileMenuToggle) return;
+    navEl.classList.remove('is-menu-open');
+    mobileMenuToggle.setAttribute('aria-expanded', 'false');
+    mobileMenuToggle.setAttribute('aria-label', 'Open navigation menu');
+  };
+
+  mobileMenuToggle?.addEventListener('click', () => {
+    const isOpen = navEl?.classList.toggle('is-menu-open');
+    mobileMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    mobileMenuToggle.setAttribute(
+      'aria-label',
+      isOpen ? 'Close navigation menu' : 'Open navigation menu',
+    );
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeMobileMenu();
+  });
+
   for (const button of document.querySelectorAll('[data-route]')) {
     button.addEventListener('click', () => {
+      closeMobileMenu();
       const route = button.dataset.route;
       guardNavigation(() => {
         if (route === 'home') goHome();
