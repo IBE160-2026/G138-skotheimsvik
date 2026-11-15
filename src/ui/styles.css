@@ -966,50 +966,66 @@ select:hover { border-color: var(--border-strong); }
 
 .topic-chip { margin: 0 0 var(--sp-2); }
 
-/* ============================================================== 14. GitHub Login Gate */
+/* ============================================================== 14. Top-Right GitHub Sign-In Popover */
 
-.auth-gate {
-  display: flex;
-  justify-content: center;
+.user-badge-slot {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  padding: var(--sp-5) 0 var(--sp-6);
+  margin-left: 0.25rem;
 }
-.auth-card {
-  width: 100%;
-  max-width: 34rem;
+.auth-menu-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.sign-in-top-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.85rem;
+  font-size: 0.85rem;
+}
+.auth-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 19.5rem;
   background: var(--surface);
   border: 1px solid var(--border-strong);
-  border-radius: var(--r-lg);
-  padding: var(--sp-6) var(--sp-5);
+  border-radius: var(--r);
+  padding: 1rem;
   box-shadow: var(--shadow-3);
-  text-align: center;
+  z-index: 80;
+  text-align: left;
 }
-.auth-badge {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--r-pill);
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  color: var(--accent);
-  margin-bottom: var(--sp-3);
+.auth-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  font-size: 0.92rem;
 }
-.auth-title {
-  margin-bottom: var(--sp-2);
-}
-.auth-subtitle {
+.auth-popover-close {
+  background: none;
+  border: none;
   color: var(--text-muted);
-  font-size: 0.96rem;
-  margin-bottom: var(--sp-5);
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+}
+.auth-popover-close:hover {
+  color: var(--text);
+}
+.auth-popover-desc {
+  margin-bottom: 0.75rem;
 }
 .github-login-form {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+  gap: 0.55rem;
+  margin: 0;
 }
 .github-input-group {
   display: flex;
@@ -1026,49 +1042,32 @@ select:hover { border-color: var(--border-strong); }
 }
 .github-prefix {
   font-family: var(--font-mono);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   color: var(--text-faint);
-  padding: 0.75rem 0 0.75rem 0.95rem;
+  padding: 0.55rem 0 0.55rem 0.7rem;
   user-select: none;
 }
 .github-login-input {
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
-  padding-left: 0.3rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.2rem;
+  font-size: 0.9rem;
 }
 .github-submit-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
+  gap: 0.45rem;
   width: 100%;
-  font-size: 1rem;
-  padding: 0.8rem 1.25rem;
+  font-size: 0.88rem;
+  padding: 0.58rem 0.9rem;
 }
 .auth-error {
   text-align: left;
-  margin-top: var(--sp-2);
-}
-.auth-features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: var(--sp-3);
-  margin-top: var(--sp-5);
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--border);
-  text-align: left;
-}
-.auth-feature {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  margin: 0.5rem 0 0;
+  padding: 0.45rem 0.65rem;
   font-size: 0.8rem;
-  color: var(--text-muted);
-}
-.auth-feature strong {
-  color: var(--text);
-  font-size: 0.84rem;
 }
 
 /* ============================================================== 15. Word Rush Mode */

@@ -23,7 +23,7 @@ import {
   categoriesView,
   categoryView,
   leaderboardView,
-  loginGateView,
+  loginPopoverView,
   practiceView,
   progressView,
   resultsView,
@@ -48,6 +48,7 @@ let activeTrainer = null;
 let progressSelection = { trainerId: null, variantKey: null };
 let leaderboardState = { tab: 'daily', selectedDate: null };
 let practiceFilters = {};
+let authPopoverState = { open: false, error: null, loading: false, pendingAction: null };
 
 function announce(message) {
   if (liveRegion) liveRegion.textContent = message;
@@ -121,12 +122,59 @@ function renderUserBadge() {
   if (!user) {
     render(
       userBadgeSlot,
-      el('button', {
-        type: 'button',
-        class: 'user-pill user-pill-guest',
-        text: 'Sign in with GitHub',
-        onClick: () => guardNavigation(() => goLogin()),
-      }),
+      el('div', { class: 'auth-menu-wrap' }, [
+        el(
+          'button',
+          {
+            type: 'button',
+            class: 'primary sign-in-top-btn',
+            'aria-expanded': String(authPopoverState.open),
+            onClick: () => {
+              authPopoverState = {
+                ...authPopoverState,
+                open: !authPopoverState.open,
+                error: null,
+              };
+              renderUserBadge();
+            },
+          },
+          [
+            el('span', {
+              html: `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.92.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11.05 11.05 0 0 1 5.78 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.24 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>`,
+            }),
+            el('span', { text: 'Sign in with GitHub' }),
+          ],
+        ),
+        authPopoverState.open
+          ? loginPopoverView({
+              error: authPopoverState.error,
+              loading: authPopoverState.loading,
+              onClose: () => {
+                authPopoverState = { ...authPopoverState, open: false, error: null };
+                renderUserBadge();
+              },
+              onLogin: async (username) => {
+                authPopoverState = { ...authPopoverState, loading: true, error: null };
+                renderUserBadge();
+                try {
+                  await auth.loginWithGitHub(username);
+                  const pending = authPopoverState.pendingAction;
+                  authPopoverState = { open: false, error: null, loading: false, pendingAction: null };
+                  renderUserBadge();
+                  if (pending) pending();
+                  else goHome();
+                } catch (err) {
+                  authPopoverState = {
+                    ...authPopoverState,
+                    loading: false,
+                    error: err.message || 'Could not sign in with GitHub.',
+                  };
+                  renderUserBadge();
+                }
+              },
+            })
+          : null,
+      ]),
     );
     return;
   }
@@ -149,8 +197,9 @@ function renderUserBadge() {
         onClick: () => {
           guardNavigation(() => {
             auth.logout();
+            authPopoverState = { open: false, error: null, loading: false, pendingAction: null };
             renderUserBadge();
-            goLogin();
+            goHome();
           });
         },
       }),
@@ -158,38 +207,25 @@ function renderUserBadge() {
   );
 }
 
-function goLogin(error = null, loading = false) {
-  show(
-    loginGateView({
-      error,
-      loading,
-      onLogin: async (username) => {
-        goLogin(null, true);
-        try {
-          await auth.loginWithGitHub(username);
-          renderUserBadge();
-          goHome();
-        } catch (err) {
-          goLogin(err.message || 'Could not sign in with GitHub.', false);
-        }
-      },
-    }),
-  );
+function goLogin(error = null, pendingAction = null) {
+  authPopoverState = {
+    open: true,
+    error,
+    loading: false,
+    pendingAction: pendingAction ?? authPopoverState.pendingAction,
+  };
+  renderUserBadge();
 }
 
 function requireAuth(action) {
   if (!auth.isAuthenticated()) {
-    goLogin();
+    goLogin(null, action);
     return;
   }
   action();
 }
 
 function goHome() {
-  if (!auth.isAuthenticated()) {
-    goLogin();
-    return;
-  }
   show(
     categoriesView({
       today: clock.today(),
@@ -198,8 +234,6 @@ function goHome() {
       progress,
       user: auth.getUser(),
       onCategory: goCategory,
-      onQuickWordRush: () => goBriefing('word-rush', 'daily', clock.today()),
-      onLeaderboard: () => goLeaderboard(),
     }),
   );
 }

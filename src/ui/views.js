@@ -76,12 +76,12 @@ function meter(done, total) {
   ]);
 }
 
-/** Home: GitHub Login gate when unauthenticated, or the Daily Edition dashboard with Word Rush spotlight + categories. */
-export function loginGateView({ onLogin, error, loading }) {
+/** Top-right GitHub sign-in popover anchored in the header. */
+export function loginPopoverView({ onLogin, onClose, error, loading }) {
   const input = el('input', {
     class: 'answer-input github-login-input',
     type: 'text',
-    placeholder: 'Enter your GitHub username (e.g. octocat)...',
+    placeholder: 'username',
     autocomplete: 'username',
     autocapitalize: 'off',
     spellcheck: 'false',
@@ -112,9 +112,9 @@ export function loginGateView({ onLogin, error, loading }) {
         },
         [
           el('span', {
-            html: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.92.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11.05 11.05 0 0 1 5.78 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.24 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>`,
+            html: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.92.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11.05 11.05 0 0 1 5.78 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.24 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>`,
           }),
-          el('span', { text: loading ? 'Connecting to GitHub...' : 'Continue with GitHub' }),
+          el('span', { text: loading ? 'Signing in...' : 'Sign in with GitHub' }),
         ],
       ),
     ],
@@ -122,30 +122,25 @@ export function loginGateView({ onLogin, error, loading }) {
 
   queueMicrotask(() => input.focus());
 
-  return el('section', { class: 'auth-gate' }, [
-    el('div', { class: 'auth-card' }, [
-      el('div', { class: 'auth-badge', text: 'GITHUB PLAYER ID REQUIRED' }),
-      el('h1', { class: 'auth-title', text: 'Sign in with GitHub to Play' }),
-      el('p', { class: 'auth-subtitle' }, [
-        'Connect your GitHub profile to unlock daily drills, the 2-Minute Word Rush challenge, and live standing on the Daily & All-Time Leaderboards.',
-      ]),
-      form,
-      error ? el('p', { class: 'warning auth-error', text: error }) : null,
-      el('div', { class: 'auth-features' }, [
-        el('div', { class: 'auth-feature' }, [
-          el('strong', { text: '2-Min Daily Word Rush' }),
-          el('span', { text: 'Same category & starting letter for everyone each day.' }),
-        ]),
-        el('div', { class: 'auth-feature' }, [
-          el('strong', { text: 'Live Leaderboards' }),
-          el('span', { text: 'Daily & All-Time rankings attached to your GitHub avatar.' }),
-        ]),
-        el('div', { class: 'auth-feature' }, [
-          el('strong', { text: '195 Countries & 1,134 People' }),
-          el('span', { text: 'High-res authentic maps, flags, portraits & smart autocomplete.' }),
-        ]),
-      ]),
+  return el('div', { class: 'auth-popover', role: 'dialog', 'aria-label': 'Sign in with GitHub' }, [
+    el('div', { class: 'auth-popover-header' }, [
+      el('strong', { text: 'Sign in with GitHub' }),
+      onClose
+        ? el('button', {
+            type: 'button',
+            class: 'auth-popover-close',
+            'aria-label': 'Close sign in',
+            text: '×',
+            onClick: onClose,
+          })
+        : null,
     ]),
+    el('p', {
+      class: 'muted small auth-popover-desc',
+      text: 'Sign in with your GitHub account to play.',
+    }),
+    form,
+    error ? el('p', { class: 'warning auth-error', text: error }) : null,
   ]);
 }
 
