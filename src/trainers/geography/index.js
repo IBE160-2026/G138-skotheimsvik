@@ -505,6 +505,7 @@ export function createBorderHopTrainer(countries, outlines) {
             mapCountries,
             wrongGuesses: [...wrongGuesses],
             pathTaken: [...pathTaken],
+            shortestPath: [...(activeRoute.shortestPath ?? [activeRoute.start, activeRoute.target])],
             optimalSteps: activeRoute.optimalSteps,
             optimalNext,
             validNextCountries,

@@ -257,11 +257,25 @@ test('a bigger board has higher single-grid capacity', () => {
   assert.ok(tilesForLevel(maxLevelFor('3x3')) >= 5, 'a 3x3 board must reach the average human span');
 });
 
-test('a pattern is checked as a set, not a sequence (FR-116, S4)', () => {
-  const prompt = { kind: 'grid', answer: [1, 4, 7] };
-  assert.equal(checkAnswer(prompt, [7, 1, 4]), 'correct');
-  assert.equal(checkAnswer(prompt, [1, 4]), 'incorrect');
-  assert.equal(checkAnswer(prompt, [1, 4, 7, 9]), 'incorrect');
+test('a pattern with a sequence checks exact blink order, while legacy grid prompts check sets', () => {
+  const legacyPrompt = { kind: 'grid', answer: [1, 4, 7] };
+  assert.equal(checkAnswer(legacyPrompt, [7, 1, 4]), 'correct');
+  assert.equal(checkAnswer(legacyPrompt, [1, 4]), 'incorrect');
+  assert.equal(checkAnswer(legacyPrompt, [1, 4, 7, 9]), 'incorrect');
+
+  const seqPrompt = { kind: 'grid', answer: [7, 1, 4], sequence: [7, 1, 4] };
+  assert.equal(checkAnswer(seqPrompt, [7, 1, 4]), 'correct');
+  assert.equal(checkAnswer(seqPrompt, [1, 4, 7]), 'incorrect');
+  assert.equal(checkAnswer(seqPrompt, [7, 1]), 'incorrect');
+
+  // Also verify daily Pattern Memory extends the sequence by 1 square each round on the same board
+  const gen = patternMemoryTrainer.createGenerator({ puzzleDate: '2026-11-05', variantKey: 'daily' });
+  const lvl1 = gen.next();
+  const lvl2 = gen.next();
+  assert.equal(lvl2.sequence.length, lvl1.sequence.length + 1);
+  if (lvl1.boardSize === lvl2.boardSize) {
+    assert.deepEqual(lvl2.sequence.slice(0, lvl1.sequence.length), lvl1.sequence);
+  }
 });
 
 // --- Figure Pairs -----------------------------------------------------------
@@ -425,6 +439,28 @@ test('Capital Guesser only asks for the capital city and provides 3 progressive 
   assert.match(prompt.capitalHints[1].label, /Hint 2.*Fact/i);
   assert.match(prompt.capitalHints[2].label, /Hint 3.*Country/i);
   assert.ok(prompt.capitalHints[2].text.includes(prompt.countryName));
+
+  // Losing all 4 lives in Capital Guesser records the answerReveal on the result
+  const clock = createFixedClock({ today: '2026-11-15', startMs: 1000 });
+  const round = createRound({
+    trainer: capitals,
+    variantKey: 'daily',
+    puzzleDate: '2026-11-15',
+    generator: capitals.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' }),
+    clock,
+  });
+  round.start();
+  round.submit('Wrong 1');
+  round.submit('Wrong 2');
+  round.submit('Wrong 3');
+  round.submit('Wrong 4');
+  assert.equal(round.state, 'ended');
+  const res = round.result();
+  assert.ok(res.answerReveal);
+  assert.equal(res.answerReveal.kind, 'capital');
+  assert.equal(res.answerReveal.solved, false);
+  assert.equal(res.answerReveal.capitalName, prompt.capitalName);
+  assert.equal(res.answerReveal.countryName, prompt.countryName);
 });
 
 test('documented alternative names are accepted (FR-65, FR-155, S4)', () => {

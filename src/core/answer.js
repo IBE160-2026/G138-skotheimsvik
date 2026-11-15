@@ -194,6 +194,16 @@ export function setEquals(submitted, expected) {
   return true;
 }
 
+/** Exact ordered sequence equality for sequential Pattern Memory. */
+export function sequenceEquals(submitted, expected) {
+  if (!Array.isArray(submitted) || !Array.isArray(expected)) return false;
+  if (submitted.length !== expected.length) return false;
+  for (let i = 0; i < expected.length; i += 1) {
+    if (submitted[i] !== expected[i]) return false;
+  }
+  return true;
+}
+
 /**
  * Check a submission against a prompt.
  *
@@ -214,6 +224,9 @@ export function checkAnswer(prompt, submitted) {
     }
 
     case 'grid': {
+      if (Array.isArray(prompt.sequence)) {
+        return sequenceEquals(submitted, prompt.sequence) ? 'correct' : 'incorrect';
+      }
       return setEquals(submitted, prompt.answer) ? 'correct' : 'incorrect';
     }
 

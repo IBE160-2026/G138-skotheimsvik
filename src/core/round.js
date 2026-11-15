@@ -58,6 +58,8 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
   let lastCorrect = null;
   /** Optional metadata carried from multi-answer prompts (e.g. Word Rush). */
   let roundMeta = null;
+  /** Answer reveal details captured when the round ends so the player sees what the answer was. */
+  let answerReveal = null;
 
   const durationMs = roundMode === 'timed' ? modeParam * 1000 : null;
   const promptLimitMs =
@@ -85,8 +87,63 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
     return roundMode === 'timed' && elapsedMs() >= durationMs;
   }
 
+  function captureReveal(prompt, wasCorrect) {
+    if (!prompt || prompt.kind === 'word-rush' || prompt.kind === 'pairs') return;
+    const reveal = {
+      solved: Boolean(wasCorrect),
+      question: prompt.question ?? null,
+      expected: formatExpected(prompt),
+    };
+    if (prompt.capitalName) {
+      reveal.kind = 'capital';
+      reveal.capitalName = prompt.capitalName;
+      reveal.countryName = prompt.countryName;
+      reveal.countryCode = prompt.countryCode;
+      reveal.hints = prompt.capitalHints ?? [];
+    } else if (prompt.flag || prompt.code) {
+      reveal.kind = 'flag';
+      reveal.countryName = prompt.answer;
+      reveal.countryCode = prompt.code;
+      reveal.continent = prompt.topicLabel;
+    } else if (prompt.outline) {
+      reveal.kind = 'outline';
+      reveal.countryName = prompt.answer;
+      reveal.continent = prompt.topicLabel;
+    } else if (prompt.kind === 'border-hop') {
+      reveal.kind = 'border-hop';
+      reveal.startCountry = prompt.startCountry;
+      reveal.targetCountry = prompt.targetCountry;
+      reveal.shortestPath = prompt.shortestPath ?? [];
+      reveal.pathTaken = prompt.pathTaken ?? [];
+    } else if (prompt.personName) {
+      reveal.kind = 'person';
+      reveal.personName = prompt.personName;
+      reveal.category = prompt.topicLabel;
+      reveal.clue = prompt.question;
+      reveal.image = prompt.image;
+    } else if (prompt.kind === 'connection-grid') {
+      reveal.kind = 'connection-grid';
+      reveal.groups = prompt.groups ?? [];
+    } else if (prompt.kind === 'timeline-sort') {
+      reveal.kind = 'timeline-sort';
+      reveal.card = prompt.card;
+      reveal.expected = prompt.displayAnswer ?? formatExpected(prompt);
+      reveal.timeline = prompt.timeline ?? [];
+    } else if (prompt.kind === 'grid') {
+      reveal.kind = 'pattern-memory';
+      reveal.level = prompt.level;
+      reveal.tileCount = prompt.tileCount;
+    } else {
+      reveal.kind = 'prompt';
+    }
+    answerReveal = reveal;
+  }
+
   function finish(reason) {
     if (state !== 'running') return;
+    if (currentPrompt && !answerReveal) {
+      captureReveal(currentPrompt, lastCorrect);
+    }
     state = 'ended';
     endedBy = reason;
     endedAtMs = clock.now();
@@ -247,6 +304,7 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
       scoreboard.record(prompt, isCorrect, clock.now() - promptShownAtMs);
       lastSubmission = value;
       lastCorrect = isCorrect;
+      captureReveal(prompt, isCorrect);
       if (prompt?.kind === 'word-rush' && isCorrect && roundMeta) {
         const matched = matchWordRushEntry(prompt, value);
         const canonical = matched.matchedEntry?.label ?? String(value).trim();
@@ -359,6 +417,7 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
         maxLevel: trainer.headlineScore === 'maxLevel' ? summary.correctCount : null,
         mistakes: roundMode === 'completion' ? summary.mistakes : null,
         wordRush: roundMeta,
+        answerReveal,
         ...summary,
       };
     },

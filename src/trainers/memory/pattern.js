@@ -82,7 +82,8 @@ export function buildLevel(rng, boardSize, level) {
     kind: 'grid',
     key: `level-${level}`,
     question: `Level ${level} (${board.columns}×${board.rows})`,
-    answer: indices.slice().sort((a, b) => a - b),
+    answer: [...indices],
+    sequence: [...indices],
     level,
     tileCount,
     boardSize,
@@ -98,7 +99,7 @@ export const patternMemoryTrainer = {
   categoryId: 'pattern-memory',
   name: 'Pattern Memory',
   description:
-    'One daily run with zero mistakes allowed. The grid size varies each day (3×3 to 6×6) — memorize the lit pattern and reproduce as many levels as possible!',
+    'One daily run with zero mistakes allowed. Squares blink one by one in sequence and each level adds 1 more square — tap the squares in the exact order they blinked!',
   roundMode: 'lives',
   variantKind: 'pool',
   variants: ['daily'],
@@ -121,6 +122,8 @@ export const patternMemoryTrainer = {
       practice ? practiceSeed() : seedFor(this.id, variantKey, puzzleDate),
     );
     let level = 0;
+    let activeIdx = boardStartIndex;
+    let currentSequence = [];
 
     return {
       next() {
@@ -134,31 +137,48 @@ export const patternMemoryTrainer = {
         }
 
         // In the daily endless run, start at today's daily board size and step up if the player exceeds its capacity.
-        let activeIdx = boardStartIndex;
+        let steppedUpBoard = false;
         while (
           activeIdx < BOARD_SIZES.length - 1 &&
           level > maxLevelFor(BOARD_SIZES[activeIdx])
         ) {
           activeIdx += 1;
+          steppedUpBoard = true;
         }
         const activeBoard = BOARD_SIZES[activeIdx];
+        const board = parseBoardSize(activeBoard);
         const effectiveTileCount = Math.min(
           tilesForLevel(level),
-          Math.floor((parseBoardSize(activeBoard)?.cells ?? 36) * MAX_FILL_RATIO),
+          Math.floor((board?.cells ?? 36) * MAX_FILL_RATIO),
         );
-        const board = parseBoardSize(activeBoard);
-        const indices = rng.sample(
-          Array.from({ length: board.cells }, (_, index) => index),
-          effectiveTileCount,
-        );
+
+        if (level === 1 || steppedUpBoard || currentSequence.length === 0) {
+          currentSequence = rng.sample(
+            Array.from({ length: board.cells }, (_, index) => index),
+            effectiveTileCount,
+          );
+        } else {
+          while (currentSequence.length < effectiveTileCount) {
+            const used = new Set(currentSequence);
+            const available = Array.from({ length: board.cells }, (_, index) => index).filter(
+              (index) => !used.has(index),
+            );
+            if (available.length === 0) break;
+            currentSequence.push(rng.pick(available));
+          }
+        }
+
+        const seqCopy = [...currentSequence];
         return {
           kind: 'grid',
           key: `level-${level}`,
           question: `Level ${level} (${board.columns}×${board.rows} Grid)`,
-          answer: indices.slice().sort((a, b) => a - b),
+          answer: seqCopy,
+          sequence: seqCopy,
           level,
-          tileCount: effectiveTileCount,
+          tileCount: seqCopy.length,
           boardSize: activeBoard,
+          boardSizeLabel: `${board.columns}×${board.rows}`,
           columns: board.columns,
           rows: board.rows,
           cellCount: board.cells,

@@ -873,12 +873,23 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   /**
    * Pattern Memory.
    *
-   * The pattern is shown, then hidden, and only then does the grid accept
-   * input. Hidden tiles carry no marker in the DOM (FR-122).
+   * Each level blinks its squares one by one in sequence (adding 1 square per
+   * round). The player then taps the squares in that exact order.
    */
   function renderGrid(prompt) {
-    const selected = new Set();
+    const sequence = Array.isArray(prompt.sequence) ? prompt.sequence : prompt.answer;
+    const pressedOrder = [];
     let locked = true;
+
+    const statusHint = el('p', {
+      class: 'format-hint pattern-status-hint',
+      text: `Watch the ${sequence.length} squares blink in order (1 → ${sequence.length})…`,
+    });
+
+    const progressBadge = el('span', {
+      class: 'badge badge-accent',
+      text: `0 / ${sequence.length} pressed`,
+    });
 
     const tiles = Array.from({ length: prompt.cellCount }, (_, index) =>
       el('button', {
@@ -887,72 +898,111 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         disabled: true,
         'aria-label': `Tile ${index + 1}`,
         'aria-pressed': 'false',
-        onClick: () => toggle(index),
+        onClick: () => pressTile(index),
       }),
     );
 
-    function toggle(index) {
+    function pressTile(index) {
       if (locked) return;
-      if (selected.has(index)) selected.delete(index);
-      else selected.add(index);
-      const tile = tiles[index];
-      tile.classList.toggle('tile-selected', selected.has(index));
-      tile.setAttribute('aria-pressed', String(selected.has(index)));
-      submitButton.disabled = selected.size === 0;
-    }
+      const stepIdx = pressedOrder.length;
+      const expectedTile = sequence[stepIdx];
+      pressedOrder.push(index);
 
-    const submitButton = el('button', {
-      type: 'button',
-      class: 'primary',
-      text: 'Submit pattern',
-      disabled: true,
-      onClick: () => {
-        if (locked) return;
+      const tile = tiles[index];
+      progressBadge.textContent = `${pressedOrder.length} / ${sequence.length} pressed`;
+
+      if (index !== expectedTile) {
         locked = true;
-        lastValue = [...selected];
-        handleSubmit([...selected]);
-      },
-    });
+        tile.classList.add('tile-wrong');
+        if (tiles[expectedTile]) {
+          tiles[expectedTile].classList.add('tile-lit');
+          tiles[expectedTile].textContent = String(stepIdx + 1);
+        }
+        statusHint.textContent = `Wrong square on step ${stepIdx + 1}!`;
+        lastValue = [...pressedOrder];
+        setTimeout(() => {
+          handleSubmit([...pressedOrder]);
+        }, 420);
+        return;
+      }
+
+      tile.classList.add('tile-selected');
+      tile.textContent = String(stepIdx + 1);
+      tile.setAttribute('aria-pressed', 'true');
+
+      if (pressedOrder.length === sequence.length) {
+        locked = true;
+        statusHint.textContent = 'Sequence complete!';
+        lastValue = [...pressedOrder];
+        setTimeout(() => {
+          handleSubmit([...pressedOrder]);
+        }, 240);
+      } else {
+        statusHint.textContent = `Good! Press square #${pressedOrder.length + 1} of ${sequence.length}`;
+      }
+    }
 
     const grid = el(
       'div',
       {
         class: 'tile-grid',
         role: 'group',
-        'aria-label': `Level ${prompt.level}, ${prompt.tileCount} tiles to reproduce`,
+        'aria-label': `Level ${prompt.level}, ${sequence.length} squares in sequence`,
         style: `grid-template-columns: repeat(${prompt.columns}, 1fr);`,
-        onKeydown: (event) => gridKeys(event, tiles, prompt.columns, toggle, submitButton),
+        onKeydown: (event) => gridKeys(event, tiles, prompt.columns, pressTile, null),
       },
       tiles,
     );
 
     render(
       promptBody,
-      prompt.boardSizeLabel
-        ? el('p', { class: 'topic-chip' }, [
-            el('span', { class: 'badge', text: `Board: ${prompt.boardSizeLabel}` }),
-          ])
-        : null,
-      el('p', { class: 'level-label', text: `Level ${prompt.level}` }),
-      el('p', {
-        class: 'format-hint',
-        text: 'Watch the pattern, then reproduce it. One wrong tile ends the run!',
-      }),
+      el('div', { class: 'pattern-header-row' }, [
+        prompt.boardSizeLabel
+          ? el('span', { class: 'badge', text: `Board: ${prompt.boardSizeLabel}` })
+          : el('span', { class: 'badge', text: `${prompt.columns}×${prompt.rows} Grid` }),
+        el('span', { class: 'level-label', text: `Level ${prompt.level} (${sequence.length} squares)` }),
+        progressBadge,
+      ]),
+      statusHint,
       grid,
-      submitButton,
     );
 
-    // Show the pattern, then take it away.
-    for (const index of prompt.answer) tiles[index].classList.add('tile-lit');
-    announce(`Level ${prompt.level}. Memorise ${prompt.tileCount} tiles.`);
+    announce(`Level ${prompt.level}. Watch ${sequence.length} squares blink in order.`);
 
+    // Blink each square one by one in sequence so the player learns both place and order.
+    const stepBlinkMs = Math.max(360, Math.min(620, Math.floor((prompt.displayMs ?? 2000) / Math.max(2, sequence.length)) + 160));
+    const stepGapMs = 130;
+    const initialDelayMs = 280;
+
+    sequence.forEach((tileIdx, orderIdx) => {
+      const startAt = initialDelayMs + orderIdx * (stepBlinkMs + stepGapMs);
+      setTimeout(() => {
+        const target = tiles[tileIdx];
+        if (!target) return;
+        target.classList.add('tile-lit');
+        target.textContent = String(orderIdx + 1);
+      }, startAt);
+
+      setTimeout(() => {
+        const target = tiles[tileIdx];
+        if (!target) return;
+        target.classList.remove('tile-lit');
+        target.textContent = '';
+      }, startAt + stepBlinkMs);
+    });
+
+    const unlockAt = initialDelayMs + sequence.length * (stepBlinkMs + stepGapMs) + 60;
     setTimeout(() => {
-      for (const index of prompt.answer) tiles[index].classList.remove('tile-lit');
+      for (const tile of tiles) {
+        tile.classList.remove('tile-lit');
+        tile.textContent = '';
+        tile.disabled = false;
+      }
       locked = false;
-      for (const tile of tiles) tile.disabled = false;
+      statusHint.textContent = `Your turn — tap the ${sequence.length} squares in the order they blinked (1 → ${sequence.length}).`;
       tiles[0]?.focus();
-      announce('Now reproduce the pattern.');
-    }, prompt.displayMs);
+      announce('Now tap the squares in the order they blinked.');
+    }, unlockAt);
   }
 
   /** Arrow-key navigation shared by both boards (FR-123, FR-133). */
@@ -1570,17 +1620,32 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
     for (let i = 0; i < timeline.length; i += 1) {
       const ev = timeline[i];
+      const positionSide = i % 2 === 0 ? 'is-above' : 'is-below';
+      const eventBox = el('div', { class: 'timeline-placed-card' }, [
+        el('span', { class: 'timeline-year-badge', text: ev.formattedYear }),
+        el('strong', { class: 'timeline-placed-title', text: ev.title }),
+        el('span', { class: 'muted small timeline-placed-category', text: ev.category }),
+      ]);
+
       trackItems.push(
-        el('div', { class: 'timeline-node' }, [
-          el('div', { class: 'timeline-node-marker' }, [
-            el('span', { class: 'timeline-year-badge', text: ev.formattedYear }),
+        el('div', { class: `timeline-h-node ${positionSide}` }, [
+          el(
+            'div',
+            { class: 'timeline-branch timeline-branch-top' },
+            positionSide === 'is-above'
+              ? [eventBox, el('span', { class: 'timeline-stem', 'aria-hidden': 'true' })]
+              : [],
+          ),
+          el('div', { class: 'timeline-axis-point', 'aria-hidden': 'true' }, [
+            el('span', { class: 'timeline-axis-dot' }),
           ]),
-          el('div', { class: 'timeline-placed-card' }, [
-            el('div', { class: 'timeline-placed-info' }, [
-              el('strong', { text: ev.title }),
-              el('span', { class: 'muted small', text: ev.category }),
-            ]),
-          ]),
+          el(
+            'div',
+            { class: 'timeline-branch timeline-branch-bottom' },
+            positionSide === 'is-below'
+              ? [el('span', { class: 'timeline-stem', 'aria-hidden': 'true' }), eventBox]
+              : [],
+          ),
         ]),
       );
 
@@ -1588,7 +1653,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         trackItems.push(
           makeDropZone(
             i + 1,
-            `${ev.formattedYear} — ${timeline[i + 1].formattedYear}`,
+            `${ev.formattedYear} – ${timeline[i + 1].formattedYear}`,
           ),
         );
       } else {
@@ -1604,17 +1669,22 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       el(
         'div',
         {
-          class: 'timeline-track',
+          class: 'timeline-track timeline-track-horizontal',
           role: 'group',
-          'aria-label': 'Chronological timeline',
+          'aria-label': 'Chronological horizontal timeline',
         },
         [
           el('div', { class: 'timeline-axis-header' }, [
             el('span', { class: 'muted small', text: '← Earliest in History' }),
-            el('span', { class: 'muted small', text: `${timeline.length} ${timeline.length === 1 ? 'event' : 'events'} on timeline` }),
+            el('span', {
+              class: 'muted small',
+              text: `${timeline.length} ${timeline.length === 1 ? 'event' : 'events'} on timeline (scroll ↔ if needed)`,
+            }),
             el('span', { class: 'muted small', text: 'Most Recent →' }),
           ]),
-          el('div', { class: 'timeline-rail' }, trackItems),
+          el('div', { class: 'timeline-h-scroll' }, [
+            el('div', { class: 'timeline-h-rail' }, trackItems),
+          ]),
         ],
       ),
     );

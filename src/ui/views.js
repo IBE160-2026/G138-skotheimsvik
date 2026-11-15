@@ -37,11 +37,13 @@ const CATEGORY_LOGO_SVG = {
     <path d="M14 22l8-8M12 16l-2 2a4.5 4.5 0 0 0 6.4 6.4l2-2M24 20l2-2a4.5 4.5 0 0 0-6.4-6.4l-2 2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
   </svg>`,
   'timeline-sort': `<svg viewBox="0 0 36 36" width="28" height="28" fill="none" aria-hidden="true">
-    <line x1="10" y1="7" x2="10" y2="29" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-    <circle cx="10" cy="11" r="2.5" fill="currentColor"/>
-    <circle cx="10" cy="18" r="2.5" fill="currentColor"/>
-    <circle cx="10" cy="25" r="2.5" fill="currentColor"/>
-    <path d="M16 11h11M16 18h8M16 25h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="5" y1="18" x2="31" y2="18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="11" y1="18" x2="11" y2="12" stroke="currentColor" stroke-width="1.8"/>
+    <rect x="6" y="6" width="10" height="6" rx="1.5" fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="1.8"/>
+    <line x1="18" y1="18" x2="18" y2="24" stroke="currentColor" stroke-width="1.8"/>
+    <rect x="13" y="24" width="10" height="6" rx="1.5" fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="1.8"/>
+    <line x1="25" y1="18" x2="25" y2="12" stroke="currentColor" stroke-width="1.8"/>
+    <rect x="20" y="6" width="10" height="6" rx="1.5" fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="1.8"/>
   </svg>`,
   'connection-grid': `<svg viewBox="0 0 36 36" width="28" height="28" fill="none" aria-hidden="true">
     <rect x="5" y="5" width="11" height="11" rx="2.5" fill="currentColor" fill-opacity="0.25" stroke="currentColor" stroke-width="2"/>
@@ -88,6 +90,21 @@ const CATEGORY_LOGO_SVG = {
   </svg>`,
 };
 
+const REACTION_ICON_SVG = {
+  like: `<svg viewBox="0 0 20 20" width="15" height="15" fill="none" aria-hidden="true">
+    <path d="M10 4L15.5 10.5H12V16H8V10.5H4.5L10 4Z" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+  </svg>`,
+  dislike: `<svg viewBox="0 0 20 20" width="15" height="15" fill="none" aria-hidden="true">
+    <path d="M10 16L4.5 9.5H8V4H12V9.5H15.5L10 16Z" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+  </svg>`,
+  starFilled: `<svg viewBox="0 0 20 20" width="15" height="15" fill="none" aria-hidden="true">
+    <path d="M10 2.5L12.3 7.15L17.45 7.9L13.72 11.53L14.6 16.65L10 14.23L5.4 16.65L6.28 11.53L2.55 7.9L7.7 7.15L10 2.5Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+  </svg>`,
+  starOutline: `<svg viewBox="0 0 20 20" width="15" height="15" fill="none" aria-hidden="true">
+    <path d="M10 2.5L12.3 7.15L17.45 7.9L13.72 11.53L14.6 16.65L10 14.23L5.4 16.65L6.28 11.53L2.55 7.9L7.7 7.15L10 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>`,
+};
+
 export function wordRushLogoMark(size = 36) {
   return el('span', {
     class: 'word-rush-logo',
@@ -102,6 +119,153 @@ export function wordRushLogoMark(size = 36) {
 /** A trainer may name its own variants; otherwise fall back to the generic label. */
 function labelFor(trainer, key) {
   return trainer.variantLabels?.[key] ?? variantLabel(trainer.variantKind, key);
+}
+
+function renderAnswerRevealSection(reveal) {
+  if (!reveal) return null;
+  const isSolved = Boolean(reveal.solved);
+
+  if (reveal.kind === 'capital') {
+    return el(
+      'div',
+      { class: `answer-reveal-card${isSolved ? ' is-solved' : ' is-missed'}` },
+      [
+        el('span', {
+          class: 'answer-reveal-badge',
+          text: isSolved ? 'Correct Answer' : 'The Correct Answer Was',
+        }),
+        el('div', { class: 'answer-reveal-main' }, [
+          el('strong', { class: 'answer-reveal-value', text: reveal.capitalName }),
+          el('span', {
+            class: 'answer-reveal-sub',
+            text: `Capital of ${reveal.countryName}`,
+          }),
+        ]),
+        reveal.hints?.length > 0
+          ? el(
+              'ul',
+              { class: 'answer-reveal-hints' },
+              reveal.hints.map((h) => el('li', { text: h })),
+            )
+          : null,
+      ],
+    );
+  }
+
+  if (reveal.kind === 'flag' || reveal.kind === 'outline') {
+    return el(
+      'div',
+      { class: `answer-reveal-card${isSolved ? ' is-solved' : ' is-missed'}` },
+      [
+        el('span', {
+          class: 'answer-reveal-badge',
+          text: isSolved ? 'Correct Answer' : 'The Correct Answer Was',
+        }),
+        el('div', { class: 'answer-reveal-main' }, [
+          el('strong', { class: 'answer-reveal-value', text: reveal.countryName }),
+          reveal.continent
+            ? el('span', { class: 'answer-reveal-sub', text: `Continent: ${reveal.continent}` })
+            : null,
+        ]),
+      ],
+    );
+  }
+
+  if (reveal.kind === 'border-hop') {
+    const route =
+      reveal.shortestPath?.length > 0
+        ? reveal.shortestPath.join(' → ')
+        : `${reveal.startCountry} → … → ${reveal.targetCountry}`;
+    return el(
+      'div',
+      { class: `answer-reveal-card${isSolved ? ' is-solved' : ' is-missed'}` },
+      [
+        el('span', {
+          class: 'answer-reveal-badge',
+          text: isSolved ? 'Route Completed' : 'Shortest Land Route Answer',
+        }),
+        el('div', { class: 'answer-reveal-main' }, [
+          el('strong', { class: 'answer-reveal-value', text: route }),
+          el('span', {
+            class: 'answer-reveal-sub',
+            text: `From ${reveal.startCountry} to ${reveal.targetCountry}`,
+          }),
+        ]),
+      ],
+    );
+  }
+
+  if (reveal.kind === 'person') {
+    if (isSolved) return null;
+    return el('div', { class: 'answer-reveal-card is-missed' }, [
+      el('span', { class: 'answer-reveal-badge', text: 'The Person You Missed Was' }),
+      el('div', { class: 'answer-reveal-main' }, [
+        el('strong', { class: 'answer-reveal-value', text: reveal.personName }),
+        reveal.category
+          ? el('span', { class: 'answer-reveal-sub', text: reveal.category })
+          : null,
+        reveal.clue
+          ? el('p', { class: 'answer-reveal-clue muted small', text: `“${reveal.clue}”` })
+          : null,
+      ]),
+    ]);
+  }
+
+  if (reveal.kind === 'timeline-sort') {
+    if (isSolved) return null;
+    return el('div', { class: 'answer-reveal-card is-missed' }, [
+      el('span', { class: 'answer-reveal-badge', text: 'The Event Year Was' }),
+      el('div', { class: 'answer-reveal-main' }, [
+        el('strong', {
+          class: 'answer-reveal-value',
+          text: `${reveal.card?.title ?? 'Event'} — ${reveal.card?.formattedYear ?? ''}`,
+        }),
+        reveal.expected
+          ? el('span', { class: 'answer-reveal-sub', text: reveal.expected })
+          : null,
+      ]),
+    ]);
+  }
+
+  if (reveal.kind === 'connection-grid' && reveal.groups?.length > 0) {
+    return el(
+      'div',
+      { class: `answer-reveal-card${isSolved ? ' is-solved' : ' is-missed'}` },
+      [
+        el('span', {
+          class: 'answer-reveal-badge',
+          text: isSolved ? 'All 4 Categories Solved' : 'Today’s 4 Categories & Answers',
+        }),
+        el(
+          'div',
+          { class: 'connection-solved-list', style: 'margin-top: 0.65rem;' },
+          reveal.groups.map((group) =>
+            el('div', { class: 'connection-solved-banner' }, [
+              el('strong', { class: 'connection-solved-title', text: group.title }),
+              el('span', {
+                class: 'connection-solved-words',
+                text: group.words.join(' · '),
+              }),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  if (reveal.kind === 'prompt' && !isSolved && reveal.expected) {
+    return el('div', { class: 'answer-reveal-card is-missed' }, [
+      el('span', { class: 'answer-reveal-badge', text: 'The Answer To The Last Prompt Was' }),
+      el('div', { class: 'answer-reveal-main' }, [
+        el('strong', { class: 'answer-reveal-value', text: String(reveal.expected) }),
+        reveal.question
+          ? el('span', { class: 'answer-reveal-sub', text: `Prompt: ${reveal.question}` })
+          : null,
+      ]),
+    ]);
+  }
+
+  return null;
 }
 
 /** A thin progress rail showing how much of something is done. */
@@ -192,17 +356,26 @@ export function categoriesView({
                 ? el('span', { class: 'fav-rank-badge', text: '#1' })
                 : null,
             onToggleFavorite
-              ? el('button', {
-                  type: 'button',
-                  class: `fav-toggle-btn${isFav ? ' is-favorited' : ''}`,
-                  'aria-pressed': String(isFav),
-                  title: isFav ? 'Remove from favorites' : 'Favorite gamemode (pins to top)',
-                  'aria-label': isFav
-                    ? `Remove ${category.name} from favorites`
-                    : `Favorite ${category.name}`,
-                  text: isFav ? '★' : '☆',
-                  onClick: () => onToggleFavorite(category.id),
-                })
+              ? el(
+                  'button',
+                  {
+                    type: 'button',
+                    class: `fav-toggle-btn${isFav ? ' is-favorited' : ''}`,
+                    'aria-pressed': String(isFav),
+                    title: isFav ? 'Remove from favorites' : 'Favorite gamemode (pins to top)',
+                    'aria-label': isFav
+                      ? `Remove ${category.name} from favorites`
+                      : `Favorite ${category.name}`,
+                    onClick: () => onToggleFavorite(category.id),
+                  },
+                  [
+                    el('span', {
+                      class: 'reaction-icon',
+                      'aria-hidden': 'true',
+                      html: isFav ? REACTION_ICON_SVG.starFilled : REACTION_ICON_SVG.starOutline,
+                    }),
+                  ],
+                )
               : null,
             el('span', {
               class: 'remaining-pill',
@@ -233,12 +406,16 @@ export function categoriesView({
                         type: 'button',
                         class: `reaction-btn reaction-like${reaction.userVote === 'like' ? ' is-active' : ''}`,
                         'aria-pressed': String(reaction.userVote === 'like'),
-                        title: 'Like this gamemode (1 vote per user)',
+                        title: 'Upvote this gamemode (1 vote per user)',
                         'aria-label': `Like ${category.name} (${reaction.likes})`,
                         onClick: () => onVote(category.id, 'like'),
                       },
                       [
-                        el('span', { 'aria-hidden': 'true', text: '👍' }),
+                        el('span', {
+                          class: 'reaction-icon',
+                          'aria-hidden': 'true',
+                          html: REACTION_ICON_SVG.like,
+                        }),
                         el('span', { class: 'reaction-count', text: String(reaction.likes) }),
                       ],
                     ),
@@ -248,12 +425,16 @@ export function categoriesView({
                         type: 'button',
                         class: `reaction-btn reaction-dislike${reaction.userVote === 'dislike' ? ' is-active' : ''}`,
                         'aria-pressed': String(reaction.userVote === 'dislike'),
-                        title: 'Dislike this gamemode (1 vote per user)',
+                        title: 'Downvote this gamemode (1 vote per user)',
                         'aria-label': `Dislike ${category.name} (${reaction.dislikes})`,
                         onClick: () => onVote(category.id, 'dislike'),
                       },
                       [
-                        el('span', { 'aria-hidden': 'true', text: '👎' }),
+                        el('span', {
+                          class: 'reaction-icon',
+                          'aria-hidden': 'true',
+                          html: REACTION_ICON_SVG.dislike,
+                        }),
                         el('span', { class: 'reaction-count', text: String(reaction.dislikes) }),
                       ],
                     ),
@@ -736,12 +917,16 @@ export function resultsView({
       ])
     : null;
 
+  const answerRevealSection = !wr ? renderAnswerRevealSection(result.answerReveal) : null;
+
   return el('section', { class: 'results' }, [
     el('h1', { text: isPractice ? 'Practice complete' : 'Round complete' }),
     el('p', { class: 'muted' }, [
       `${trainer.name} — ${labelFor(trainer, result.variantKey)}`,
     ]),
     el('p', { class: 'end-reason', text: END_REASON_LABEL[result.endedBy] ?? 'Round over' }),
+
+    answerRevealSection,
 
     el('div', { class: 'result-stats' }, [
       stat(
