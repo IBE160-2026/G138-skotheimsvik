@@ -112,7 +112,13 @@ export function describeRound(trainer, variantKey) {
   const param = modeParamFor(trainer, variantKey);
   if (trainer.roundMode === 'timed') return `${param} seconds`;
   if (trainer.roundMode === 'lives') {
-    return param === 1 ? 'One life — the first mistake ends it' : `${param} lives`;
+    const perPrompt =
+      typeof trainer.promptTimeLimitSeconds === 'number' && trainer.promptTimeLimitSeconds > 0
+        ? ` · ${trainer.promptTimeLimitSeconds}s per person`
+        : '';
+    return param === 1
+      ? `One life — the first mistake ends it${perPrompt}`
+      : `${param} lives${perPrompt}`;
   }
   return `${param} pairs to match`;
 }

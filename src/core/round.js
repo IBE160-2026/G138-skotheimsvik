@@ -60,6 +60,10 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
   let roundMeta = null;
 
   const durationMs = roundMode === 'timed' ? modeParam * 1000 : null;
+  const promptLimitMs =
+    typeof trainer.promptTimeLimitSeconds === 'number' && trainer.promptTimeLimitSeconds > 0
+      ? trainer.promptTimeLimitSeconds * 1000
+      : null;
 
   function elapsedMs() {
     if (state === 'idle') return 0;
@@ -70,6 +74,11 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
   function remainingMs() {
     if (roundMode !== 'timed') return null;
     return Math.max(0, durationMs - elapsedMs());
+  }
+
+  function promptRemainingMs() {
+    if (!promptLimitMs || state !== 'running') return null;
+    return Math.max(0, promptLimitMs - Math.max(0, clock.now() - promptShownAtMs));
   }
 
   function isExpired() {
@@ -182,6 +191,10 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
     },
 
     remainingMs,
+    promptRemainingMs,
+    get promptTimeLimitSeconds() {
+      return trainer.promptTimeLimitSeconds ?? null;
+    },
     elapsedMs,
     score: headlineScore,
     stats: () => scoreboard.snapshot(),
@@ -209,8 +222,9 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
     /**
      * Submit an answer for the current prompt.
      * @param {unknown} value
+     * @param {{timedOut?: boolean}} [options]
      */
-    submit(value) {
+    submit(value, options = {}) {
       if (state !== 'running') {
         return { status: 'rejected', reason: 'round-not-running' };
       }
@@ -222,7 +236,7 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
       }
 
       const prompt = currentPrompt;
-      const status = checkAnswer(prompt, value);
+      const status = options.timedOut ? 'incorrect' : checkAnswer(prompt, value);
 
       // Empty submissions change nothing at all (FR-66).
       if (status === 'ignored') {
@@ -255,6 +269,7 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
 
       const feedback = {
         status,
+        timedOut: Boolean(options.timedOut),
         prompt,
         expected: formatExpected(prompt),
         lifeLost,

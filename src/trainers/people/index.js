@@ -10,6 +10,7 @@ import { createRng, seedFor, practiceSeed } from '../../core/rng.js';
 
 /** Kept for backwards-compatible imports. */
 export const PEOPLE_PER_ROUND = 15;
+export const PERSON_TIME_LIMIT_SECONDS = 30;
 
 const LIVES = 3;
 
@@ -114,7 +115,7 @@ export function createFamousPeopleTrainer({ people, categories }, portraits = nu
     categoryId: 'people',
     name: 'People Guesser',
     description:
-      'One daily run across all categories. Three lives — guess wrong and you find out who the person was before moving on to the next person. See how many people you can guess!',
+      'One daily run across all categories. 30 seconds per person and 3 lives — guess wrong or run out of time and you find out who the person was before moving on to the next person!',
     roundMode: 'lives',
     variantKind: 'pool',
     variants: ['all'],
@@ -124,6 +125,7 @@ export function createFamousPeopleTrainer({ people, categories }, portraits = nu
     renderer: 'portrait',
     scoreLabel: 'People guessed',
     modeParam: LIVES,
+    promptTimeLimitSeconds: PERSON_TIME_LIMIT_SECONDS,
     topics: categoryKeys.map((id) => ({ id, label: categories[id] })),
     variantLabels: { all: 'Daily Challenge (All Categories)', ...categories },
 
@@ -150,6 +152,8 @@ export function createFamousPeopleTrainer({ people, categories }, portraits = nu
 
           return {
             kind: 'text',
+            personName: subject.name,
+            pageimage: subject.pageimage ?? null,
             key: `person:${subject.name}`,
             topicId: subject.category,
             topicLabel: subject.categoryLabel,

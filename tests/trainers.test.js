@@ -449,11 +449,35 @@ test('People Guesser is a single daily 3-lives run combining all categories with
   assert.equal(trainer.name, 'People Guesser');
   assert.equal(trainer.roundMode, 'lives');
   assert.equal(trainer.modeParam, 3);
+  assert.equal(trainer.promptTimeLimitSeconds, 30);
   assert.deepEqual(trainer.variants, ['all']);
   assert.equal(trainer.noPractice, true);
   const prompts = pull(trainer, 'all', 40);
   assert.equal(prompts.length, 40);
   assert.equal(new Set(prompts.map((p) => p.answer)).size, 40);
+
+  // Verify 30s per-person countdown timer and timeout life loss
+  const clock = createFixedClock({ today: '2026-11-15', startMs: 1000 });
+  const gen = trainer.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'all' });
+  const round = createRound({
+    trainer,
+    variantKey: 'all',
+    puzzleDate: '2026-11-15',
+    generator: gen,
+    clock,
+  });
+  const firstPrompt = round.start();
+  assert.equal(round.promptRemainingMs(), 30_000);
+  clock.advance(12_000);
+  assert.equal(round.promptRemainingMs(), 18_000);
+  const timeoutFeedback = round.submit('', { timedOut: true });
+  assert.equal(timeoutFeedback.status, 'incorrect');
+  assert.equal(timeoutFeedback.timedOut, true);
+  assert.equal(timeoutFeedback.lifeLost, true);
+  assert.equal(timeoutFeedback.expected, firstPrompt.answer);
+  assert.equal(round.livesRemaining, 2);
+  // Timer resets to 30s for the next person
+  assert.equal(round.promptRemainingMs(), 30_000);
 });
 
 test('poolFor filters by category when given a category key (FR-156)', () => {

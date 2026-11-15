@@ -112,21 +112,53 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
   function renderStatus() {
     const stats = round.stats();
+    const promptRem = round.promptRemainingMs?.();
+    const hasPromptTimer = typeof promptRem === 'number';
     render(
       statusBar,
       modeIndicator(),
+      hasPromptTimer ? stat('Timer', `${Math.ceil(promptRem / 1000)}s`, 'stat-time') : null,
       stat(trainer.scoreLabel ?? 'Score', String(round.score())),
       stat('Accuracy', `${stats.accuracy}%`),
       stat('Streak', String(stats.currentStreak)),
     );
 
     if (!timerRail) return;
-    const remaining = round.remainingMs();
-    const total = round.modeParam * 1000;
+    const remaining = round.roundMode === 'timed' ? round.remainingMs() : promptRem;
+    const total =
+      round.roundMode === 'timed'
+        ? round.modeParam * 1000
+        : (round.promptTimeLimitSeconds ?? 30) * 1000;
     const fraction = Math.max(0, Math.min(1, remaining / total));
     const bar = timerRail.firstElementChild;
     bar.style.width = `${fraction * 100}%`;
     bar.classList.toggle('low', fraction <= 0.2);
+  }
+
+  /** Triggered when the 30s per-prompt timer expires in a lives round (e.g. People Guesser). */
+  function handlePromptTimeout() {
+    if (busy || round.state !== 'running') return;
+    const feedback = round.submit('', { timedOut: true });
+    if (feedback.status === 'rejected') {
+      finish();
+      return;
+    }
+    renderStatus();
+    showFeedback(feedback);
+
+    if (feedback.ended) {
+      busy = true;
+      setTimeout(finish, FEEDBACK_MS);
+      return;
+    }
+
+    busy = true;
+    setTimeout(() => {
+      busy = false;
+      hints = [];
+      guessesUsed = 0;
+      drawPrompt();
+    }, FEEDBACK_MS);
   }
 
   /** Submit, show feedback, then move on. */
@@ -337,7 +369,11 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       if (hint) hints.push(hint);
     }
 
-    let feedbackText = correct ? '✓ Correct' : `✗ Wrong — ${feedback.expected}`;
+    let feedbackText = correct
+      ? '✓ Correct'
+      : feedback.timedOut
+        ? `⏱ Time's up! — ${feedback.expected}`
+        : `✗ Wrong — ${feedback.expected}`;
 
     if (prompt?.kind === 'connection-grid' && Array.isArray(lastValue)) {
       const pickNorm = new Set(lastValue.map((w) => normaliseText(w)));
@@ -877,25 +913,47 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     queueMicrotask(() => cards.find((card) => !card.disabled)?.focus());
   }
 
-  /** Famous People — every person gets a portrait (local WebP, Wikimedia Commons, or fallback SVG), plus the clue. */
+  /** Famous People — every person gets a portrait (local WebP, Wikimedia Commons, Wikipedia REST API thumbnail, or fallback SVG), plus the clue. */
   function renderPortrait(prompt) {
     const fallbackUri = buildFallbackPortraitDataUri(prompt.answer, prompt.topicLabel);
     const imgSrc = prompt.image || fallbackUri;
 
+    const imgEl = el('img', {
+      class: 'portrait-image',
+      src: imgSrc,
+      alt: 'Portrait of the person to identify',
+      loading: 'eager',
+      decoding: 'async',
+      onError: (e) => {
+        const img = e.currentTarget;
+        if (!img.dataset.wikiRestTried && prompt.personName) {
+          img.dataset.wikiRestTried = 'true';
+          const title = encodeURIComponent(String(prompt.personName).replace(/\s+/g, '_'));
+          fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              const thumb = data?.thumbnail?.source || data?.originalimage?.source;
+              if (thumb && thumb !== img.src) {
+                img.src = thumb;
+              } else {
+                img.dataset.fallbackApplied = 'true';
+                img.src = fallbackUri;
+              }
+            })
+            .catch(() => {
+              img.dataset.fallbackApplied = 'true';
+              img.src = fallbackUri;
+            });
+          return;
+        }
+        if (img.dataset.fallbackApplied) return;
+        img.dataset.fallbackApplied = 'true';
+        img.src = fallbackUri;
+      },
+    });
+
     const figure = el('figure', { class: 'portrait' }, [
-      el('img', {
-        class: 'portrait-image',
-        src: imgSrc,
-        alt: 'Portrait of the person to identify',
-        loading: 'eager',
-        decoding: 'async',
-        onError: (e) => {
-          const img = e.currentTarget;
-          if (img.dataset.fallbackApplied) return;
-          img.dataset.fallbackApplied = 'true';
-          img.src = fallbackUri;
-        },
-      }),
+      imgEl,
       prompt.imageCredit
         ? el('figcaption', {
             class: 'portrait-credit',
@@ -1353,8 +1411,11 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       statusBar = el('div', { class: 'round-status' });
       feedbackBar = el('div', { class: 'round-feedback', role: 'status' });
       promptBody = el('div', { class: 'round-body' });
+      const hasPromptTimer =
+        typeof activeRound.promptTimeLimitSeconds === 'number' &&
+        activeRound.promptTimeLimitSeconds > 0;
       timerRail =
-        activeRound.roundMode === 'timed'
+        activeRound.roundMode === 'timed' || hasPromptTimer
           ? el('div', { class: 'timer-rail', 'aria-hidden': 'true' }, [
               el('span', { class: 'timer-bar', style: 'width: 100%;' }),
             ])
@@ -1386,6 +1447,20 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         timer = setInterval(() => {
           if (round.tick() !== 'running') {
             finish();
+            return;
+          }
+          renderStatus();
+        }, 200);
+      } else if (hasPromptTimer) {
+        timer = setInterval(() => {
+          if (round.state !== 'running') {
+            finish();
+            return;
+          }
+          if (busy) return;
+          const rem = round.promptRemainingMs?.() ?? 0;
+          if (rem <= 0) {
+            handlePromptTimeout();
             return;
           }
           renderStatus();
