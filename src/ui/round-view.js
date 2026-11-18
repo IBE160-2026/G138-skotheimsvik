@@ -119,6 +119,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       return stat('Time', formatClock(round.remainingMs()), 'stat-time');
     }
     if (round.roundMode === 'lives') {
+      if (trainer?.noLives) return null;
       const lives = Math.max(0, round.livesRemaining);
       return stat(
         'Lives',
@@ -139,7 +140,13 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
     render(
       statusBar,
       modeIndicator(),
-      hasPromptTimer ? stat('Timer', `${Math.ceil(promptRem / 1000)}s`, 'stat-time') : null,
+      hasPromptTimer
+        ? stat(
+            trainer?.noLives ? 'Time left' : 'Timer',
+            `${Math.max(0, Math.ceil(promptRem / 1000))}s`,
+            'stat-time',
+          )
+        : null,
       stat(trainer.scoreLabel ?? 'Score', String(round.score())),
       stat('Accuracy', `${stats.accuracy}%`),
       stat('Streak', String(stats.currentStreak)),
@@ -277,7 +284,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
           } else {
             let lifeLost = false;
             let ended = false;
-            if (round.roundMode === 'lives') {
+            if (round.roundMode === 'lives' && !trainer?.noLives) {
               const fb = round.submit(value);
               lifeLost = Boolean(fb.lifeLost);
               ended = Boolean(fb.ended);
@@ -305,7 +312,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
 
       let lifeLost = false;
       let ended = false;
-      if (round.roundMode === 'lives') {
+      if (round.roundMode === 'lives' && !trainer?.noLives) {
         const fb = round.submit(value);
         lifeLost = Boolean(fb.lifeLost);
         ended = Boolean(fb.ended);
@@ -1359,7 +1366,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
   }
 
   /**
-   * Word Chain (90-second Last-Letter Relay).
+   * Word Chain (30s-per-word Last-Letter Relay).
    */
   function renderWordChain(prompt) {
     const chainWords = prompt.chainWords ?? [prompt.previousWord].filter(Boolean);
@@ -1384,17 +1391,17 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
             el('strong', { class: 'word-rush-pill-value', text: prompt.topicLabel }),
           ]),
           el('div', { class: 'word-rush-pill' }, [
-            el('span', { class: 'word-rush-pill-label', text: 'Last word' }),
+            el('span', { class: 'word-rush-pill-label', text: isFirstTurn ? 'Starting letter' : 'Last word' }),
             el('strong', {
               class: 'word-rush-pill-value',
-              text: isFirstTurn ? 'Choose your first word!' : prompt.previousWord,
+              text: isFirstTurn ? `Start with "${prompt.letter}"` : prompt.previousWord,
             }),
           ]),
           el('div', { class: 'word-rush-pill word-rush-pill-letter' }, [
-            el('span', { class: 'word-rush-pill-label', text: 'Next starts with' }),
+            el('span', { class: 'word-rush-pill-label', text: isFirstTurn ? 'Starts with' : 'Next starts with' }),
             el('strong', {
               class: 'word-rush-pill-value',
-              text: isFirstTurn ? 'Any' : prompt.letter,
+              text: prompt.letter || 'A',
             }),
           ]),
           el('div', { class: 'word-rush-pill' }, [
@@ -1415,7 +1422,7 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
         chainWords.length === 0
           ? el('p', {
               class: 'muted',
-              text: `Type any ${prompt.topicLabel} word to start your chain!`,
+              text: `Type a ${prompt.topicLabel} entry starting with "${prompt.letter}" to start your chain!`,
             })
           : el(
               'ul',
@@ -1999,15 +2006,16 @@ export function createRoundView({ container, announce, onFinish, onLeave }) {
       onLeave();
       return;
     }
+    const isUnscored = Boolean(round.isPractice || round.isAdminMode);
     const confirmed =
-      round.isPractice ||
+      isUnscored ||
       globalThis.confirm(
         'Leaving now ends this round and uses up today’s attempt. Your score so far will be recorded. Leave anyway?',
       );
     if (!confirmed) return;
     stopTimer();
     round.abandon();
-    if (round.isPractice) onLeave();
+    if (isUnscored) onLeave();
     else onFinish(round);
   }
 

@@ -2593,9 +2593,23 @@ select:hover { border-color: var(--border-strong); }
   background: color-mix(in srgb, var(--accent) 10%, var(--surface)) !important;
 }
 .rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.84rem;
+}
+.rank-pill.rank-1 {
+  color: #f59e0b;
+}
+.rank-crown-icon,
+.player-crown-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+  flex-shrink: 0;
 }
 .player-cell {
   display: flex;
@@ -2616,6 +2630,9 @@ select:hover { border-color: var(--border-strong); }
   line-height: 1.25;
 }
 .player-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.94rem;
 }
 .player-handle {

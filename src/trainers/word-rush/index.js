@@ -25,24 +25,271 @@ export const STATIC_CATEGORIES = Object.freeze({
     label: 'Sports & Athletics',
     group: 'Sport',
     items: [
-      'Archery', 'Athletics', 'Auto Racing', 'Badminton', 'Baseball', 'Basketball', 'Biathlon',
-      'Billiards', 'Bobsleigh', 'Bodybuilding', 'Bowling', 'Boxing', 'Breakdancing', 'Canoeing',
-      'Cheerleading', 'Chess', 'Climbing', 'Cricket', 'Croquet', 'CrossFit', 'Curling', 'Cycling',
-      'Darts', 'Decathlon', 'Diving', 'Dodgeball', 'Dressage', 'Equestrian', 'Esports', 'Fencing',
-      'Field Hockey', 'Figure Skating', 'Fishing', 'Floorball', 'Football', 'Formula One', 'Frisbee',
-      'Futsal', 'Gaelic Football', 'Golf', 'Gymnastics', 'Handball', 'Hang Gliding', 'Heptathlon',
-      'High Jump', 'Hockey', 'Horse Racing', 'Hurling', 'Ice Hockey', 'Ice Skating', 'Javelin',
-      'Jiu-Jitsu', 'Judo', 'Karate', 'Karting', 'Kayaking', 'Kickboxing', 'Kitesurfing', 'Kung Fu',
-      'Lacrosse', 'Long Jump', 'Luge', 'Marathon', 'Martial Arts', 'Mixed Martial Arts', 'Motocross',
-      'Mountaineering', 'Muay Thai', 'Netball', 'Orienteering', 'Padel', 'Paragliding', 'Parkour',
-      'Pentathlon', 'Pickleball', 'Polo', 'Powerlifting', 'Racquetball', 'Rallying', 'Rock Climbing',
-      'Rodeo', 'Roller Skating', 'Rowing', 'Rugby', 'Running', 'Sailing', 'Sambo', 'Scuba Diving',
-      'Shooting', 'Shot Put', 'Skateboarding', 'Skeleton', 'Ski Jumping', 'Skiing', 'Skydiving',
-      'Snooker', 'Snowboarding', 'Soccer', 'Softball', 'Speed Skating', 'Sprint', 'Squash',
-      'Sumo Wrestling', 'Surfing', 'Swimming', 'Synchronized Swimming', 'Table Tennis', 'Taekwondo',
-      'Tennis', 'Track and Field', 'Trampolining', 'Triathlon', 'Tug of War', 'Ultimate Frisbee',
-      'Volleyball', 'Wakeboarding', 'Walking', 'Water Polo', 'Water Skiing', 'Weightlifting',
-      'Windsurfing', 'Wrestling', 'Wushu', 'Yachting', 'Yoga',
+      'Acrobatic Gymnastics', 'Aerobics', 'Aikido', 'Air Racing', 'Alpine Skiing', 'American Football',
+      'Aquathlon', 'Archery', 'Arm Wrestling', 'Artistic Gymnastics', 'Artistic Swimming', 'Association Football',
+      'Athletics', 'Australian Rules Football', 'Auto Racing', 'Autocross', 'Axe Throwing', 'Badminton',
+      'Bandy', 'Barrel Racing', 'BASE Jumping', 'Baseball', 'Basketball', 'Basque Pelota', 'Beach Handball',
+      'Beach Soccer', 'Beach Tennis', 'Beach Volleyball', 'Biathlon', 'Bicycle Motocross', 'Billiards',
+      'BMX', 'BMX Racing', 'Bobsled', 'Bobsleigh', 'Bocce', 'Boccia', 'Bodybuilding', 'Bossaball',
+      'Bouldering', 'Boules', 'Bowling', 'Bowls', 'Box Lacrosse', 'Boxing', 'Brazilian Jiu-Jitsu',
+      'Breakdancing', 'Breaking', 'Broomball', 'Bungee Jumping', 'Cabers', 'Calisthenics', 'Camogie',
+      'Canoe Polo', 'Canoe Slalom', 'Canoe Sprint', 'Canoeing', 'Capoeira', 'Caving', 'Chariot Racing',
+      'Cheerleading', 'Chess', 'Clay Pigeon Shooting', 'Cliff Diving', 'Climbing', 'Coaching',
+      'College Football', 'Combat Sambo', 'Competitive Eating', 'Competitive Swimming', 'Cornhole',
+      'Court Tennis', 'Cricket', 'Croquet', 'Cross Country', 'Cross-Country Running', 'Cross-Country Skiing',
+      'CrossFit', 'Cue Sports', 'Curling', 'Cycle Polo', 'Cycle Speedway', 'Cycling', 'Cyclo-Cross',
+      'Dancesport', 'Darts', 'Decathlon', 'Demolition Derby', 'Disc Golf', 'Discus', 'Discus Throw',
+      'Diving', 'Dodgeball', 'Dog Sledding', 'Downhill Skiing', 'Drag Racing', 'Dragon Boat Racing',
+      'Dressage', 'Drifting', 'Duathlon', 'Eight-Ball', 'Endurance Racing', 'Enduro', 'Equestrian',
+      'Equestrianism', 'Esports', 'Extreme Sports', 'Falconry', 'Fencing', 'Field Archery', 'Field Hockey',
+      'Figure Skating', 'Finswimming', 'Fishing', 'Fistball', 'Five-a-Side Football', 'Flag Football',
+      'Floorball', 'Flora Marathon', 'Fly Fishing', 'Flying Disc', 'Foil Fencing', 'Footbag', 'Football',
+      'Footgolf', 'Formula E', 'Formula One', 'Four Square', 'Free Diving', 'Freediving', 'Freerunning',
+      'Freestyle BMX', 'Freestyle Motocross', 'Freestyle Skiing', 'Freestyle Swimming', 'Freestyle Wrestling',
+      'Frisbee', 'Full Contact Karate', 'Futsal', 'Gaelic Football', 'Gaelic Handball', 'Gateball',
+      'Giant Slalom', 'Gliding', 'Goalball', 'Go-Karting', 'Golf', 'Greco-Roman Wrestling', 'Greyhound Racing',
+      'Gridiron', 'Gymkhana', 'Gymnastics', 'Hammer Throw', 'Handball', 'Hang Gliding', 'Hapkido',
+      'Harness Racing', 'Harrier', 'Heptathlon', 'High Diving', 'High Jump', 'Highland Games', 'Hiking',
+      'Hill Climbing', 'Hockey', 'Horse Polo', 'Horse Racing', 'Horseback Riding', 'Horseshoes',
+      'Hot Air Ballooning', 'Hurdles', 'Hurdling', 'Hurling', 'Ice Climbing', 'Ice Dancing', 'Ice Fishing',
+      'Ice Hockey', 'Ice Racing', 'Ice Skating', 'Ice Cross Downhill', 'Ice Yachting', 'Indoor Cricket',
+      'Indoor Football', 'Indoor Hockey', 'Indoor Rowing', 'Indoor Soccer', 'Indoor Volleyball',
+      'Inline Hockey', 'Inline Skating', 'Ironman Triathlon', 'Jai Alai', 'Javelin', 'Javelin Throw',
+      'Jet Skiing', 'Jiu-Jitsu', 'Jockey', 'Jogging', 'Jousting', 'Judo', 'Jujutsu', 'Jumping',
+      'Kabaddi', 'Karate', 'Kart Racing', 'Karting', 'Kayaking', 'Kendo', 'Kenpo', 'Kettlebell Lifting',
+      'Kickball', 'Kickboxing', 'Kiteboarding', 'Kitesurfing', 'Kneeboarding', 'Korfball', 'Krav Maga',
+      'Kronum', 'Kung Fu', 'Kyudo', 'Lacrosse', 'Land Sailing', 'Land Windsurfing', 'Laser Run',
+      'Lawn Bowls', 'Lawn Tennis', 'Lead Climbing', 'Lethwei', 'Lifesaving', 'Little League',
+      'Long Distance Running', 'Long Jump', 'Longboarding', 'Luge', 'Lumberjack Sports', 'Marathon',
+      'Marathon Swimming', 'Martial Arts', 'Middle Distance Running', 'Miniature Golf', 'Mixed Martial Arts',
+      'MMA', 'Modern Pentathlon', 'Mogul Skiing', 'Monster Truck', 'Motoball', 'Motocross', 'Motor Racing',
+      'Motorcycle Racing', 'Mountain Biking', 'Mountaineering', 'Muay Thai', 'Mud Bogging', 'NASCAR',
+      'Netball', 'Nine-Ball', 'Nordic Combined', 'Nordic Walking', 'Obstacle Course Racing', 'Ocean Rowing',
+      'Off-Road Racing', 'Olympic Weightlifting', 'Open Water Swimming', 'Orienteering', 'Outrigger Canoeing',
+      'Paddle Boarding', 'Paddle Tennis', 'Paddleboarding', 'Padel', 'Paintball', 'Parachuting',
+      'Paragliding', 'Paralympic Athletics', 'Paramotoring', 'Parasailing', 'Parkour', 'Pelota',
+      'Pencak Silat', 'Pentathlon', 'Pesapallo', 'Petanque', 'Pickleball', 'Pilates', 'Ping Pong',
+      'Platform Diving', 'Platform Tennis', 'Pocket Billiards', 'Pole Climbing', 'Pole Dance', 'Pole Vault',
+      'Polo', 'Polocrosse', 'Pool', 'Powerboating', 'Powerlifting', 'Pro Wrestling', 'Pugilism',
+      'Quidditch', 'Quadball', 'Race Walking', 'Racewalking', 'Racketlon', 'Racquetball', 'Rafting',
+      'Rally Raid', 'Rallycross', 'Rallying', 'Rappelling', 'Real Tennis', 'Relay Race', 'Rhythmic Gymnastics',
+      'Ringette', 'Rink Bandy', 'Rink Hockey', 'Road Cycling', 'Road Racing', 'Rock Climbing', 'Rodeo',
+      'Ninjutsu', 'Roller Derby', 'Roller Hockey', 'Roller Skating', 'Rope Skipping', 'Rounders', 'Rowing',
+      'Rugby', 'Rugby League', 'Rugby Sevens', 'Rugby Union', 'Running', 'Sabre Fencing', 'Sailing',
+      'Sambo', 'Sandboarding', 'Savate', 'Schwingen', 'Scootering', 'Scrambling', 'Scuba Diving',
+      'Sculling', 'Sepak Takraw', 'Shinty', 'Shooting', 'Short Track Speed Skating', 'Shot Put',
+      'Show Jumping', 'Shuffleboard', 'Shuttlecock', 'Skateboarding', 'Skating', 'Skeet Shooting',
+      'Skeleton', 'Ski Cross', 'Ski Jumping', 'Ski Mountaineering', 'Ski Touring', 'Skiing', 'Skimboarding',
+      'Skydiving', 'Skyrunning', 'Slacklining', 'Slalom', 'Slalom Canoeing', 'Slalom Skiing', 'Sled Dog Racing',
+      'Sled Hockey', 'Slowpitch Softball', 'Snooker', 'Snorkeling', 'Snow Polo', 'Snow Rugby',
+      'Snow Volleyball', 'Snowboarding', 'Snowkiting', 'Snowmobiling', 'Snowshoeing', 'Soccer', 'Soft Tennis',
+      'Softball', 'Spearfishing', 'Speed Climbing', 'Speed Flying', 'Speed Skating', 'Speed Skiing',
+      'Speedball', 'Speedway', 'Sport Climbing', 'Sport Fishing', 'Sprint', 'Sprint Canoe', 'Sprint Cycling',
+      'Sprinting', 'Squash', 'Stand Up Paddleboarding', 'Steeplechase', 'Stickball', 'Stock Car Racing',
+      'Street Hockey', 'Street Luge', 'Street Workout', 'Streetball', 'Strength Athletics', 'Strongman',
+      'Subbuteo', 'Sumo', 'Sumo Wrestling', 'Super-G', 'Superbike Racing', 'Supercross', 'Surf Kayaking',
+      'Surf Lifesaving', 'Surfing', 'Swimming', 'Sword Fighting', 'Synchronized Skating', 'Synchronized Swimming',
+      'Table Football', 'Table Hockey', 'Table Tennis', 'Taekwondo', 'Tag Rugby', 'Tai Chi', 'Tchoukball',
+      'Team Handball', 'Team Pursuit', 'Tee-Ball', 'Telemark Skiing', 'Ten-Pin Bowling', 'Tennis',
+      'Teqball', 'Tetherball', 'Tae Bo', 'Thai Boxing', 'Three-Day Eventing', 'Three-Point Contest',
+      'Throwing', 'Time Trial', 'Toboggan', 'Touch Football', 'Touch Rugby', 'Touring Car Racing',
+      'Track and Field', 'Track Cycling', 'Trail Running', 'Trampolining', 'Trap Shooting', 'Trial Biking',
+      'Triathlon', 'Triple Jump', 'Tug of War', 'Tumbling', 'Ultimate', 'Ultimate Frisbee', 'Ultramarathon',
+      'Underwater Football', 'Underwater Hockey', 'Underwater Ice Hockey', 'Underwater Orienteering',
+      'Underwater Photography', 'Underwater Rugby', 'Underwater Target Shooting', 'Unicycling',
+      'Vaulting', 'Velodrome', 'Volleyball', 'Wakeboarding', 'Wakeskating', 'Wakesurfing', 'Walking',
+      'Wallball', 'Water Aerobics', 'Water Basketball', 'Water Polo', 'Water Skiing', 'Water Volleyball',
+      'Wave Skiing', 'Weight Throw', 'Weightlifting', 'Wheelchair Basketball', 'Wheelchair Fencing',
+      'Wheelchair Rugby', 'Wheelchair Tennis', 'Whitewater Kayaking', 'Whitewater Rafting', 'Wife Carrying',
+      'Windsurfing', 'Wing Chun', 'Wingsuit Flying', 'Winter Biathlon', 'Winter Swimming', 'Wiffle Ball',
+      'Women Football', 'Woodchopping', 'Wrestling', 'Wushu', 'X Games', 'Xare', 'Xtreme Martial Arts',
+      'Yacht Racing', 'Yachting', 'Yoga', 'Yukigassen', 'Ziplining', 'Zorbing', 'Zumba',
+      // Also include iconic athletes in Sport & Athletics so typing an athlete like "Mike Tyson" in Sports works seamlessly!
+      'Aaron Donald', 'Aaron Judge', 'Aaron Rodgers', 'Abebe Bikila', 'Ada Hegerberg', 'Adam Peaty',
+      'Adesanya', 'Alberto Contador', 'Alberto Tomba', 'Alex Morgan', 'Alex Ovechkin', 'Alexander Karelin',
+      'Alexander Ovechkin', 'Alexander Volkanovski', 'Alexander Zverev', 'Alexis Sanchez', 'Ali',
+      'Allen Iverson', 'Allyson Felix', 'Alonso', 'Amanda Nunes', 'Anderson Silva', 'Andre Agassi',
+      'Andrea Pirlo', 'Andres Iniesta', 'Andy Murray', 'Angel Di Maria', 'Anja Parson', 'Annika Sorenstam',
+      'Anthony Davis', 'Anthony Joshua', 'Antoine Griezmann', 'Antonio Brown', 'AP McCoy', 'Ariarne Titmus',
+      'Arjen Robben', 'Armand Duplantis', 'Arnold Palmer', 'Arnold Schwarzenegger', 'Arthur Ashe',
+      'Aryna Sabalenka', 'Asafa Powell', 'Ash Barty', 'Ashton Eaton', 'Ayrton Senna', 'Babe Didrikson Zaharias',
+      'Babe Ruth', 'badr Hari', 'Barry Bonds', 'Barry Sanders', 'Bartolo Colon', 'Bastian Schweinsteiger',
+      'Beckham', 'Ben Hogan', 'Ben Johnson', 'Ben Roethlisberger', 'Venus Williams', 'Bernard Hopkins',
+      'Bernhard Langer', 'Bethany Hamilton', 'Bill Russell', 'Billie Jean King', 'Billy Jean King',
+      'Birgit Fischer', 'Bjorn Borg', 'Bjorn Daehlie', 'Blake Griffin', 'Bo Jackson', 'Bob Beamon',
+      'Bob Cousy', 'Bob Gibson', 'Bobby Charlton', 'Bobby Fischer', 'Bobby Hull', 'Bobby Moore',
+      'Bobby Orr', 'Bode Miller', 'Bolt', 'Boris Becker', 'Brad Marchand', 'Bradley Wiggins',
+      'Breanna Stewart', 'Brett Favre', 'Brian Lara', 'Brian ODriscoll', 'Brock Lesnar', 'Bruce Jenner',
+      'Bruce Lee', 'Bruno Soares', 'Bryce Harper', 'Buster Douglas', 'Caeleb Dressel', 'Caitlin Clark',
+      'Cal Ripken Jr', 'Cam Newton', 'Cameron Smith', 'Canelo Alvarez', 'Carl Lewis', 'Carli Lloyd',
+      'Carlos Alcaraz', 'Carlos Monzon', 'Carlos Sainz', 'Carlos Tevez', 'Carmelo Anthony',
+      'Caroline Wozniacki', 'Casemiro', 'Cassius Clay', 'Caster Semenya', 'Cathy Freeman',
+      'Cesar Cielo', 'Charles Barkley', 'Charles Leclerc', 'Charles Oliveira', 'Chris Evert',
+      'Chris Froome', 'Chris Hoy', 'Chris Paul', 'Christian Coleman', 'Christian Pulisic',
+      'Christine Sinclair', 'Christiano Ronaldo', 'Chuck Liddell', 'Clara Hughes', 'Claressa Shields',
+      'Claude Makelele', 'Clayton Kershaw', 'Clint Dempsey', 'Clyde Drexler', 'Coby White', 'Coco Gauff',
+      'Cody Rhodes', 'Cole Palmer', 'Collin Morikawa', 'Conor McGregor', 'Connor McDavid', 'Cooper Kupp',
+      'Courtney Dauwalter', 'Cristiano Ronaldo', 'Cruyff', 'Cy Young', 'Daiki Hashimoto', 'Daley Thompson',
+      'Damian Lillard', 'Dan Carter', 'Dan Marino', 'Danica Patrick', 'Daniel Cormier', 'Daniel Ricciardo',
+      'Daniil Medvedev', 'Dario Franchitti', 'David Beckham', 'David Ortiz', 'David Robinson',
+      'David Rudisha', 'David Villa', 'Dawn Fraser', 'Deion Sanders', 'Demetrious Johnson',
+      'Dennis Bergkamp', 'Dennis Rodman', 'Deontay Wilder', 'Derek Jeter', 'Derrick Henry', 'Derrick Rose',
+      'Devin Booker', 'Dick Fosbury', 'Didier Drogba', 'Diego Forlan', 'Diego Maradona', 'Dina Asher-Smith',
+      'Dirk Nowitzki', 'Djokovic', 'Dominik Hasek', 'Dominique Dawes', 'Don Bradman', 'Donovan Bailey',
+      'Draymond Green', 'Drew Brees', 'Dustin Johnson', 'Dustin Poirier', 'Dwyane Wade', 'Earvin Magic Johnson',
+      'Eddy Merckx', 'Eden Hazard', 'Edinson Cavani', 'Edwin Moses', 'Eileen Gu', 'Elaine Thompson-Herah',
+      'Elena Delle Donne', 'Eli Manning', 'Eliud Kipchoge', 'Ellyse Perry', 'Emil Zatopek', 'Emma McKeon',
+      'Emma Raducanu', 'Emerson Fittipaldi', 'Emmitt Smith', 'Eric Cantona', 'Eric Heiden', 'Erling Haaland',
+      'Eusebio', 'Evander Holyfield', 'Evgeni Plushenko', 'Fabian Cancellara', 'Fabio Cannavaro',
+      'Faith Kipyegon', 'Federer', 'Fedor Emelianenko', 'Felix Neureuther', 'Femke Bol', 'Ferenc Puskas',
+      'Fernando Alonso', 'Fernando Torres', 'Filippo Inzaghi', 'Florence Griffith-Joyner', 'Floyd Mayweather',
+      'Floyd Patterson', 'Fran Tarkenton', 'Francesco Totti', 'Francis Ngannou', 'Franco Baresi',
+      'Frank Lampard', 'Frankie Dettori', 'Franz Beckenbauer', 'Franz Klammer', 'Frazier', 'Fred Perry',
+      'Fredrik Ljungberg', 'Fury', 'Gabi Garcia', 'Gabriel Batistuta', 'Gabriel Jesus', 'Gabriela Sabatini',
+      'Gareth Bale', 'Garry Kasparov', 'Gary Lineker', 'Gary Player', 'Gavin Hastings', 'Gemma Spofforth',
+      'Gene Sarazen', 'Gennady Golovkin', 'George Best', 'George Foreman', 'George Russell',
+      'George Weah', 'Georges St-Pierre', 'Geraint Thomas', 'Gerd Muller', 'Giacomo Agostini',
+      'Gianluigi Buffon', 'Giannis Antetokounmpo', 'Gigi Buffon', 'Gilberto Silva', 'Gino Bartali',
+      'Gordie Howe', 'Gordon Banks', 'Greg LeMond', 'Greg Louganis', 'Greg Norman', 'Grete Waitz',
+      'Gretzky', 'Gunnar Nordahl', 'Gustavo Kuerten', 'Haaland', 'Hakeem Olajuwon', 'Haile Gebrselassie',
+      'Hamilton', 'Hank Aaron', 'Hans-Gunnar Liljenwall', 'Hanyu Yuzuru', 'Hardik Pandya', 'Harry Kane',
+      'Hassan Yazdani', 'Hector Camacho', 'Heike Drechsler', 'Helen Wills', 'Helio Castroneves',
+      'Henrik Harlaut', 'Henrik Kristoffersen', 'Henrik Larsson', 'Henrik Lundqvist', 'Henry Armstrong',
+      'Henry Cejudo', 'Hermann Maier', 'Hicham El Guerrouj', 'Hideki Matsui', 'Hideki Matsuyama',
+      'Hikaru Nakamura', 'Hilary Knight', 'Hines Ward', 'Hristo Stoichkov', 'Hulk Hogan', 'Ian Botham',
+      'Ian Rush', 'Ian Thorpe', 'Ibrahimovic', 'Ichiro Suzuki', 'Iga Swiatek', 'Iker Casillas',
+      'Ilia Malinin', 'Imran Khan', 'Ingemar Stenmark', 'Ingebrigtsen', 'Ingrid Kristiansen',
+      'Irene Schouten', 'Isaiah Thomas', 'Isiah Thomas', 'Islam Makhachev', 'Israel Adesanya',
+      'Ivan Lendl', 'Iverson', 'Jack Dempsey', 'Jack Johnson', 'Jack Nicklaus', 'Jackie Joyner-Kersee',
+      'Jackie Robinson', 'Jackie Stewart', 'Jacob Ingebrigtsen', 'Jacques Anquetil', 'Jacques Kallis',
+      'Jadon Sancho', 'Ja Morant', 'Jairzinho', 'Jake LaMotta', 'Jake Paul', 'Jakob Ingebrigtsen',
+      'Jalen Brunson', 'Jalen Hurts', 'Jamal Murray', 'James Harden', 'James Hunt', 'James Rodriguez',
+      'Jamie Vardy', 'Jan Frodeno', 'Jan Ullrich', 'Jan Zelezny', 'Jan-Ove Waldner', 'Jane Torvill',
+      'Janet Evans', 'Janica Kostelic', 'Jannik Sinner', 'Jaromir Jagr', 'Jason Kelce', 'Jason Kidd',
+      'Javier Sotomayor', 'Javier Zanetti', 'Jaylen Brown', 'Jean-Claude Killy', 'Jeff Gordon',
+      'Jenson Button', 'Jerome Boateng', 'Jerry Rice', 'Jerry West', 'Jesse Owens', 'Jessica Ennis-Hill',
+      'Jimmie Johnson', 'Jimmy Butler', 'Jimmy Connors', 'Jim Brown', 'Jim Clark', 'Jim Thorpe',
+      'Joakim Noah', 'Joan Benoit', 'Joao Felix', 'Joaquin Niemann', 'Joe Burrow', 'Joe Calzaghe',
+      'Joe DiMaggio', 'Joe Frazier', 'Joe Greene', 'Joe Louis', 'Joe Montana', 'Joe Namath',
+      'Joe Root', 'Joel Embiid', 'Johan Cruyff', 'Johannes Hoesflot Klaebo', 'Johannes Thingnes Boe',
+      'John Cena', 'John Elway', 'John Higgins', 'John Madden', 'John McEnroe', 'John Stockton',
+      'John Surtees', 'John Terry', 'Johnny Bench', 'Johnny Unitas', 'Johnny Weissmuller', 'Jokic',
+      'Jon Jones', 'Jon Rahm', 'Jonah Lomu', 'Jonas Vingegaard', 'Jonathan Edwards', 'Jonathan Toews',
+      'Jordan', 'Jordan Larson', 'Jordan Love', 'Jordan Spieth', 'Jorge Lorenzo', 'Jose Aldo',
+      'Jose Mourinho', 'Joseph Schooling', 'Josh Allen', 'Joshua Cheptegei', 'Juan Manuel Fangio',
+      'Juan Martin del Potro', 'Juan Soto', 'Jude Bellingham', 'Julian Alaphilippe', 'julie Ertz',
+      'Julio Cesar Chavez', 'Julius Erving', 'Junior Seau', 'Jurgen Klinsmann', 'Jurgen Klopp',
+      'Justin Gaethje', 'Justin Gatlin', 'Justin Jefferson', 'Justin Rose', 'Justin Thomas',
+      'Justine Henin', 'Jutta Leerdam', 'Kaka', 'Kamaru Usman', 'Kamila Valieva', 'Kapil Dev',
+      'Kareem Abdul-Jabbar', 'Karim Benzema', 'Karl Malone', 'Karl-Anthony Towns', 'Karoline Bjerkeli Grovdal',
+      'Karsten Warholm', 'Kasparov', 'Katarina Witt', 'Katie Ledecky', 'Katie Taylor', 'Kawhi Leonard',
+      'Kayla Harrison', 'Kazuchika Okada', 'Keegan Bradley', 'Keisuke Honda', 'Kelly Holmes',
+      'Kelly Slater', 'Kelvin Kiptum', 'Kemba Walker', 'Ken Griffey Jr', 'Ken Norton', 'Kenenisa Bekele',
+      'Kenny Dalglish', 'Kenny Smith', 'Kerri Walsh Jennings', 'Kevin De Bruyne', 'Kevin Durant',
+      'Kevin Garnett', 'Kevin Harvick', 'Kevin Mayer', 'Khabib', 'Khabib Nurmagomedov', 'Khamzat Chimaev',
+      'Kim Clijsters', 'Kim Yuna', 'Kimi Raikkonen', 'King Kenny', 'Kipchoge', 'Kirani James',
+      'Kjetil Andre Aamodt', 'Klaebo', 'Klay Thompson', 'Klitschko', 'Kobe', 'Kobe Bryant',
+      'Kohei Uchimura', 'Koji Murofushi', 'Kostya Tszyu', 'Kris Bryant', 'Kristian Blummenfelt',
+      'Kristof Milak', 'Kurt Angle', 'Kurt Busch', 'Kurt Warner', 'Kylian Mbappe', 'Kyrie Irving',
+      'LaDainian Tomlinson', 'Lamar Jackson', 'Lamine Yamal', 'Lando Norris', 'Lance Armstrong',
+      'Landon Donovan', 'Larry Bird', 'Larry Fitzgerald', 'Larry Holmes', 'Lasha Talakhadze',
+      'Laura Kenny', 'Laure Manaudou', 'Laurent Blanc', 'Laurie Hernandez', 'Leander Paes',
+      'LeBron', 'LeBron James', 'Lee Chong Wei', 'Lennox Lewis', 'Leo Messi', 'Leon Edwards',
+      'Leon Marchand', 'Lev Yashin', 'Lewis Hamilton', 'Lidia Valentin', 'Lilian Thuram', 'Lin Dan',
+      'Lindsey Vonn', 'Lionel Messi', 'Lisa Leslie', 'Lleyton Hewitt', 'Lochte', 'Logan Paul',
+      'Lolo Jones', 'Lomachenko', 'Luka Doncic', 'Luka Modric', 'Luis Figo', 'Luis Suarez',
+      'Luke Littler', 'Lyoto Machida', 'Ma Long', 'MacArthur', 'Mads Pedersen', 'Magdalena Neuner',
+      'Magic Johnson', 'Magnus Carlsen', 'Mahendra Singh Dhoni', 'Maki Tsukada', 'Malik Nabers',
+      'Manon Rheaume', 'Manuel Neuer', 'Manny Pacquiao', 'Manu Ginobili', 'Marc Gasol', 'Marc Marquez',
+      'Marcel Hirscher', 'Marcel Jacobs', 'Marcelo', 'Marco Pantani', 'Marco van Basten',
+      'Marcus Rashford', 'Margaret Court', 'Maria Sharapova', 'Mariano Rivera', 'Marie-Jose Perec',
+      'Mario Andretti', 'Mario Kempes', 'Mario Lemieux', 'Marion Jones', 'Marit Bjorgen',
+      'Mark Cavendish', 'Mark Messier', 'Mark Selby', 'Mark Spitz', 'Mark Webber', 'Marta',
+      'Martin Brodeur', 'Martin Fourcade', 'Martin Odegaard', 'Martina Hingis', 'Martina Navratilova',
+      'Martina Sablikova', 'Marvin Hagler', 'Mary Lou Retton', 'Masahiko Kimura', 'Mat Fraser',
+      'Matej Mohoric', 'Mathew Barzal', 'Mathieu van der Poel', 'Mats Sundin', 'Mats Wilander',
+      'Matt Biondi', 'Matt Fitzpatrick', 'Matthew Stafford', 'Maurice Greene', 'Maurice Richard',
+      'Max Holloway', 'Max Scherzer', 'Max Verstappen', 'Mayweather', 'Mbappe', 'McGregor',
+      'Megan Rapinoe', 'Mesut Ozil', 'Messi', 'Mia Hamm', 'Micah Parsons', 'Michael Ballack',
+      'Michael Bisping', 'Michael Chang', 'Michael Clarke', 'Michael Gross', 'Michael Irvin',
+      'Michael Johnson', 'Michael Jordan', 'Michael Owen', 'Michael Phelps', 'Michael Schumacher',
+      'Michael Smith', 'Michael Spinks', 'Michael Strahan', 'Michael van Gerwen', 'Michael Vick',
+      'Michel Platini', 'Michelle Kwan', 'Michelle Wie', 'Mick Doohan', 'Mickelson', 'Mika Hakkinen',
+      'Mikaela Shiffrin', 'Mike Bossy', 'Mike Krzyzewski', 'Mike Piazza', 'Mike Powell', 'Mike Schmidt',
+      'Mike Singletary', 'Mike Trout', 'Mike Tyson', 'Mikhail Tal', 'Mikkel Hansen', 'Milos Raonic',
+      'Miltiadis Tentoglou', 'Mirko Cro Cop', 'Miroslav Klose', 'Missy Franklin', 'Misty May-Treanor',
+      'Mitch Marner', 'Mo Farah', 'Mo Salah', 'Mohamed Farah', 'Mohamed Salah', 'Mohammad Amir',
+      'Mondo Duplantis', 'Monica Seles', 'Mookie Betts', 'Morgan Hamm', 'Moses Malone', 'MS Dhoni',
+      'Muhammad Ali', 'Muttiah Muralitharan', 'Mutaz Essa Barshim', 'Myles Garrett', 'Nadal',
+      'Nadia Comaneci', 'Nafissatou Thiam', 'Naomi Osaka', 'Nasser Al-Attiyah', 'Nastia Liukin',
+      'Natalie Coughlin', 'Nathan Chen', 'Nathan MacKinnon', 'Neeraj Chopra', 'Neil Robertson',
+      'Nelly Korda', 'Nelson Piquet', 'Nemanja Vidic', 'Neymar', 'Nick Faldo', 'Nick Kyrgios',
+      'Nicklas Lidstrom', 'Nico Rosberg', 'Nicola Adams', 'Nicolas Anelka', 'Nigel Mansell',
+      'Niki Lauda', 'Nikita Kucherov', 'Nikola Jokic', 'Nikola Karabatic', 'Nils van der Poel',
+      'Nino Schurter', 'Noah Lyles', 'Nolan Ryan', 'Nonito Donaire', 'Novak Djokovic', 'Nunes',
+      'Nurmagomedov', 'Nyjah Huston', 'O.J. Simpson', 'Odell Beckham Jr', 'Oksana Chusovitina',
+      'Ole Einar Bjorndalen', 'Ole Gunnar Solskjaer', 'Oleksandr Usyk', 'Olga Korbut', 'Oliver Kahn',
+      'Olivier Giroud', 'Ohtani', 'Omar Sivori', 'Ondrej Nepela', 'Oscar De La Hoya', 'Oscar Piastri',
+      'Oscar Robertson', 'Oscar Schmidt', 'Ovechkin', 'Owen Farrell', 'Paavo Nurmi', 'Pacquiao',
+      'Paddy Pimblett', 'Paige Bueckers', 'Paolo Maldini', 'Paolo Rossi', 'Pascal Siakam',
+      'Pat Rafter', 'Patrick Cantlay', 'Patrick Ewing', 'Patrick Kane', 'Patrick Mahomes',
+      'Patrick Roy', 'Patrick Vieira', 'Pau Gasol', 'Paul Gascoigne', 'Paul George', 'Paul Hamm',
+      'Paul Pogba', 'Paul Scholes', 'Paula Radcliffe', 'Payne Stewart', 'Pedro Martinez', 'Pele',
+      'Penny Oleksiak', 'Pep Guardiola', 'Pernell Whitaker', 'Pernilla Wiberg', 'Pertti Karppinen',
+      'Pete Maravich', 'Pete Rose', 'Pete Sampras', 'Peter Forsberg', 'Peter Great', 'Peter Sagan',
+      'Peter Schmeichel', 'Peter Shilton', 'Peter Snell', 'Peter Wright', 'Petr Cech',
+      'Petra Kvitova', 'Petra Vlhova', 'Petter Northug', 'Peyton Manning', 'Phelps', 'Phil Esposito',
+      'Phil Foden', 'Phil Hellmuth', 'Phil Jackson', 'Phil Mickelson', 'Phil Taylor', 'Philip Lahm',
+      'Philipp Lahm', 'Pierre Gasly', 'Pierre-Emerick Aubameyang', 'Pieter van den Hoogenband',
+      'Pirlo', 'PK Subban', 'primoz Roglic', 'Puskas', 'Quinton Jackson', 'Rachael Blackmore',
+      'Radamel Falcao', 'Rafael Leao', 'Rafael Nadal', 'raghib Ismail', 'Raheem Sterling',
+      'Ralf Schumacher', 'Randy Johnson', 'Randy Moss', 'Randy Orton', 'Raul', 'Ray Allen',
+      'Ray Bourque', 'Ray Leonard', 'Ray Lewis', 'Ray Robinson', 'Raymond van Barneveld',
+      'Rebecca Adlington', 'Reggie Bush', 'Reggie Jackson', 'Reggie Miller', 'Reggie White',
+      'Rebeca Andrade', 'Remco Evenepoel', 'Rene Higuita', 'Rene Lacoste', 'Rens Blom',
+      'Rey Mysterio', 'Ric Flair', 'Ricardo Kaka', 'Rich Froning', 'Richard Petty', 'Richie McCaw',
+      'Rickey Henderson', 'Ricky Hatton', 'Ricky Ponting', 'Riddick Bowe', 'Rivaldo', 'Rob Gronkowski',
+      'Robbie Keane', 'Robert Kubica', 'Robert Lewandowski', 'Robert Parish', 'Roberto Baggio',
+      'Roberto Carlos', 'Roberto Clemente', 'Roberto Duran', 'Robin van Persie', 'Robinson',
+      'Rockne', 'Rocky Marciano', 'Rod Laver', 'Rodman', 'Rodri', 'Rodrigo De Paul', 'Roger Bannister',
+      'Roger Clemens', 'Roger Federer', 'Roger Milla', 'Roger Staubach', 'Roman Reigns', 'Romario',
+      'Romelu Lukaku', 'Ron Artest', 'Ronald Koeman', 'Ronaldinho', 'Ronaldo', 'Ronda Rousey',
+      'Ronan O Gara', 'Ronnie Coleman', 'Ronnie O Sullivan', 'Rory McIlroy', 'Rose Namajunas',
+      'Ross Chastain', 'Roy Emerson', 'Roy Jones Jr', 'Roy Keane', 'Ruud Gullit', 'Ruud van Nistelrooy',
+      'Rui Hachimura', 'Russell Westbrook', 'Russell Wilson', 'Ruta Meilutyte', 'Ruth', 'Ryan Crouser',
+      'Ryan Giggs', 'Ryan Lochte', 'Ryoyu Kobayashi', 'Sabrina Ionescu', 'Sachin Tendulkar',
+      'Sadio Mane', 'Saquon Barkley', 'Sarah Sjostrom', 'Saul Canelo Alvarez', 'Scott Dixon',
+      'Scott Hamilton', 'Scottie Pippen', 'Scottie Scheffler', 'Sean O Malley', 'Sebastian Coe',
+      'Sebastian Vettel', 'Seve Ballesteros', 'Shane Lowry', 'Shane Mosley', 'Shane Warne',
+      'Shannon Miller', 'Shai Gilgeous-Alexander', 'Shakur Stevenson', 'Shaquille O Neal',
+      'Shaun Livingston', 'Shaun Pollock', 'Shaun White', 'Shawn Johnson', 'Shawn Michaels',
+      'Shelly-Ann Fraser-Pryce', 'Shericka Jackson', 'Shiffrin', 'Shohei Ohtani', 'Shoaib Akhtar',
+      'Sidney Crosby', 'Sifan Hassan', 'Simona Halep', 'Simone Biles', 'Simone Manuel', 'Sir Chris Hoy',
+      'Sixten Jernberg', 'Sky Brown', 'Sloane Stephens', 'Smokin Joe Frazier', 'Sofia Goggia',
+      'Son Heung-min', 'Sonny Liston', 'Sophie Devine', 'Sourav Ganguly', 'Stamkos', 'Stan Mikita',
+      'Stan Smith', 'Stan Wawrinka', 'Stefan Edberg', 'Stefan Kraft', 'Stefanie Graf', 'Steffi Graf',
+      'Steph Curry', 'Stephen Curry', 'Stephen Hendry', 'Sterling Moss', 'Steve Nash', 'Steve Ovett',
+      'Steve Prefontaine', 'Steve Redgrave', 'Steve Smith', 'Steve Steve', 'Steve Waugh',
+      'Steve Yzerman', 'Steven Gerrard', 'Steven Stamkos', 'Stewart', 'Stipe Miocic', 'Stirling Moss',
+      'Stone Cold Steve Austin', 'Stuart Broad', 'Sue Bird', 'Sugar Ray Leonard', 'Sugar Ray Robinson',
+      'Summer McIntosh', 'Sun Yang', 'Sunil Chhetri', 'Sunisa Lee', 'Surya Bonaly', 'Sven Kramer',
+      'Sydney McLaughlin-Levrone', 'Sylvester Stallone', 'Tadej Pogacar', 'Tai Tzu-ying',
+      'Takanori Nagase', 'Takuma Sato', 'Tamika Catchings', 'Tanni Grey-Thompson', 'Tara Lipinski',
+      'Tarjei Boe', 'Tyson', 'Tyson Fury', 'Tyson Gay', 'Usain Bolt', 'Usyk', 'Valentino Rossi',
+      'Valerie Adams', 'Valtteri Bottas', 'Van Basten', 'Van Dijk', 'Van Nistelrooy', 'Van Persie',
+      'Vasyl Lomachenko', 'Verstappen', 'Vettel', 'Victor Axelsen', 'Victor Wembanyama',
+      'Victoria Azarenka', 'Vijay Singh', 'Viktor Axelsen', 'Viktor Hovland', 'Vince Carter',
+      'Vince Lombardi', 'Vincent Kompany', 'Vinicius Junior', 'Virat Kohli', 'Virgil van Dijk',
+      'Vitali Klitschko', 'Vitor Belfort', 'Viv Richards', 'Vladimir Klitschko', 'Vladislav Tretiak',
+      'Von Miller', 'Vonn', 'Wladimir Klitschko', 'Walter Payton', 'Wanderlei Silva', 'Warren Moon',
+      'Wasim Akram', 'Wayde van Niekerk', 'Wayne Gretzky', 'Wayne Rooney', 'Webb Simpson',
+      'Wembanyama', 'Wendy Holdener', 'Wes Unseld', 'Westbrook', 'White', 'Wilma Rudolph',
+      'Willie Mays', 'Willie Shoemaker', 'Wilson Kipketer', 'Wilt Chamberlain', 'Wout van Aert',
+      'Woods', 'Xander Schauffele', 'Xavi', 'Xavi Hernandez', 'Yao Ming', 'Yaroslava Mahuchikh',
+      'Yasin', 'Yasuhiro Yamashita', 'Yelena Isinbayeva', 'Yohan Blake', 'Yogi Berra', 'Yordenis Ugas',
+      'Yulimar Rojas', 'Yuna Kim', 'Yuto Horigome', 'Yuzuru Hanyu', 'Zach LaVine', 'Zack Wheeler',
+      'Zara Tindall', 'Zdeno Chara', 'Zico', 'Zidane', 'Zinedine Zidane', 'Zion Williamson',
+      'Zlatan', 'Zlatan Ibrahimovic', 'Zoe Sadowski-Synnott',
     ],
   },
   gaming: {
@@ -508,8 +755,751 @@ export const STATIC_CATEGORIES = Object.freeze({
 });
 
 /**
+ * Built-in comprehensive A–Z rosters for Athletes, Actors & Filmmakers, and Musicians & Singers
+ * so that even before/alongside `people.json` and online search, players have hundreds of iconic
+ * names across every letter of the alphabet (including full names and surname aliases).
+ */
+export const STATIC_ATHLETES = Object.freeze([
+  'Aaron Donald', 'Aaron Judge', 'Aaron Rodgers', 'Abebe Bikila', 'Ada Hegerberg', 'Adam Peaty',
+  'Alberto Contador', 'Alberto Tomba', 'Alex Morgan', 'Alexander Karelin', 'Alexander Ovechkin',
+  'Alexander Volkanovski', 'Alexander Zverev', 'Alexis Sanchez', 'Allen Iverson', 'Allyson Felix',
+  'Amanda Nunes', 'Anderson Silva', 'Andre Agassi', 'Andrea Pirlo', 'Andres Iniesta', 'Andy Murray',
+  'Angel Di Maria', 'Anja Parson', 'Annika Sorenstam', 'Anthony Davis', 'Anthony Edwards',
+  'Anthony Joshua', 'Antoine Griezmann', 'Antonio Brown', 'Ariarne Titmus', 'Arjen Robben',
+  'Armand Duplantis', 'Arnold Palmer', 'Arthur Ashe', 'Aryna Sabalenka', 'Asafa Powell', 'Ash Barty',
+  'Ashton Eaton', 'Auston Matthews', 'Ayrton Senna', 'Babe Didrikson Zaharias', 'Babe Ruth',
+  'Badr Hari', 'Barry Bonds', 'Barry Sanders', 'Bastian Schweinsteiger', 'Ben Hogan', 'Ben Johnson',
+  'Ben Roethlisberger', 'Ben Shelton', 'Bernard Hopkins', 'Bernhard Langer', 'Bethany Hamilton',
+  'Bill Russell', 'Billie Jean King', 'Birgit Fischer', 'Bjorn Borg', 'Bjorn Daehlie', 'Blake Griffin',
+  'Bo Jackson', 'Bob Beamon', 'Bob Cousy', 'Bob Gibson', 'Bobby Charlton', 'Bobby Fischer',
+  'Bobby Hull', 'Bobby Moore', 'Bobby Orr', 'Bode Miller', 'Boris Becker', 'Brad Marchand',
+  'Bradley Wiggins', 'Breanna Stewart', 'Brett Favre', 'Brian Lara', 'Brock Lesnar', 'Brooks Koepka',
+  'Bruce Lee', 'Bryce Harper', 'Bukayo Saka', 'Buster Douglas', 'Caeleb Dressel', 'Caitlin Clark',
+  'Cal Ripken Jr', 'Cale Makar', 'Cam Newton', 'Cameron Smith', 'Canelo Alvarez', 'Carl Lewis',
+  'Carli Lloyd', 'Carlos Alcaraz', 'Carlos Monzon', 'Carlos Sainz', 'Carlos Tevez', 'Carmelo Anthony',
+  'Caroline Wozniacki', 'Casemiro', 'Cassius Clay', 'Caster Semenya', 'Cathy Freeman', 'Cesar Cielo',
+  'Charles Barkley', 'Charles Leclerc', 'Charles Oliveira', 'Chris Evert', 'Chris Froome', 'Chris Hoy',
+  'Chris Paul', 'Christian Coleman', 'Christian McCaffrey', 'Christian Pulisic', 'Christine Sinclair',
+  'Chuck Liddell', 'Clara Hughes', 'Claressa Shields', 'Claude Makelele', 'Clayton Kershaw',
+  'Clint Dempsey', 'Clyde Drexler', 'Coco Gauff', 'Cole Palmer', 'Collin Morikawa', 'Conor McGregor',
+  'Connor Bedard', 'Connor McDavid', 'Cooper Kupp', 'Courtney Dauwalter', 'Cristiano Ronaldo',
+  'Cy Young', 'Daiki Hashimoto', 'Daley Thompson', 'Damian Lillard', 'Dan Carter', 'Dan Marino',
+  'Danica Patrick', 'Daniel Cormier', 'Daniel Ricciardo', 'Daniil Medvedev', 'David Beckham',
+  'David Ortiz', 'David Pastrnak', 'David Robinson', 'David Rudisha', 'David Villa', 'Dawn Fraser',
+  'Deion Sanders', 'Demetrious Johnson', 'Dennis Bergkamp', 'Dennis Rodman', 'Deontay Wilder',
+  'Derek Jeter', 'Derrick Henry', 'Derrick Rose', 'Devin Booker', 'Dick Fosbury', 'Didier Drogba',
+  'Diego Forlan', 'Diego Maradona', 'Dina Asher-Smith', 'Dirk Nowitzki', 'Dominik Hasek',
+  'Dominique Dawes', 'Don Bradman', 'Donovan Bailey', 'Donovan Mitchell', 'Draymond Green',
+  'Drew Brees', 'Dricus Du Plessis', 'Dustin Johnson', 'Dustin Poirier', 'Dwyane Wade', 'Eddy Merckx',
+  'Eden Hazard', 'Edinson Cavani', 'Edwin Moses', 'Eileen Gu', 'Elaine Thompson-Herah',
+  'Elena Delle Donne', 'Eli Manning', 'Eliud Kipchoge', 'Ellyse Perry', 'Emil Zatopek',
+  'Emiliano Martinez', 'Emma McKeon', 'Emma Raducanu', 'Emerson Fittipaldi', 'Emmitt Smith',
+  'Eric Cantona', 'Eric Heiden', 'Erling Haaland', 'Eusebio', 'Evander Holyfield', 'Evgeni Plushenko',
+  'Fabian Cancellara', 'Fabio Cannavaro', 'Faith Kipyegon', 'Fedor Emelianenko', 'Femke Bol',
+  'Ferenc Puskas', 'Fernando Alonso', 'Fernando Tatis Jr', 'Fernando Torres', 'Filippo Inzaghi',
+  'Florence Griffith-Joyner', 'Floyd Mayweather', 'Floyd Patterson', 'Fran Tarkenton',
+  'Francesco Bagnaia', 'Francesco Totti', 'Francis Ngannou', 'Franco Baresi', 'Frank Lampard',
+  'Frankie Dettori', 'Franz Beckenbauer', 'Franz Klammer', 'Fred Perry', 'Fredrik Ljungberg',
+  'Gabriel Batistuta', 'Gabriel Jesus', 'Gabriela Sabatini', 'Gareth Bale', 'Garry Kasparov',
+  'Gary Lineker', 'Gary Payton', 'Gary Player', 'Gennady Golovkin', 'George Best', 'George Foreman',
+  'George Gervin', 'George Kittle', 'George Russell', 'George Weah', 'Georges St-Pierre',
+  'Geraint Thomas', 'Gerd Muller', 'Gervonta Davis', 'Giacomo Agostini', 'Gianluigi Buffon',
+  'Giannis Antetokounmpo', 'Gilberto Silva', 'Gino Bartali', 'Gordie Howe', 'Gordon Banks',
+  'Greg LeMond', 'Greg Louganis', 'Greg Norman', 'Grete Waitz', 'Gunnar Nordahl', 'Gustavo Kuerten',
+  'Hakeem Olajuwon', 'Haile Gebrselassie', 'Hank Aaron', 'Harry Kane', 'Hassan Yazdani',
+  'Hector Camacho', 'Heike Drechsler', 'Helen Wills', 'Helio Castroneves', 'Henrik Kristoffersen',
+  'Henrik Larsson', 'Henrik Lundqvist', 'Henry Armstrong', 'Henry Cejudo', 'Hermann Maier',
+  'Hicham El Guerrouj', 'Hideki Matsui', 'Hideki Matsuyama', 'Hikaru Nakamura', 'Hilary Knight',
+  'Hristo Stoichkov', 'Hulk Hogan', 'Ian Botham', 'Ian Rush', 'Ian Thorpe', 'Ichiro Suzuki',
+  'Iga Swiatek', 'Iker Casillas', 'Ilia Malinin', 'Ilia Topuria', 'Imran Khan', 'Ingemar Stenmark',
+  'Ingrid Kristiansen', 'Irene Schouten', 'Isiah Thomas', 'Islam Makhachev', 'Israel Adesanya',
+  'Ivan Lendl', 'Ja Morant', 'Jack Dempsey', 'Jack Eichel', 'Jack Grealish', 'Jack Hughes',
+  'Jack Johnson', 'Jack Nicklaus', 'Jackie Joyner-Kersee', 'Jackie Robinson', 'Jackie Stewart',
+  'Jacques Anquetil', 'Jacques Kallis', 'Jadon Sancho', 'Jairzinho', 'Jake LaMotta', 'Jake Paul',
+  'Jakob Ingebrigtsen', 'Jalen Brunson', 'Jalen Hurts', 'Jamal Murray', 'James Harden', 'James Hunt',
+  'James Rodriguez', 'Jamie Vardy', 'Jan Frodeno', 'Jan Ullrich', 'Jan Zelezny', 'Jan-Ove Waldner',
+  'Janet Evans', 'Janica Kostelic', 'Jannik Sinner', 'Jaromir Jagr', 'Jason Kelce', 'Jason Kidd',
+  'Javier Sotomayor', 'Javier Zanetti', 'Jaylen Brown', 'Jayson Tatum', 'Jean-Claude Killy',
+  'Jeff Gordon', 'Jenson Button', 'Jerome Boateng', 'Jerry Rice', 'Jerry West', 'Jesse Owens',
+  'Jessica Ennis-Hill', 'Jim Brown', 'Jim Clark', 'Jim Courier', 'Jim Thorpe', 'Jimmie Johnson',
+  'Jimmy Butler', 'Jimmy Connors', 'Joan Benoit', 'Joao Felix', 'Joe Burrow', 'Joe Calzaghe',
+  'Joe DiMaggio', 'Joe Frazier', 'Joe Louis', 'Joe Montana', 'Joe Namath', 'Joe Root', 'Joel Embiid',
+  'Johan Cruyff', 'Johannes Hoesflot Klaebo', 'Johannes Thingnes Boe', 'John Cena', 'John Elway',
+  'John Higgins', 'John Madden', 'John McEnroe', 'John Stockton', 'John Surtees', 'John Terry',
+  'Johnny Bench', 'Johnny Unitas', 'Johnny Weissmuller', 'Jon Jones', 'Jon Rahm', 'Jonah Lomu',
+  'Jonas Vingegaard', 'Jonathan Edwards', 'Jonathan Toews', 'Jordan Love', 'Jordan Spieth',
+  'Jorge Lorenzo', 'Jose Aldo', 'Jose Mourinho', 'Joseph Schooling', 'Josh Allen', 'Joshua Cheptegei',
+  'Jrue Holiday', 'Juan Manuel Fangio', 'Juan Martin del Potro', 'Juan Soto', 'Jude Bellingham',
+  'Julian Alaphilippe', 'Julio Cesar Chavez', 'Julius Erving', 'Jurgen Klinsmann', 'Jurgen Klopp',
+  'Justin Gaethje', 'Justin Gatlin', 'Justin Jefferson', 'Justin Rose', 'Justin Thomas',
+  'Justine Henin', 'Jutta Leerdam', 'Kaka', 'Kamaru Usman', 'Kapil Dev', 'Kareem Abdul-Jabbar',
+  'Karim Benzema', 'Karl Malone', 'Karl-Anthony Towns', 'Karsten Warholm', 'Katarina Witt',
+  'Katie Ledecky', 'Katie Taylor', 'Kawhi Leonard', 'Kayla Harrison', 'Kazuchika Okada',
+  'Keisuke Honda', 'Kelly Holmes', 'Kelly Slater', 'Kelvin Kiptum', 'Ken Griffey Jr', 'Ken Norton',
+  'Kenenisa Bekele', 'Kenny Dalglish', 'Kerri Walsh Jennings', 'Kevin De Bruyne', 'Kevin Durant',
+  'Kevin Garnett', 'Kevin Harvick', 'Kevin Mayer', 'Khabib Nurmagomedov', 'Khamzat Chimaev',
+  'Kim Clijsters', 'Kim Yuna', 'Kimi Raikkonen', 'Kirani James', 'Kjetil Andre Aamodt',
+  'Klay Thompson', 'Kobe Bryant', 'Kohei Uchimura', 'Koji Murofushi', 'Kostya Tszyu',
+  'Kristian Blummenfelt', 'Kristof Milak', 'Kurt Angle', 'Kurt Warner', 'Kylian Mbappe',
+  'Kyrie Irving', 'LaDainian Tomlinson', 'Lamar Jackson', 'Lamine Yamal', 'Lando Norris',
+  'Lance Armstrong', 'Landon Donovan', 'Larry Bird', 'Larry Fitzgerald', 'Larry Holmes',
+  'Lasha Talakhadze', 'Laura Kenny', 'Laure Manaudou', 'Laurent Blanc', 'Laurie Hernandez',
+  'Leander Paes', 'LeBron James', 'Lee Chong Wei', 'Lennox Lewis', 'Leon Edwards', 'Leon Marchand',
+  'Lev Yashin', 'Lewis Hamilton', 'Lidia Valentin', 'Lilian Thuram', 'Lin Dan', 'Lindsey Vonn',
+  'Lionel Messi', 'Lisa Leslie', 'Lleyton Hewitt', 'Logan Paul', 'Lolo Jones', 'Luka Doncic',
+  'Luka Modric', 'Luis Figo', 'Luis Suarez', 'Luke Littler', 'Lyoto Machida', 'Ma Long',
+  'Mads Pedersen', 'Magdalena Neuner', 'Magic Johnson', 'Magnus Carlsen', 'Mahendra Singh Dhoni',
+  'Manuel Neuer', 'Manny Pacquiao', 'Manu Ginobili', 'Marc Gasol', 'Marc Marquez', 'Marcel Hirscher',
+  'Marcel Jacobs', 'Marcelo', 'Marco Pantani', 'Marco van Basten', 'Marcus Rashford',
+  'Margaret Court', 'Maria Sharapova', 'Mariano Rivera', 'Marie-Jose Perec', 'Mario Andretti',
+  'Mario Kempes', 'Mario Lemieux', 'Marion Jones', 'Marit Bjorgen', 'Mark Cavendish', 'Mark Messier',
+  'Mark Selby', 'Mark Spitz', 'Mark Webber', 'Marta', 'Martin Brodeur', 'Martin Fourcade',
+  'Martin Odegaard', 'Martina Hingis', 'Martina Navratilova', 'Martina Sablikova', 'Marvin Hagler',
+  'Mary Lou Retton', 'Masahiko Kimura', 'Mat Fraser', 'Matej Mohoric', 'Mathew Barzal',
+  'Mathieu van der Poel', 'Mats Sundin', 'Mats Wilander', 'Matt Biondi', 'Matt Fitzpatrick',
+  'Matthew Stafford', 'Maurice Greene', 'Maurice Richard', 'Max Holloway', 'Max Scherzer',
+  'Max Verstappen', 'Megan Rapinoe', 'Mesut Ozil', 'Mia Hamm', 'Micah Parsons', 'Michael Ballack',
+  'Michael Bisping', 'Michael Chang', 'Michael Clarke', 'Michael Gross', 'Michael Irvin',
+  'Michael Johnson', 'Michael Jordan', 'Michael Owen', 'Michael Phelps', 'Michael Schumacher',
+  'Michael Smith', 'Michael Spinks', 'Michael Strahan', 'Michael van Gerwen', 'Michael Vick',
+  'Michel Platini', 'Michelle Kwan', 'Michelle Wie', 'Mick Doohan', 'Mika Hakkinen',
+  'Mikaela Shiffrin', 'Mike Bossy', 'Mike Krzyzewski', 'Mike Piazza', 'Mike Powell', 'Mike Schmidt',
+  'Mike Singletary', 'Mike Trout', 'Mike Tyson', 'Mikhail Tal', 'Mikkel Hansen', 'Milos Raonic',
+  'Miltiadis Tentoglou', 'Mirko Cro Cop', 'Miroslav Klose', 'Missy Franklin', 'Misty May-Treanor',
+  'Mitch Marner', 'Mo Farah', 'Mo Salah', 'Mohamed Farah', 'Mohamed Salah', 'Mondo Duplantis',
+  'Monica Seles', 'Mookie Betts', 'Moses Malone', 'MS Dhoni', 'Muhammad Ali', 'Muttiah Muralitharan',
+  'Mutaz Essa Barshim', 'Myles Garrett', 'Nadia Comaneci', 'Nafissatou Thiam', 'Naomi Osaka',
+  'Nasser Al-Attiyah', 'Nastia Liukin', 'Natalie Coughlin', 'Nathan Chen', 'Nathan MacKinnon',
+  'Neeraj Chopra', 'Neil Robertson', 'Nelly Korda', 'Nelson Piquet', 'Nemanja Vidic', 'Neymar',
+  'Nick Faldo', 'Nick Kyrgios', 'Nicklas Lidstrom', 'Nico Rosberg', 'Nicola Adams', 'Nicolas Anelka',
+  'Nigel Mansell', 'Niki Lauda', 'Nikita Kucherov', 'Nikola Jokic', 'Nikola Karabatic',
+  'Nils van der Poel', 'Nino Schurter', 'Noah Lyles', 'Nolan Ryan', 'Nonito Donaire',
+  'Novak Djokovic', 'Nyjah Huston', 'Odell Beckham Jr', 'Oksana Chusovitina', 'Ole Einar Bjorndalen',
+  'Ole Gunnar Solskjaer', 'Oleksandr Usyk', 'Olga Korbut', 'Oliver Kahn', 'Olivier Giroud',
+  'Omar Sivori', 'Oscar De La Hoya', 'Oscar Piastri', 'Oscar Robertson', 'Oscar Schmidt',
+  'Owen Farrell', 'Paavo Nurmi', 'Paddy Pimblett', 'Paige Bueckers', 'Paolo Maldini', 'Paolo Rossi',
+  'Pascal Siakam', 'Pat Rafter', 'Patrick Cantlay', 'Patrick Ewing', 'Patrick Kane',
+  'Patrick Mahomes', 'Patrick Roy', 'Patrick Vieira', 'Pau Gasol', 'Paul Gascoigne', 'Paul George',
+  'Paul Pogba', 'Paul Scholes', 'Paula Radcliffe', 'Payne Stewart', 'Pedro Martinez', 'Pele',
+  'Penny Oleksiak', 'Pep Guardiola', 'Pernell Whitaker', 'Pernilla Wiberg', 'Pete Maravich',
+  'Pete Rose', 'Pete Sampras', 'Peter Forsberg', 'Peter Sagan', 'Peter Schmeichel', 'Peter Shilton',
+  'Peter Snell', 'Peter Wright', 'Petr Cech', 'Petra Kvitova', 'Petra Vlhova', 'Petter Northug',
+  'Peyton Manning', 'Phil Esposito', 'Phil Foden', 'Phil Jackson', 'Phil Mickelson', 'Phil Taylor',
+  'Philipp Lahm', 'Pierre Gasly', 'Pierre-Emerick Aubameyang', 'Pieter van den Hoogenband',
+  'PK Subban', 'Primoz Roglic', 'Quinton Jackson', 'Rachael Blackmore', 'Radamel Falcao',
+  'Rafael Leao', 'Rafael Nadal', 'Raheem Sterling', 'Ralf Schumacher', 'Randy Johnson', 'Randy Moss',
+  'Randy Orton', 'Raul', 'Ray Allen', 'Ray Bourque', 'Ray Lewis', 'Raymond van Barneveld',
+  'Rebecca Adlington', 'Rebeca Andrade', 'Reggie Bush', 'Reggie Jackson', 'Reggie Miller',
+  'Reggie White', 'Remco Evenepoel', 'Rene Higuita', 'Rene Lacoste', 'Rey Mysterio', 'Ric Flair',
+  'Rich Froning', 'Richard Petty', 'Richie McCaw', 'Rickey Henderson', 'Ricky Hatton',
+  'Ricky Ponting', 'Riddick Bowe', 'Rivaldo', 'Rob Gronkowski', 'Robbie Keane', 'Robert Kubica',
+  'Robert Lewandowski', 'Robert Parish', 'Roberto Baggio', 'Roberto Carlos', 'Roberto Clemente',
+  'Roberto Duran', 'Robin van Persie', 'Rocky Marciano', 'Rod Laver', 'Rodri', 'Rodrigo De Paul',
+  'Roger Bannister', 'Roger Clemens', 'Roger Federer', 'Roger Milla', 'Roger Staubach',
+  'Roman Reigns', 'Romario', 'Romelu Lukaku', 'Ronald Koeman', 'Ronaldinho', 'Ronda Rousey',
+  'Ronnie Coleman', 'Ronnie OSullivan', 'Rory McIlroy', 'Rose Namajunas', 'Roy Emerson',
+  'Roy Jones Jr', 'Roy Keane', 'Ruud Gullit', 'Ruud van Nistelrooy', 'Rui Hachimura',
+  'Russell Westbrook', 'Russell Wilson', 'Ruta Meilutyte', 'Ryan Crouser', 'Ryan Giggs',
+  'Ryan Lochte', 'Ryoyu Kobayashi', 'Sabrina Ionescu', 'Sachin Tendulkar', 'Sadio Mane',
+  'Saquon Barkley', 'Sarah Sjostrom', 'Saul Canelo Alvarez', 'Scott Dixon', 'Scott Hamilton',
+  'Scottie Pippen', 'Scottie Scheffler', 'Sean OMalley', 'Sebastian Coe', 'Sebastian Vettel',
+  'Serena Williams', 'Sergio Aguero', 'Sergio Busquets', 'Sergio Perez', 'Sergio Ramos',
+  'Seve Ballesteros', 'Shane Lowry', 'Shane Mosley', 'Shane Warne', 'Shannon Miller',
+  'Shai Gilgeous-Alexander', 'Shakur Stevenson', 'Shaquille ONeal', 'Shaun White', 'Shawn Johnson',
+  'Shawn Michaels', 'Shelly-Ann Fraser-Pryce', 'Shericka Jackson', 'Shohei Ohtani', 'Shoaib Akhtar',
+  'Sidney Crosby', 'Sifan Hassan', 'Simona Halep', 'Simone Biles', 'Simone Manuel', 'Sir Chris Hoy',
+  'Sky Brown', 'Sloane Stephens', 'Sofia Goggia', 'Son Heung-min', 'Sonny Liston', 'Sourav Ganguly',
+  'Stan Mikita', 'Stan Smith', 'Stan Wawrinka', 'Stefan Edberg', 'Stefan Kraft', 'Steffi Graf',
+  'Stephen Curry', 'Stephen Hendry', 'Steve Nash', 'Steve Ovett', 'Steve Prefontaine',
+  'Steve Redgrave', 'Steve Smith', 'Steve Waugh', 'Steve Yzerman', 'Steven Gerrard',
+  'Steven Stamkos', 'Stipe Miocic', 'Stirling Moss', 'Stone Cold Steve Austin', 'Stuart Broad',
+  'Sue Bird', 'Sugar Ray Leonard', 'Sugar Ray Robinson', 'Summer McIntosh', 'Sun Yang',
+  'Sunil Chhetri', 'Sunisa Lee', 'Surya Bonaly', 'Sven Kramer', 'Sydney McLaughlin-Levrone',
+  'Tadej Pogacar', 'Tai Tzu-ying', 'Takanori Nagase', 'Takuma Sato', 'Tamika Catchings',
+  'Tanni Grey-Thompson', 'Tara Lipinski', 'Tarjei Boe', 'Teddy Riner', 'Teofimo Lopez',
+  'Terence Crawford', 'Thierry Henry', 'Thomas Hearns', 'Thomas Muller', 'Tadej Pogacar',
+  'Tiger Woods', 'Tim Duncan', 'Tim Tebow', 'Timo Boll', 'Tirunesh Dibaba', 'Tito Ortiz',
+  'TJ Dillashaw', 'Tobin Heath', 'Tom Brady', 'Tom Daley', 'Tom Finney', 'Tom Kim', 'Tom Seaver',
+  'Tom Watson', 'Tommy Fleetwood', 'Tommy Hearns', 'Toni Kroos', 'Tony Gwynn', 'Tony Hawk',
+  'Tony Parker', 'Tony Romo', 'Torvill and Dean', 'Tracy Austin', 'Tracy McGrady', 'Trae Young',
+  'Travis Kelce', 'Trent Alexander-Arnold', 'Trevor Lawrence', 'Triple H', 'Troy Aikman',
+  'Troy Polamalu', 'Tua Tagovailoa', 'Ty Cobb', 'Tyreek Hill', 'Tyson Fury', 'Tyson Gay',
+  'Uli Hoeness', 'Ulrich Salchow', 'Umar Nurmagomedov', 'Unai Emery', 'Usain Bolt', 'Uta Abe',
+  'Uwe Seeler', 'Valentino Rossi', 'Valerie Adams', 'Valtteri Bottas', 'Vasyl Lomachenko',
+  'Venus Williams', 'Victor Osimhen', 'Victor Wembanyama', 'Victoria Azarenka', 'Vijay Singh',
+  'Viktor Axelsen', 'Viktor Gyokeres', 'Viktor Hovland', 'Vince Carter', 'Vince Lombardi',
+  'Vincent Kompany', 'Vinicius Junior', 'Virat Kohli', 'Virgil van Dijk', 'Vitali Klitschko',
+  'Vitor Belfort', 'Viv Richards', 'Vladimir Klitschko', 'Vladislav Tretiak', 'Von Miller',
+  'Wladimir Klitschko', 'Walter Payton', 'Wanderlei Silva', 'Warren Moon', 'Wasim Akram',
+  'Wayde van Niekerk', 'Wayne Gretzky', 'Wayne Rooney', 'Wendy Holdener', 'Wes Unseld',
+  'Wilma Rudolph', 'Willie Mays', 'Willie Shoemaker', 'Wilson Kipketer', 'Wilt Chamberlain',
+  'Wout van Aert', 'Xabi Alonso', 'Xander Schauffele', 'Xavi', 'Xavi Hernandez', 'Xherdan Shaqiri',
+  'Yao Ming', 'Yaroslava Mahuchikh', 'Yasuhiro Yamashita', 'Yelena Isinbayeva', 'Yohan Blake',
+  'Yogi Berra', 'Yordenis Ugas', 'Yulimar Rojas', 'Yuna Kim', 'Yuto Horigome', 'Yuzuru Hanyu',
+  'Zach LaVine', 'Zack Wheeler', 'Zara Tindall', 'Zdeno Chara', 'Zico', 'Zinedine Zidane',
+  'Zion Williamson', 'Zlatan Ibrahimovic', 'Zoe Sadowski-Synnott',
+]);
+
+export const STATIC_ACTORS = Object.freeze([
+  'Aaron Paul', 'Aaron Taylor-Johnson', 'Adam Driver', 'Adam Sandler', 'Adrien Brody', 'Al Pacino',
+  'Alan Rickman', 'Alec Baldwin', 'Alec Guinness', 'Alfred Hitchcock', 'Alicia Vikander',
+  'Amanda Seyfried', 'Amy Adams', 'Ana de Armas', 'Andrew Garfield', 'Andy Serkis', 'Angela Bassett',
+  'Angelina Jolie', 'Anjelica Huston', 'Anna Kendrick', 'Anne Hathaway', 'Anthony Hopkins',
+  'Anthony Mackie', 'Antonio Banderas', 'Anya Taylor-Joy', 'Arnold Schwarzenegger', 'Aubrey Plaza',
+  'Audrey Hepburn', 'Austin Butler', 'Ava Gardner', 'awkwafina', 'Barbara Stanwyck', 'Barry Keoghan',
+  'Ben Affleck', 'Ben Kingsley', 'Ben Stiller', 'Benedict Cumberbatch', 'Benicio del Toro',
+  'Bette Davis', 'Betty White', 'Bill Hader', 'Bill Murray', 'Bill Nighy', 'Bill Skarsgard',
+  'Billy Bob Thornton', 'Billy Crystal', 'Billy Wilder', 'Blake Lively', 'Bob Odenkirk',
+  'Bong Joon-ho', 'Brad Pitt', 'Bradley Cooper', 'Brendan Fraser', 'Brendan Gleeson', 'Brie Larson',
+  'Brigitte Bardot', 'Bruce Lee', 'Bruce Willis', 'Bryan Cranston', 'Burt Lancaster', 'Burt Reynolds',
+  'Buster Keaton', 'Cameron Diaz', 'Carey Mulligan', 'Cary Grant', 'Casey Affleck', 'Cate Blanchett',
+  'Catherine Deneuve', 'Catherine Zeta-Jones', 'Chadwick Boseman', 'Channing Tatum',
+  'Charlie Chaplin', 'Charlie Sheen', 'Charlize Theron', 'Charlton Heston', 'Chevy Chase',
+  'Chiwetel Ejiofor', 'Chloe Grace Moretz', 'Chow Yun-fat', 'Chris Evans', 'Chris Hemsworth',
+  'Chris Pine', 'Chris Pratt', 'Chris Rock', 'Chris Tucker', 'Christian Bale', 'Christina Applegate',
+  'Christina Ricci', 'Christoph Waltz', 'Christopher Lee', 'Christopher Lloyd', 'Christopher Nolan',
+  'Christopher Plummer', 'Christopher Walken', 'Cillian Murphy', 'Claire Danes', 'Claire Foy',
+  'Clark Gable', 'Clint Eastwood', 'Clive Owen', 'Colin Farrell', 'Colin Firth', 'Colman Domingo',
+  'Courteney Cox', 'Cuba Gooding Jr', 'Cary Elwes', 'Daisy Edgar-Jones', 'Daisy Ridley',
+  'Dakota Fanning', 'Dakota Johnson', 'Dan Aykroyd', 'Daniel Brühl', 'Daniel Craig',
+  'Daniel Day-Lewis', 'Daniel Kaluuya', 'Daniel Radcliffe', 'Danny DeVito', 'Danny Glover',
+  'Danny Trejo', 'Darren Aronofsky', 'Dave Bautista', 'David Cronenberg', 'David Fincher',
+  'David Harbour', 'David Lynch', 'David Tennant', 'Debbie Reynolds', 'Demi Moore',
+  'Denis Villeneuve', 'Denise Richards', 'Dennis Hopper', 'Dennis Quaid', 'Denzel Washington',
+  'Dev Patel', 'Diane Keaton', 'Diane Kruger', 'Diane Lane', 'Dick Van Dyke', 'Diego Luna',
+  'Dolph Lundgren', 'Domhnall Gleeson', 'Donald Glover', 'Donald Sutherland', 'Don Cheadle',
+  'Donnie Yen', 'Doris Day', 'Drew Barrymore', 'Dustin Hoffman', 'Dwayne Johnson', 'Ed Harris',
+  'Ed Helms', 'Eddie Murphy', 'Eddie Redmayne', 'Edward Norton', 'Eiza Gonzalez', 'Elijah Wood',
+  'Elizabeth Banks', 'Elizabeth Olsen', 'Elizabeth Taylor', 'Elle Fanning', 'Ellen Burstyn',
+  'Elliott Gould', 'Emily Blunt', 'Emma Mackey', 'Emma Roberts', 'Emma Stone', 'Emma Thompson',
+  'Emma Watson', 'Emilio Estevez', 'Ewan McGregor', 'Ethan Hawke', 'Eva Green', 'Eva Longoria',
+  'Eva Mendes', 'Evan Peters', 'Faye Dunaway', 'Federico Fellini', 'Felicity Jones', 'Finn Wolfhard',
+  'Florence Pugh', 'Forest Whitaker', 'Frances McDormand', 'Francis Ford Coppola', 'Frank Capra',
+  'Frank Darabont', 'Fred Astaire', 'Freddie Highmore', 'Gael Garcia Bernal', 'Gal Gadot',
+  'Gary Cooper', 'Gary Oldman', 'Gemma Arterton', 'Gemma Chan', 'Gene Hackman', 'Gene Kelly',
+  'Gene Wilder', 'Geoffrey Rush', 'George Clooney', 'George C. Scott', 'George Lucas',
+  'George Miller', 'Gerard Butler', 'Gerard Depardieu', 'Gillian Anderson', 'Giancarlo Esposito',
+  'Ginger Rogers', 'Glen Powell', 'Glenn Close', 'Goldie Hawn', 'Gong Li', 'Grace Kelly',
+  'Gregory Peck', 'Greta Garbo', 'Greta Gerwig', 'Guillermo del Toro', 'Guy Pearce', 'Guy Ritchie',
+  'Gwyneth Paltrow', 'Hailee Steinfeld', 'Halle Berry', 'Harrison Ford', 'Harvey Keitel',
+  'Hayao Miyazaki', 'Hayden Christensen', 'Heath Ledger', 'Helen Hunt', 'Helen Mirren',
+  'Helena Bonham Carter', 'Henry Cavill', 'Henry Fonda', 'Hilary Swank', 'Holly Hunter',
+  'Hugh Bonneville', 'Hugh Dancy', 'Hugh Grant', 'Hugh Jackman', 'Hugh Laurie', 'Humphrey Bogart',
+  'Hunter Schafer', 'Ian Holm', 'Ian McKellen', 'Ian McShane', 'Idris Elba', 'Imelda Staunton',
+  'Ingmar Bergman', 'Ingrid Bergman', 'Irrfan Khan', 'Isabelle Huppert', 'Isla Fisher',
+  'J.K. Simmons', 'Jack Black', 'Jack Lemmon', 'Jack Nicholson', 'Jack Quaid', 'Jackie Chan',
+  'Jacob Elordi', 'Jada Pinkett Smith', 'Jade Pettyjohn', 'Jake Gyllenhaal', 'James Caan',
+  'James Cameron', 'James Coburn', 'James Cromwell', 'James Dean', 'James Earl Jones',
+  'James Franco', 'James Gandolfini', 'James Garner', 'James Gunn', 'James Marsden',
+  'James McAvoy', 'James Stewart', 'Jamie Bell', 'Jamie Dornan', 'Jamie Foxx', 'Jamie Lee Curtis',
+  'Jane Campion', 'Jane Fonda', 'Jane Lynch', 'Jane Seymour', 'Janet Leigh', 'Jared Harris',
+  'Jared Leto', 'Javier Bardem', 'Jason Bateman', 'Jason Clarke', 'Jason Isaacs', 'Jason Momoa',
+  'Jason Segel', 'Jason Statham', 'Jason Sudeikis', 'Jean Reno', 'Jean-Claude Van Damme',
+  'Jean-Luc Godard', 'Jeff Bridges', 'Jeff Daniels', 'Jeff Goldblum', 'Jeffrey Wright',
+  'Jenna Ortega', 'Jennifer Aniston', 'Jennifer Connelly', 'Jennifer Coolidge', 'Jennifer Garner',
+  'Jennifer Hudson', 'Jennifer Jason Leigh', 'Jennifer Lawrence', 'Jennifer Lopez', 'Jeremy Allen White',
+  'Jeremy Irons', 'Jeremy Renner', 'Jeremy Strong', 'Jerry Lewis', 'Jesse Eisenberg',
+  'Jesse Plemons', 'Jessica Alba', 'Jessica Biel', 'Jessica Chastain', 'Jessica Lange',
+  'Jet Li', 'Jim Broadbent', 'Jim Carrey', 'Jodie Comer', 'Jodie Foster', 'Joe Pesci',
+  'Joel Coen', 'Joey King', 'John Boyega', 'John Candy', 'John Carpenter', 'John Cassavetes',
+  'John Cena', 'John Cleese', 'John Cusack', 'John David Washington', 'John Ford', 'John Goodman',
+  'John Hurt', 'John Krasinski', 'John Leguizamo', 'John Lithgow', 'John Malkovich',
+  'John Singleton', 'John Travolta', 'John Turturro', 'John Wayne', 'Johnny Depp', 'Jon Bernthal',
+  'Jon Favreau', 'Jon Hamm', 'Jon Voight', 'Jonah Hill', 'Jonathan Bailey', 'Jonathan Majors',
+  'Jonathan Pryce', 'Jordan Peele', 'Joseph Cotten', 'Joseph Gordon-Levitt', 'Josh Brolin',
+  'Josh Duhamel', 'Josh Gad', 'Josh Hartnett', 'Josh Hutcherson', 'Jude Law', 'Judi Dench',
+  'Judy Garland', 'Julia Garner', 'Julia Louis-Dreyfus', 'Julia Roberts', 'Julianne Moore',
+  'Julie Andrews', 'Julie Christie', 'Julie Delpy', 'Juliette Binoche', 'Kaley Cuoco',
+  'Karen Gillan', 'Karl Urban', 'Kate Beckinsale', 'Kate Blanchett', 'Kate Hudson', 'Kate Mara',
+  'Kate Winslet', 'Katharine Hepburn', 'Katheryn Winnick', 'Kathy Bates', 'Katie Holmes',
+  'Keanu Reeves', 'Keira Knightley', 'Ke Huy Quan', 'Keith David', 'Kelly Macdonald',
+  'Kelvin Harrison Jr', 'Ken Jeong', 'Ken Watanabe', 'Kenneth Branagh', 'Keri Russell',
+  'Kerry Washington', 'Kevin Bacon', 'Kevin Costner', 'Kevin Hart', 'Kevin James', 'Kevin Kline',
+  'Kevin Spacey', 'Kiefer Sutherland', 'Kieran Culkin', 'Kim Basinger', 'Kim Novak',
+  'Kirsten Dunst', 'Kit Harington', 'Kodi Smit-McPhee', 'Kristen Bell', 'Kristen Stewart',
+  'Kristen Wiig', 'Kurt Russell', 'Kyle MacLachlan', 'LaKeith Stanfield', 'Lana Wachowski',
+  'Lance Reddick', 'Lars von Trier', 'Laura Dern', 'Laura Linney', 'Laurence Fishburne',
+  'Laurence Olivier', 'Lauren Bacall', 'Lea Seydoux', 'Lee Byung-hun', 'Lee Pace',
+  'lena Headey', 'Leonardo DiCaprio', 'Leslie Nielsen', 'Letitia Wright', 'Liam Hemsworth',
+  'Liam Neeson', 'Lily Collins', 'Lily Gladstone', 'Lily James', 'Lily-Rose Depp',
+  'Lin-Manuel Miranda', 'Linda Hamilton', 'Lindsay Lohan', 'Lisa Kudrow', 'Liv Tyler',
+  'Liv Ullmann', 'Logan Lerman', 'Lucy Liu', 'Luke Evans', 'Luke Wilson', 'Lupita Nyongo',
+  'Macaulay Culkin', 'Mackenzie Davis', 'Mads Mikkelsen', 'Maggie Gyllenhaal', 'Maggie Smith',
+  'Mahershala Ali', 'Malcolm McDowell', 'Mandy Patinkin', 'Marcello Mastroianni', 'Margot Robbie',
+  'Maria Bakalova', 'Marion Cotillard', ' Marisa Tomei', 'Mark Hamill', 'Mark Ruffalo',
+  'Mark Rylance', 'MarkStrong', 'Mark Wahlberg', 'Marlene Dietrich', 'Marlon Brando',
+  'Marlon Wayans', 'Martin Freeman', 'Martin Lawrence', 'Martin Scorsese', 'Martin Sheen',
+  'Mary Elizabeth Winstead', 'Mary Pickford', 'Matt Damon', 'Matt Dillon', 'Matt LeBlanc',
+  'Matt Smith', 'Matthew Broderick', 'Matthew Lillard', 'Matthew Macfadyen', 'Matthew McConaughey',
+  'Matthew Perry', 'Maureen OHara', 'Max von Sydow', 'Maya Hawke', 'Maya Rudolph', 'Meg Ryan',
+  'Megan Fox', 'Mel Brooks', 'Mel Gibson', 'Melissa McCarthy', 'Meryl Streep', 'Mia Farrow',
+  'Mia Goth', 'Michael Bay', 'Michael B. Jordan', 'Michael Caine', 'Michael Cera',
+  'Michael Clarke Duncan', 'Michael Douglas', 'Michael Fassbender', 'Michael Gambon',
+  'Michael J. Fox', 'Michael Keaton', 'Michael Mann', 'Michael Pena', 'Michael Rooker',
+  'Michael Shannon', 'Michael Sheen', 'Michelle Monaghan', 'Michelle Pfeiffer',
+  'Michelle Rodriguez', 'Michelle Williams', 'Michelle Yeoh', 'Mickey Rourke', 'Mila Kunis',
+  'Miles Teller', 'Millie Bobby Brown', 'Milla Jovovich', 'Milo Ventimiglia', 'Mindy Kaling',
+  'Minnie Driver', 'mira Sorvino', 'Miranda Otto', 'Monica Bellucci', 'Montgomery Clift',
+  'Morgan Freeman', 'Nadine Labaki', 'Naomi Watts', 'Naomie Harris', 'Natalia Dyer',
+  'Natalie Dormer', 'Natalie Portman', 'Natalie Wood', 'Nathan Fillion', 'Nathan Lane',
+  'Neil Patrick Harris', 'Nia Long', 'Nicholas Hoult', 'Nick Frost', 'Nick Nolte', 'Nick Offerman',
+  'Nicolas Cage', 'Nicole Kidman', 'Noah Baumbach', 'Noah Centineo', 'Noomi Rapace',
+  'Norman Reedus', 'Octavia Spencer', 'Oleg Yankovsky', 'Olga Kurylenko', 'Oliver Platt',
+  'Oliver Reed', 'Oliver Stone', 'Olivia Colman', 'Olivia Cooke', 'Olivia de Havilland',
+  'Olivia Newton-John', 'Olivia Wilde', 'Omar Sy', 'Orlando Bloom', 'Orson Welles', 'Oscar Isaac',
+  'Owen Wilson', 'Paddy Considine', 'Pamela Anderson', 'Park Chan-wook', 'Patricia Arquette',
+  'Patricia Clarkson', 'Patrick Dempsey', 'Patrick Stewart', 'Patrick Swayze', 'Patrick Wilson',
+  'Paul Bettany', 'Paul Dano', 'Paul Giamatti', 'Paul Greengrass', 'Paul Mescal', 'Paul Newman',
+  'Paul Rudd', 'Paul Thomas Anderson', 'Paul Verhoeven', 'Paul Walker', 'Pedro Almodovar',
+  'Pedro Pascal', 'Penelope Cruz', 'Penn Badgley', 'Peter Capaldi', 'Peter Cushing',
+  'Peter Dinklage', 'Peter Falk', 'Peter Jackson', 'Peter Lorre', 'Peter OToole', 'Peter Sellers',
+  'Peter Weir', 'Philip Seymour Hoffman', 'Phoebe Waller-Bridge', 'Pierce Brosnan',
+  'Quentin Tarantino', 'Queen Latifah', 'Quinta Brunson', 'Rachel McAdams', 'Rachel Weisz',
+  'Rachel Zegler', 'Rainn Wilson', 'Ralph Fiennes', 'Ralph Macchio', 'Rami Malek',
+  'Randall Park', 'Raquel Welch', 'Ray Liotta', 'Ray Romano', 'Rebecca Ferguson', 'Rebecca Hall',
+  'Reese Witherspoon', 'Regina Hall', 'Regina King', 'Renee Zellweger', 'Rhys Ifans',
+  'Richard Attenborough', 'Richard Burton', 'Richard Dreyfuss', 'Richard Gere', 'Richard Harris',
+  'Richard Linklater', 'Richard Madden', 'Ricky Gervais', 'Ridley Scott', 'Rinko Kikuchi',
+  'Rita Hayworth', 'Rita Moreno', 'River Phoenix', 'Riz Ahmed', 'Rob Reiner', 'Rob Lowe',
+  'Robert Aldrich', 'Robert Altman', 'Robert Carlyle', 'Robert De Niro', 'Robert Downey Jr',
+  'Robert Duvall', 'RobertEggers', 'Robert Mitchum', 'Robert Pattinson', 'Robert Redford',
+  'Robert Rodriguez', 'Robert Shaw', 'Robert Zemeckis', 'Robin Williams', 'Robin Wright',
+  'Rock Hudson', 'Rod Steiger', 'Roger Moore', 'Roman Polanski', 'Ron Howard', 'Ron Perlman',
+  'Rooney Mara', 'Rosamund Pike', 'Rosario Dawson', 'Rose Byrne', 'Rowan Atkinson', 'Roy Scheider',
+  'Ruby Dee', 'Rupert Grint', 'Russell Crowe', 'Rutger Hauer', 'Ruth Negga', 'Ryan Coogler',
+  'Ryan Gosling', 'Ryan O Neal', 'Ryan Phillippe', 'Ryan Reynolds', 'Sacha Baron Cohen',
+  'Sadie Sink', 'Sally Field', 'Sally Hawkins', 'Salma Hayek', 'Sam Claflin', 'Sam Elliott',
+  'Sam Mendes', 'Sam Neill', 'Sam Raimi', 'Sam Rockwell', 'Sam Worthington', 'Samuel L. Jackson',
+  'Sandra Bullock', 'Sandra Hüller', 'Sandra Oh', 'Saoirse Ronan', 'Sarah Jessica Parker',
+  'Sarah Michelle Gellar', 'Sarah Paulson', 'Sarah Snook', 'Scarlett Johansson', 'Scott Eastwood',
+  'Scott Glenn', 'Sean Astin', 'Sean Bean', 'Sean Connery', 'Sean Penn', 'Sebastian Stan',
+  'Selma Blair', 'Sergio Leone', 'Seth MacFarlane', 'Seth Rogen', 'Shailene Woodley',
+  'Sharon Stone', 'Shaun Toub', 'Shia LaBeouf', 'Shirley MacLaine', 'Shirley Temple',
+  'Sidney Lumet', 'Sidney Poitier', 'Sienna Miller', 'Sigourney Weaver', 'Simon Pegg',
+  'Simone Signoret', 'Sissy Spacek', 'Sofia Coppola', 'Sofia Vergara', 'Song Kang-ho',
+  'Sophia Loren', 'Sophie Marceau', 'Sophie Turner', 'Spike Jonze', 'Spike Lee', 'Stan Lee',
+  'Stanley Kubrick', 'Stanley Tucci', 'Stellan Skarsgard', 'Stephen Chow', 'Stephen Graham',
+  'Steve Buscemi', 'Steve Carell', 'Steve Martin', 'Steve McQueen', 'Steven Spielberg',
+  'Steven Yeun', 'Stockard Channing', 'Susan Sarandon', 'Sydney Pollack', 'Sydney Sweeney',
+  'Sylvester Stallone', 'Taika Waititi', 'Takeshi Kitano', 'Taron Egerton', 'Taraji P. Henson',
+  'Tilda Swinton', 'Tim Allen', 'Tim Burton', 'Tim Curry', 'Tim Robbins', 'Tim Roth',
+  'Timothy Dalton', 'Timothy Olyphant', 'Timothy Spall', 'Timothee Chalamet', 'Tina Fey',
+  'Tobey Maguire', 'Toby Jones', 'Todd Phillips', 'Tom Cruise', 'Tom Felton', 'Tom Glynn-Carney',
+  'Tom Hanks', 'Tom Hardy', 'Tom Hiddleston', 'Tom Holland', 'Tom Hopper', 'Tom Wilkinson',
+  'Tommy Lee Jones', 'Toni Collette', 'Tony Chiu-Wai Leung', 'Tony Curtis', 'Tony Scott',
+  'Tony Shalhoub', 'Topher Grace', 'Toshiro Mifune', 'Tracee Ellis Ross', 'Trevante Rhodes',
+  'Tye Sheridan', 'Tyrese Gibson', 'Udo Kier', 'Uma Thurman', 'Utkarsh Ambudkar', 'Val Kilmer',
+  'Vanessa Hudgens', 'Vanessa Kirby', 'Vanessa Redgrave', 'Vera Farmiga', 'Veronica Lake',
+  'Viggo Mortensen', 'Vin Diesel', 'Vince Vaughn', 'Vincent Cassel', 'Vincent DOnofrio',
+  'Vincent Price', 'Viola Davis', 'Vivien Leigh', 'Walton Goggins', 'Wanda Sykes', 'Warren Beatty',
+  'Werner Herzog', 'Wes Anderson', 'Wes Craven', 'Wesley Snipes', 'Whoopi Goldberg',
+  'Will Arnett', 'Will Ferrell', 'Will Poulter', 'Will Smith', 'Willem Dafoe', 'William Defoe',
+  'William Friedkin', 'William Holden', 'William H. Macy', 'William Hurt', 'William Shatner',
+  'William Wyler', 'Winona Ryder', 'Wong Kar-wai', 'Woody Allen', 'Woody Harrelson',
+  'Xavi', 'Xavier Dolan', 'Xolo Mariduena', 'Yahya Abdul-Mateen II', 'Yorgos Lanthimos',
+  'Yul Brynner', 'Zach Braff', 'Zach Galifianakis', 'Zachary Levi', 'Zachary Quinto',
+  'Zack Snyder', 'Zazie Beetz', 'Zendaya', 'Zhang Ziyi', 'Zoe Kravitz', 'Zoe Saldana',
+  'Zooey Deschanel',
+]);
+
+export const STATIC_MUSICIANS = Object.freeze([
+  '50 Cent', 'Aaliyah', 'ABBA', 'AC/DC', 'Adam Lambert', 'Adam Levine', 'Adele', 'Aerosmith',
+  'Akon', 'Al Green', 'Alan Jackson', 'Alan Walker', 'Alanis Morissette', 'Alejandro Sanz',
+  'Alessia Cara', 'Alex Turner', 'Alice Cooper', 'Alice in Chains', 'Alicia Keys',
+  'Alison Krauss', 'Allman Brothers', 'Amy Lee', 'Amy Winehouse', 'Anderson .Paak',
+  'Andrea Bocelli', 'Andre 3000', 'Andrew Lloyd Webber', 'Angus Young', 'Anitta', 'Annie Lennox',
+  'Anthrax', 'Antonio Vivaldi', 'Aphex Twin', 'Arcade Fire', 'Arctic Monkeys', 'Aretha Franklin',
+  'Ariana Grande', 'Armin van Buuren', 'ASAP Rocky', 'Ashanti', 'Avenged Sevenfold', 'Avicii',
+  'Avril Lavigne', 'Axl Rose', 'B.B. King', 'Baby Keem', 'Backstreet Boys', 'Bad Bunny',
+  'Bad Religion', 'Barbra Streisand', 'Barry Gibb', 'Barry Manilow', 'Barry White',
+  'Bastille', 'Beach Boys', 'Beastie Boys', 'Beatles', 'Beabadoobee', 'Bebe Rexha', 'Beck',
+  'Bee Gees', 'Beethoven', 'Belinda Carlisle', 'Ben E. King', 'Ben Folds', 'Ben Howard',
+  'Benny Blanco', 'Benny Goodman', 'Benson Boone', 'Berry Gordy', 'Bette Midler', 'Beyonce',
+  'Big Sean', 'Biggie Smalls', 'Bill Evans', 'Bill Withers', 'Billie Eilish', 'Billie Holiday',
+  'Billie Joe Armstrong', 'Billy Corgan', 'Billy Idol', 'Billy Joel', 'Billy Ocean',
+  'Billy Ray Cyrus', 'Bing Crosby', 'Bjork', 'Black Eyed Peas', 'Black Sabbath', 'BLACKPINK',
+  'Blake Shelton', 'Blink-182', 'Blondie', 'Blur', 'Bo Burnham', 'Bob Dylan', 'Bob Geldof',
+  'Bob Marley', 'Bob Seger', 'Bobby Brown', 'Bobby Darin', 'Bobby McFerrin', 'Bon Iver',
+  'Bon Jovi', 'Bonnie Raitt', 'Bonnie Tyler', 'Bono', 'Boy George', 'Boyz II Men', 'Brad Paisley',
+  'Brandon Flowers', 'Brandy', 'Brendon Urie', 'Brian Eno', 'Brian May', 'Brian Wilson',
+  'Bring Me The Horizon', 'Britney Spears', 'Bruce Dickinson', 'Bruce Hornsby',
+  'Bruce Springsteen', 'Bruno Mars', 'Bryan Adams', 'Bryan Ferry', 'BTS', 'Buddy Guy',
+  'Buddy Holly', 'Burna Boy', 'Busta Rhymes', 'Cage the Elephant', 'Calvin Harris',
+  'Camila Cabello', 'Cannibal Corpse', 'Cardi B', 'Carlos Santana', 'Carly Rae Jepsen',
+  'Carly Simon', 'Carole King', 'Carrie Underwood', 'Cat Stevens', 'Celine Dion', 'Central Cee',
+  'Cesaria Evora', 'Chad Kroeger', 'Chainsmokers', 'Chaka Khan', 'Chance the Rapper',
+  'Chappell Roan', 'Charli XCX', 'Charlie Parker', 'Charlie Puth', 'Charlie Watts',
+  'Chet Baker', 'Cher', 'Chester Bennington', 'Childish Gambino', 'Chopin', 'Chris Brown',
+  'Chris Cornell', 'Chris Isaak', 'Chris Martin', 'Chris Rea', 'Chris Stapleton',
+  'Christina Aguilera', 'Christine McVie', 'Christopher Cross', 'Chuck Berry', 'Chvrches',
+  'Ciara', 'Clairo', 'Claude Debussy', 'Cliff Richard', 'Cocteau Twins', 'Coldplay',
+  'Cole Porter', 'Colin Hay', 'Common', 'Conan Gray', 'Coolio', 'Corey Taylor',
+  'Counting Crows', 'Courtney Love', 'Craig David', 'Cranberries', 'Cream',
+  'Creedence Clearwater Revival', 'Crosby Stills and Nash', 'Culture Club', 'Curtis Mayfield',
+  'Cyndi Lauper', 'Cypress Hill', 'Daft Punk', 'Damon Albarn', 'Dan Reynolds', 'Daniel Caesar',
+  'Danny Elfman', 'Darius Rucker', 'Darryl McDaniels', 'Daryl Hall', 'Dave Brubeck',
+  'Dave Gahan', 'Dave Grohl', 'Dave Matthews', 'Dave Mustaine', 'David Bowie', 'David Byrne',
+  'David Crosby', 'David Gilmour', 'David Guetta', 'David Lee Roth', 'De La Soul', 'Deadmau5',
+  'Dean Martin', 'Debbie Harry', 'Debussy', 'Deep Purple', 'Def Leppard', 'Deftones',
+  'Delta Goodrem', 'Demi Lovato', 'Denzel Curry', 'Depeche Mode', 'Derek and the Dominos',
+  'Destinys Child', 'Diana Krall', 'Diana Ross', 'Dido', 'Dio', 'Dionne Warwick', 'Dire Straits',
+  'Disclosure', 'Dizzy Gillespie', 'DJ Khaled', 'DJ Shadow', 'DJ Snake', 'DMX', 'Doja Cat',
+  'Dolly Parton', 'Don Henley', 'Don McLean', 'Donald Fagen', 'Donna Summer', 'Donovan',
+  'Doobie Brothers', 'Doors', 'Dr. Dre', 'Drake', 'Dream Theater', 'Dua Lipa', 'Duke Ellington',
+  'Duran Duran', 'Dusty Springfield', 'Dvorak', 'Dwight Yoakam', 'Eagles', 'Earl Sweatshirt',
+  'Earth Wind and Fire', 'Eazy-E', 'Ed O Brien', 'Ed Sheeran', 'Eddie Van Halen', 'Eddie Vedder',
+  'Edith Piaf', 'Edward Elgar', 'Electric Light Orchestra', 'Ella Fitzgerald', 'Ellie Goulding',
+  'Elliott Smith', 'Elton John', 'Elvis Costello', 'Elvis Presley', 'Eminem', 'Emmylou Harris',
+  'empire of the Sun', 'Ennio Morricone', 'Enrique Iglesias', 'Enya', 'Erasure', 'Eric Burdon',
+  'Eric Clapton', 'Eric Prydz', 'Erykah Badu', 'Estelle', 'Etta James', 'Eurythmics',
+  'Evanescence', 'Eve', 'Ezra Koenig', 'Fabolous', 'Faith Evans', 'Faith Hill', 'Faith No More',
+  'Fall Out Boy', 'Fat Joe', 'Fatboy Slim', 'Fats Domino', 'Fela Kuti', 'Fergie', 'Fetty Wap',
+  'Fiona Apple', 'Five Finger Death Punch', 'Flaming Lips', 'Flea', 'Fleet Foxes',
+  'Fleetwood Mac', 'Flo Rida', 'Florence Welch', 'Florence and the Machine', 'Flying Lotus',
+  'Foals', 'Foo Fighters', 'Foreigner', 'Foster the People', 'Four Tops', 'FKA twigs',
+  'Frank Black', 'Frank Iero', 'Frank Ocean', 'Frank Sinatra', 'Frank Zappa', 'Frankie Valli',
+  'Franz Ferdinand', 'Franz Liszt', 'Franz Schubert', 'Fred Again', 'Fred Durst',
+  'Freddie Mercury', 'Fugees', 'Fun.', 'Future', 'G-Eazy', 'Garbage', 'Garth Brooks',
+  'Gary Barlow', 'Gary Moore', 'Gary Numan', 'Gavin Rossdale', 'Gene Krupa', 'Gene Simmons',
+  'Genesis', 'George Benson', 'George Clinton', 'George Ezra', 'George Gershwin',
+  'George Harrison', 'George Michael', 'George Strait', 'Geri Halliwell', 'Ghostface Killah',
+  'Gil Scott-Heron', 'Ginuwine', 'Giorgio Moroder', 'Giveon', 'Gladys Knight', 'Glass Animals',
+  'Glen Campbell', 'Glenn Frey', 'Glenn Miller', 'Gloria Estefan', 'Gloria Gaynor', 'Gnarls Barkley',
+  'Gojira', 'Goldfrapp', 'Goo Goo Dolls', 'Good Charlotte', 'Gorillaz', 'Gotye', 'Grace Jones',
+  'Graham Coxon', 'Grandmaster Flash', 'Grateful Dead', 'Green Day', 'Gregg Allman', 'Grimes',
+  'Gucci Mane', 'Guns N Roses', 'Gunna', 'Gustavo Dudamel', 'Guy-Manuel de Homem-Christo',
+  'Gwen Stefani', 'HAIM', 'Hall and Oates', 'Halsey', 'Hank Williams', 'Hans Zimmer',
+  'Hardwell', 'Harry Belafonte', 'Harry Connick Jr', 'Harry Nilsson', 'Harry Styles',
+  'Hayley Williams', 'Heart', 'Henry Mancini', 'Herbie Hancock', 'Hilary Duff', 'Hoobastank',
+  'Hootie and the Blowfish', 'Howlin Wolf', 'Hozier', 'Huey Lewis', 'Ice Cube', 'Ice Spice',
+  'Ice-T', 'Idina Menzel', 'Iggy Azalea', 'Iggy Pop', 'Igor Stravinsky', 'Imagine Dragons',
+  'Imogen Heap', 'Incubus', 'Indila', 'Interpol', 'INXS', 'Iron Maiden', 'Iron and Wine',
+  'Isaac Hayes', 'Itzhak Perlman', 'IU', 'J Balvin', 'J. Cole', 'Jack Antonoff', 'Jack Harlow',
+  'Jack Johnson', 'Jack White', 'Jackie Wilson', 'Jackson 5', 'Jackson Browne', 'Jacques Brel',
+  'Jadakiss', 'Jagged Edge', 'Jake Bugg', 'James Arthur', 'James Bay', 'James Blake',
+  'James Blunt', 'James Brown', 'James Hetfield', 'James Horner', 'James Taylor', 'Jamie Cullum',
+  'Jamie xx', 'Jamiroquai', 'Jane Addiction', 'Janelle Monae', 'Janet Jackson', 'Janis Joplin',
+  'Jarvis Cocker', 'Jason Derulo', 'Jason Mraz', 'Jay Sean', 'Jay-Z', 'Jean-Michel Jarre',
+  'Jeezy', 'Jeff Beck', 'Jeff Buckley', 'Jeff Lynne', 'Jefferson Airplane', 'Jelly Roll',
+  'Jennifer Hudson', 'Jennifer Lopez', 'Jerry Garcia', 'Jerry Lee Lewis', 'Jethro Tull',
+  'Jhene Aiko', 'Jim Morrison', 'Jimi Hendrix', 'Jimmy Buffett', 'Jimmy Cliff', 'Jimmy Eat World',
+  'Jimmy Page', 'Jisoo', 'Joan Armatrading', 'Joan Baez', 'Joan Jett', 'Joe Bonamassa',
+  'Joe Cocker', 'Joe Jonas', 'Joe Perry', 'Joe Satriani', 'Joe Strummer', 'Joe Walsh',
+  'Joey Ramone', 'Johann Sebastian Bach', 'Johannes Brahms', 'John Bonham', 'John Cage',
+  'John Coltrane', 'John Deacon', 'John Denver', 'John Fogerty', 'John Frusciante',
+  'John Lee Hooker', 'John Legend', 'John Lennon', 'John Lydon', 'John Mayer', 'John Mellencamp',
+  'John Newman', 'John Oats', 'John Paul Jones', 'John Prine', 'John Williams', 'Johnny Cash',
+  'Johnny Marr', 'Johnny Mathis', 'Johnny Ramone', 'Joji', 'Jon Bon Jovi', 'Jonas Brothers',
+  'Joni Mitchell', 'Jonny Greenwood', 'Jordin Sparks', 'Jorja Smith', 'Jose Carreras',
+  'Josh Groban', 'Josh Homme', 'Joss Stone', 'Journey', 'Joy Division', 'Juanes', 'Judas Priest',
+  'Juice WRLD', 'Julian Casablancas', 'Julie London', 'Julio Iglesias', 'Jungkook',
+  'Justice', 'Justin Bieber', 'Justin Hawkins', 'Justin Timberlake', 'Justin Vernon',
+  'Kacey Musgraves', 'Kali Uchis', 'Kanye West', 'Karol G', 'Kasabian', 'Kate Bush',
+  'Katy Perry', 'Kaytranada', 'Keane', 'Kehlani', 'Keith Moon', 'Keith Jarrett', 'Keith Richards',
+  'Keith Urban', 'Kelis', 'Kelly Clarkson', 'Kelly Rowland', 'Kendrick Lamar', 'Kenny Chesney',
+  'Kenny G', 'Kenny Loggins', 'Kenny Rogers', 'Kesha', 'Kevin Parker', 'Khalid', 'Kid Cudi',
+  'Kid Rock', 'Kim Deal', 'Kim Gordon', 'Kim Petras', 'King Crimson', 'King Krule',
+  'Kings of Leon', 'Kinks', 'Kirk Hammett', 'Kiss', 'Kodak Black', 'Koffee', 'Kool and the Gang',
+  'Korn', 'Kraftwerk', 'Kris Kristofferson', 'Kurt Cobain', 'Kygo', 'Kylie Minogue', 'L.L. Cool J',
+  'Labrinth', 'Lady Antebellum', 'Lady Gaga', 'Lamb of God', 'Lana Del Rey', 'Lang Lang',
+  'Lars Ulrich', 'Lauv', 'Laura Marling', 'Laura Nyro', 'Lauren Hill', 'Lauryn Hill',
+  'Layne Staley', 'LCD Soundsystem', 'LeAnn Rimes', 'Led Zeppelin', 'Lee Scratch Perry',
+  'Left Eye', 'Lemmy Kilmister', 'Lenny Kravitz', 'Leonard Bernstein', 'Leonard Cohen',
+  'Leona Lewis', 'Leon Bridges', 'Les Paul', 'Lewis Capaldi', 'Liam Gallagher', 'Liam Payne',
+  'Lil Baby', 'Lil Durk', 'Lil Jon', 'Lil Kim', 'Lil Nas X', 'Lil Peep', 'Lil Tecca',
+  'Lil Uzi Vert', 'Lil Wayne', 'Lil Yachty', 'Lily Allen', 'Limp Bizkit', 'Linda Ronstadt',
+  'Lindsey Buckingham', 'Linkin Park', 'Lionel Richie', 'Lisa', 'Lisa Loeb', 'Little Mix',
+  'Little Richard', 'Little Simz', 'Lizzo', 'LL Cool J', 'LMFAO', 'Logic', 'London Grammar',
+  'Lorde', 'Loretta Lynn', 'Lou Reed', 'Louis Armstrong', 'Louis Tomlinson', 'Luciano Pavarotti',
+  'Ludacris', 'Ludovico Einaudi', 'Ludwig van Beethoven', 'Luis Fonsi', 'Luke Bryan',
+  'Luke Combs', 'Lykke Li', 'Lynyrd Skynyrd', 'M.I.A.', 'Mac DeMarco', 'Mac Miller', 'Macklemore',
+  'Madlib', 'Madness', 'Madonna', 'Maggie Rogers', 'Mahalia', 'Mahalia Jackson', 'Major Lazer',
+  'Maluma', 'Mamas and the Papas', 'Maneskin', 'Manic Street Preachers', 'Marc Anthony',
+  'Marc Bolan', 'Marcus Mumford', 'Maria Callas', 'Mariah Carey', 'Marilyn Manson',
+  'Marina', 'Mario', 'Mark Hoppus', 'Mark Knopfler', 'Mark Lanegan', 'Mark Ronson',
+  'Maroon 5', 'Marshmello', 'Martha Argerich', 'Martin Garrix', 'Martina McBride', 'Marvin Gaye',
+  'Mary J. Blige', 'Massive Attack', 'Mastodon', 'Matisyahu', 'Matt Bellamy', 'Matt Berninger',
+  'Matt Healy', 'Maurice Ravel', 'Max Martin', 'Maxwell', 'Maynard James Keenan', 'Mazzy Star',
+  'MC Hammer', 'Meat Loaf', 'Meg White', 'Megadeth', 'Megan Thee Stallion', 'Meghan Trainor',
+  'Mel B', 'Mel C', 'Melanie Martinez', 'Melissa Etheridge', 'Memphis Minnie', 'Men at Work',
+  'Merle Haggard', 'Metallica', 'Method Man', 'Metro Boomin', 'MF DOOM', 'MGMT', 'Michael Bolton',
+  'Michael Buble', 'Michael Hutchence', 'Michael Jackson', 'Michael Kiwanuka', 'Michael McDonald',
+  'Michael Stipe', 'Michelle Branch', 'Mick Fleetwood', 'Mick Jagger', 'Mick Jones', 'Mick Mars',
+  'Miguel', 'Mika', 'Mike Oldfield', 'Mike Patton', 'Mike Posner', 'Mike Shinoda', 'Miley Cyrus',
+  'Miles Davis', 'Minnie Riperton', 'Miranda Lambert', 'Misfits', 'Missy Elliott', 'Mitski',
+  'Moby', 'Modern Talking', 'Modest Mouse', 'Mogwai', 'Moliere', 'Moloko', 'Monica',
+  'Monsta X', 'Monster Magnet', 'Moody Blues', 'Morgan Wallen', 'Morrissey', 'Mos Def',
+  'Motley Crue', 'Motorhead', 'Mötley Crüe', 'Mozart', 'Muddy Waters', 'Mumford and Sons',
+  'Muse', 'My Bloody Valentine', 'My Chemical Romance', 'Myles Kennedy', 'N.W.A', 'Nancy Sinatra',
+  'Nas', 'Nat King Cole', 'Natasha Bedingfield', 'Nate Dogg', 'Nathaniel Rateliff', 'Ne-Yo',
+  'Neil Diamond', 'Neil Finn', 'Neil Peart', 'Neil Tennant', 'Neil Young', 'Nelly',
+  'Nelly Furtado', 'Nena', 'Neutral Milk Hotel', 'New Edition', 'New Kids on the Block',
+  'New Order', 'Niall Horan', 'Nick Cave', 'Nick Drake', 'Nick Jonas', 'Nick Mason',
+  'Nicki Minaj', 'Nickelback', 'Nico', 'Nicole Scherzinger', 'Nightwish', 'Nile Rodgers',
+  'Nina Nesbitt', 'Nina Persson', 'Nina Simone', 'Nine Inch Nails', 'Nirvana', 'No Doubt',
+  'Noah Kahan', 'Noel Gallagher', 'Noname', 'Norah Jones', 'Norman Cook', 'Notorious B.I.G.',
+  'NSYNC', 'Oasis', 'Offset', 'Of Monsters and Men', 'Ol Dirty Bastard', 'Olafur Arnalds',
+  'Oliver Tree', 'Olivia Newton-John', 'Olivia Rodrigo', 'Omar Apollo', 'One Direction',
+  'OneRepublic', 'Opeth', 'Ornette Coleman', 'Otis Redding', 'OutKast', 'Owl City',
+  'Ozuna', 'Ozzy Osbourne', 'P.J. Harvey', 'Paco de Lucia', 'Paloma Faith', 'Panic at the Disco',
+  'Pantera', 'Paolo Nutini', 'Papa Roach', 'Paramore', 'Passenger', 'Pat Benatar', 'Pat Metheny',
+  'Patti LaBelle', 'Patti Smith', 'Patsy Cline', 'Paul Anka', 'Paul Banks', 'Paul Kalkbrenner',
+  'Paul McCartney', 'Paul Oakenfold', 'Paul Simon', 'Paul Stanley', 'Paul van Dyk', 'Paul Weller',
+  'Paula Abdul', 'Pavement', 'Pavarotti', 'Peaches', 'Pearl Jam', 'Peggy Lee', 'Pendulum',
+  'Pentatonix', 'Per Gessle', 'Percy Sledge', 'Perry Farrell', 'Peso Pluma', 'Pet Shop Boys',
+  'Pete Doherty', 'Pete Seeger', 'Pete Townshend', 'Pete Wentz', 'Peter Cetera', 'Peter Frampton',
+  'Peter Gabriel', 'Peter Green', 'Peter Hook', 'Peter Tosh', 'Pharrell Williams', 'Phil Anselmo',
+  'Phil Collins', 'Phil Lynott', 'Phil Spector', 'Philip Glass', 'Phoebe Bridgers', 'Phoenix',
+  'Pink', 'Pink Floyd', 'Pitbull', 'Pixies', 'PJ Harvey', 'Placebo', 'Placido Domingo',
+  'Playboi Carti', 'Poison', 'Police', 'Polo G', 'Polyphia', 'Pop Smoke', 'Poppy',
+  'Porcupine Tree', 'Porter Robinson', 'Portishead', 'Post Malone', 'Prefabsprout',
+  'Primal Scream', 'Primus', 'Prince', 'Prodigy', 'Psy', 'Public Enemy', 'Pulp', 'Pusha T',
+  'Pussycat Dolls', 'Pyotr Ilyich Tchaikovsky', 'Q-Tip', 'Quavo', 'Queen', 'Queen Latifah',
+  'Queens of the Stone Age', 'Quincy Jones', 'R.E.M.', 'Rachmaninoff', 'Radiohead',
+  'Rae Sremmurd', 'Rag n Bone Man', 'Rage Against the Machine', 'Rammstein', 'Ramones',
+  'Randy Newman', 'Randy Rhoads', 'Ravel', 'Ray Charles', 'Ray Davies', 'Ray LaMontagne',
+  'Ray Manzarek', 'Raye', 'Razorlight', 'Red Hot Chili Peppers', 'Red Velvet', 'Regina Spektor',
+  'Rema', 'Rene Fleming', 'Rex Orange County', 'Richard Ashcroft', 'Richard Clayderman',
+  'Richard Marx', 'Richard Strauss', 'Richard Wagner', 'Richard Wright', 'Richie Sambora',
+  'Rick Astley', 'Rick James', 'Rick Ross', 'Rick Rubin', 'Rick Wakeman', 'Ricky Martin',
+  'Rihanna', 'Rina Sawayama', 'Ringo Starr', 'Rise Against', 'Rita Ora', 'Ritchie Blackmore',
+  'Ritchie Valens', 'Rivers Cuomo', 'Rob Halford', 'Rob Thomas', 'Rob Zombie', 'Robbie Robertson',
+  'Robbie Williams', 'Robert Fripp', 'Robert Johnson', 'Robert Palmer', 'Robert Plant',
+  'Robert Schumann', 'Robert Smith', 'Roberta Flack', 'Robin Gibb', 'Robin Thicke', 'Robyn',
+  'Rod Stewart', 'Roddy Ricch', 'Rodrigo y Gabriela', 'Roger Daltrey', 'Roger Taylor',
+  'Roger Waters', 'Rolling Stones', 'Ronan Keating', 'Ronnie Spector', 'Ronnie Van Zant',
+  'Ronnie Wood', 'Rory Gallagher', 'Rosalia', 'Rose', 'Rosanne Cash', 'Rostropovich',
+  'Roxette', 'Roxy Music', 'Roy Ayers', 'Roy Hargrove', 'Roy Orbison', 'Royal Blood',
+  'Rozalla', 'Run the Jewels', 'Run-DMC', 'RuPaul', 'Rush', 'RZA', 'S Club 7', 'Sabaton',
+  'Sabrina Carpenter', 'Sade', 'Saint-Saens', 'Salt-N-Pepa', 'Sam Cooke', 'Sam Fender',
+  'Sam Hunt', 'Sam Smith', 'Sammy Davis Jr', 'Sammy Hagar', 'Santana', 'Santigold',
+  'Sara Bareilles', 'Sarah Brightman', 'Sarah McLachlan', 'Satie', 'Savage Garden', 'Saweetie',
+  'ScHoolboy Q', 'Scissor Sisters', 'Scooter', 'Scorpions', 'Scott Joplin', 'Scott Stapp',
+  'Scott Weiland', 'Seal', 'Sean Kingston', 'Sean Paul', 'Sebastian Bach', 'Seether',
+  'Selena', 'Selena Gomez', 'Sepultura', 'Serge Gainsbourg', 'Sergei Prokofiev',
+  'Sergei Rachmaninoff', 'Serj Tankian', 'Sex Pistols', 'Shabba Ranks', 'Shaggy', 'Shakira',
+  'Shania Twain', 'Shane MacGowan', 'Sharon Van Etten', 'Shawn Mendes', 'Sheena Easton',
+  'Sheila E.', 'Sheryl Crow', 'Shinedown', 'Shania Twain', 'Sia', 'Sid Vicious', 'Sigrid',
+  'Sigur Ros', 'Silk Sonic', 'Silverchair', 'Simon Le Bon', 'Simon and Garfunkel', 'Simple Minds',
+  'Simple Plan', 'Simply Red', 'Sinatra', 'Sinead O Connor', 'Siouxsie Sioux',
+  'Siouxsie and the Banshees', 'Sir Mix-a-Lot', 'Sister Sledge', 'SZA', 'Skepta', 'Skillet',
+  'Skrillex', 'Slash', 'Slayer', 'Sleater-Kinney', 'Slick Rick', 'Slipknot', 'Slowdive',
+  'Sly Stone', 'Sly and the Family Stone', 'Smash Mouth', 'Smashing Pumpkins', 'Smino',
+  'Smiths', 'Smokey Robinson', 'Snoop Dogg', 'Snow Patrol', 'Soft Cell', 'Solange',
+  'Solomon Burke', 'Sonic Youth', 'Sonny Bono', 'Sonny Rollins', 'Sophie Ellis-Bextor',
+  'Soulja Boy', 'Soundgarden', 'Spandau Ballet', 'Spice Girls', 'St. Vincent', 'Staind',
+  'Stan Getz', 'Status Quo', 'Steely Dan', 'Stefflon Don', 'Stephen Malkmus', 'Stephen Sondheim',
+  'Stephen Stills', 'Steppenwolf', 'Stereolab', 'Stereophonics', 'Steve Aoki', 'Steve Earle',
+  'Steve Hackett', 'Steve Harris', 'Steve Lacy', 'Steve Lukather', 'Steve Miller',
+  'Steve Perry', 'Steve Reich', 'Steve Vai', 'Steve Winwood', 'Steven Tyler', 'Stevie Nicks',
+  'Stevie Ray Vaughan', 'Stevie Wonder', 'Sting', 'Stone Roses', 'Stone Temple Pilots',
+  'Stormzy', 'Stravinsky', 'Stray Kids', 'Stromae', 'Strokes', 'Sturgill Simpson', 'Styx',
+  'Sublime', 'Suede', 'Sufjan Stevens', 'Sugababes', 'Sugarhill Gang', 'Sum 41', 'Summer Walker',
+  'Sun Ra', 'Supergrass', 'Supertramp', 'Supremes', 'Survivor', 'Susan Boyle', 'Suzanne Vega',
+  'Suzi Quatro', 'Swae Lee', 'Swedish House Mafia', 'System of a Down', 'T-Bone Walker',
+  'T-Pain', 'T.I.', 'T. Rex', 'Taio Cruz', 'Take That', 'Takeoff', 'Talib Kweli', 'Talk Talk',
+  'Talking Heads', 'Tammi Terrell', 'Tame Impala', 'Tanita Tikaram', 'Tate McRae', 'Taylor Hawkins',
+  'Taylor Momsen', 'Taylor Swift', 'Tchaikovsky', 'Tears for Fears', 'Technotronic',
+  'Ted Nugent', 'Teddy Pendergrass', 'Teddy Swims', 'Tegan and Sara', 'Telemann', 'Tems',
+  'Temptations', 'Tenacious D', 'Terence Trent DArby', 'Texas', 'Thaiboy Digital', 'The 1975',
+  'The Animals', 'The B-52s', 'TheBand', 'The Beach Boys', 'The Beatles', 'The Black Keys',
+  'The Byrds', 'The Calling', 'The Cardigans', 'The Carpenters', 'The Chainsmokers',
+  'The Charlatans', 'The Chemical Brothers', 'The Clash', 'The Corrs', 'The Cranberries',
+  'The Cult', 'The Cure', 'The Darkness', 'The Doors', 'The Drifters', 'The Everly Brothers',
+  'The Flaming Lips', 'The Fray', 'The Game', 'TheGo-Gos', 'The Hollies', 'The Human League',
+  'The Isley Brothers', 'The Jam', 'The Jesus and Mary Chain', 'The Kid LAROI', 'The Killers',
+  'The Kinks', 'The Libertines', 'The Lumineers', 'The Mamas and the Papas', 'The Mars Volta',
+  'The Monkees', 'The Moody Blues', 'The National', 'The Neighbourhood', 'The Notorious B.I.G.',
+  'The Offspring', 'The Police', 'The Postal Service', 'The Pretenders', 'The Prodigy',
+  'The Psychedelic Furs', 'The Raconteurs', 'The Ramones', 'The Replacements', 'The Righteous Brothers',
+  'The Rolling Stones', 'The Roots', 'The Runaways', 'The Script', 'The Shadows', 'The Shangri-Las',
+  'The Shins', 'The Sisters of Mercy', 'The Smashing Pumpkins', 'The Smiths', 'The Specials',
+  'The Stone Roses', 'The Stooges', 'The Stranglers', 'The Streets', 'The Strokes', 'The Supremes',
+  'The Temptations', 'The Ting Tings', 'The Tragically Hip', 'The Turtles', 'The Velvet Underground',
+  'The Verve', 'The Vines', 'The Walkmen', 'The War on Drugs', 'The Waterboys', 'The Weeknd',
+  'The White Stripes', 'The Who', 'The Wombats', 'The xx', 'The Yardbirds', 'The Zombies',
+  'Thelonious Monk', 'Them Crooked Vultures', 'Thin Lizzy', 'Third Eye Blind', 'Thirty Seconds to Mars',
+  'Thom Yorke', 'Thomas Bangalter', 'Thomas Newman', 'Thomas Rhett', 'Three Days Grace',
+  'Three Dog Night', 'Three 6 Mafia', 'Thrice', 'Thundercat', 'Tiesto', 'Tierra Whack',
+  'Tinashe', 'Tim Bergling', 'Tim McGraw', 'Timbaland', 'Tina Charles', 'Tina Turner', 'Tinie Tempah',
+  'Tito Puente', 'TLC', 'Toby Keith', 'Todd Rundgren', 'Tom Chaplin', 'Tom DeLonge', 'Tom Jones',
+  'Tom Morello', 'Tom Odell', 'Tom Petty', 'Tom Waits', 'Tom Yorke', 'Tommy Dorsey', 'Tommy James',
+  'Tommy Lee', 'Toni Braxton', 'Tony Bennett', 'Tony Hadley', 'Tony Iommi', 'Tool', 'Toots Hibbert',
+  'Tori Amos', 'Tori Kelly', 'Toto', 'Tove Lo', 'Townes Van Zandt', 'Trace Adkins', 'Tracy Chapman',
+  'Train', 'Travis', 'Travis Barker', 'Travis Scott', 'Trent Reznor', 'Trey Anastasio',
+  'Trey Songz', 'Tribe Called Quest', 'Tricky', 'Trisha Yearwood', 'Trivium', 'Troye Sivan',
+  'Tupac Shakur', 'Turnstile', 'TV on the Radio', 'Twenty One Pilots', 'Twista', 'Twisted Sister',
+  'Two Door Cinema Club', 'Ty Dolla Sign', 'Tyga', 'Tyler Childers', 'Tyler Joseph',
+  'Tyler the Creator', 'Type O Negative', 'U2', 'UB40', 'Ultravox', 'Umberto Tozzi', 'Underworld',
+  'Uriah Heep', 'Usher', 'utada Hikaru', 'Vampire Weekend', 'Van Halen', 'Van Morrison',
+  'Vanessa Carlton', 'Vanessa Mae', 'Vanessa Paradis', 'Vangelis', 'Vanilla Ice',
+  'Vaughan Williams', 'Velvet Revolver', 'Velvet Underground', 'Vengaboys', 'Verdi', 'Verve',
+  'Vic Mensa', 'Vicente Fernandez', 'Victoria Beckham', 'Viktor Tsoi', 'Village People',
+  'Vince Clarke', 'Vince Gill', 'Vince Neil', 'Vince Staples', 'Violent Femmes', 'Vivaldi',
+  'Volbeat', 'Vulfpeck', 'W.A.S.P.', 'Wagner', 'Wale', 'Walk the Moon', 'Wallows', 'Wanda Jackson',
+  'Wang Chung', 'War', 'Warren G', 'Warren Zevon', 'Washed Out', 'Waylon Jennings', 'Wayne Coyne',
+  'Wayne Shorter', 'Ween', 'Weezer', 'Weird Al Yankovic', 'Wet Leg', 'Westlife', 'Wham!',
+  'White Lies', 'White Stripes', 'White Zombie', 'Whitesnake', 'Whitney Houston', 'Who',
+  'Wilco', 'Wild Beasts', 'Will.i.am', 'Will Smith', 'William Orbit', 'Willie Colon',
+  'Willie Dixon', 'Willie Nelson', 'Willow Smith', 'Wilson Pickett', 'Wings', 'Win Butler',
+  'Within Temptation', 'Wiz Khalifa', 'Wizkid', 'Wolf Alice', 'Wolfgang Amadeus Mozart',
+  'Wolfmother', 'Wombats', 'Woody Guthrie', 'Wu-Tang Clan', 'Wyclef Jean', 'Wynonna Judd',
+  'X Ambassadors', 'X-Ray Spex', 'Xavier Cugat', 'XJapan', 'XTC', 'XXXTentacion', 'Yanni',
+  'Yardbirds', 'Yaz', 'Yazoo', 'Yeah Yeah Yeahs', 'Years and Years', 'Yeat', 'Yellowcard',
+  'Yes', 'YG', 'Yngwie Malmsteen', 'Yo La Tengo', 'Yo-Yo Ma', 'Yoko Ono', 'Yolanda Adams',
+  'Young Jeezy', 'Young Thug', 'YoungBoy Never Broke Again', 'Yungblud', 'Yusuf Islam',
+  'Zac Brown Band', 'Zach Bryan', 'Zack de la Rocha', 'Zara Larsson', 'Zayn', 'Zayn Malik',
+  'Zedd', 'Zero 7', 'Ziggy Marley', 'Zola Jesus', 'Zombies', 'Zucchero', 'Zwan', 'ZZ Top',
+]);
+
+function buildPersonEntry(name, extraAlternatives = []) {
+  const clean = String(name ?? '').trim();
+  const alts = new Set(extraAlternatives.map((a) => String(a ?? '').trim()).filter(Boolean));
+  const parts = clean.split(/\s+/);
+  if (parts.length >= 2) {
+    const surname = parts[parts.length - 1];
+    if (surname.length >= 3 && !/^(jr\.?|sr\.?|ii|iii|iv)$/i.test(surname)) {
+      alts.add(surname);
+    }
+  }
+  return { label: clean, alternatives: [...alts] };
+}
+
+function mergePersonEntries(baseNames = [], peopleSubset = []) {
+  const map = new Map();
+  for (const name of baseNames) {
+    const entry = buildPersonEntry(name);
+    const k = compactKey(entry.label);
+    if (k && !map.has(k)) map.set(k, entry);
+  }
+  for (const p of peopleSubset) {
+    const entry = buildPersonEntry(p.name, p.alternatives ?? []);
+    const k = compactKey(entry.label);
+    if (!k) continue;
+    const prev = map.get(k);
+    if (prev) {
+      const mergedAlts = new Set([...(prev.alternatives ?? []), ...(entry.alternatives ?? [])]);
+      prev.alternatives = [...mergedAlts];
+    } else {
+      map.set(k, entry);
+    }
+  }
+  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
+
+const LEARNED_WORDS_STORAGE_KEY = 'learninghub.v2.learnedWords';
+const globalLearnedWords = [];
+
+function readLocalLearnedWords() {
+  try {
+    const raw = globalThis.localStorage?.getItem?.(LEARNED_WORDS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    const list = Array.isArray(parsed?.data)
+      ? parsed.data
+      : Array.isArray(parsed)
+        ? parsed
+        : [];
+    return list.filter((w) => w && typeof w.categoryId === 'string' && typeof w.label === 'string');
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalLearnedWords(list) {
+  try {
+    globalThis.localStorage?.setItem?.(
+      LEARNED_WORDS_STORAGE_KEY,
+      JSON.stringify({ schemaVersion: 1, data: list }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+export function applyLearnedWordToCategories(categoriesMap, wordRecord) {
+  if (!categoriesMap || !wordRecord?.categoryId || !wordRecord?.label) return false;
+  const cat = categoriesMap[wordRecord.categoryId];
+  if (!cat || !Array.isArray(cat.items)) return false;
+  const k = compactKey(wordRecord.label);
+  if (!k) return false;
+  const exists = cat.items.some((item) => {
+    const lbl = typeof item === 'string' ? item : item?.label;
+    return compactKey(lbl) === k;
+  });
+  if (exists) return false;
+  cat.items.push({
+    label: wordRecord.label,
+    alternatives: Array.isArray(wordRecord.alternatives) ? wordRecord.alternatives : [],
+  });
+  return true;
+}
+
+export function registerLearnedWord(categoriesMap, { categoryId, label, alternatives = [], sync = true, fetchImpl = globalThis.fetch }) {
+  if (!categoryId || !label) return null;
+  const cleanLabel = String(label).trim();
+  const cleanCat = String(categoryId).trim().toLowerCase();
+  if (!cleanLabel || !cleanCat) return null;
+
+  const record = {
+    categoryId: cleanCat,
+    label: cleanLabel,
+    alternatives: Array.isArray(alternatives)
+      ? alternatives.map((a) => String(a ?? '').trim()).filter((a) => a && a.toLowerCase() !== cleanLabel.toLowerCase())
+      : [],
+  };
+
+  applyLearnedWordToCategories(categoriesMap, record);
+  const CROSS_CATEGORY_PAIRS = [
+    ['athletes', 'sport'],
+    ['musicians', 'music'],
+    ['actors', 'movies'],
+  ];
+  for (const [catA, catB] of CROSS_CATEGORY_PAIRS) {
+    if (cleanCat === catA && categoriesMap?.[catB]) {
+      applyLearnedWordToCategories(categoriesMap, { ...record, categoryId: catB });
+    } else if (cleanCat === catB && categoriesMap?.[catA]) {
+      applyLearnedWordToCategories(categoriesMap, { ...record, categoryId: catA });
+    }
+  }
+
+  const key = `${cleanCat}|${compactKey(cleanLabel)}`;
+  const stored = [...readLocalLearnedWords(), ...globalLearnedWords];
+  const map = new Map();
+  for (const item of [...stored, record]) {
+    const ik = `${item.categoryId}|${compactKey(item.label)}`;
+    if (!map.has(ik)) map.set(ik, item);
+  }
+  const merged = [...map.values()];
+  globalLearnedWords.length = 0;
+  globalLearnedWords.push(...merged);
+  writeLocalLearnedWords(merged);
+
+  if (sync && typeof fetchImpl === 'function') {
+    fetchImpl('/api/leaderboard', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ learnedWord: record }),
+    })
+      .then((r) => (r?.ok ? r.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.learnedWords)) {
+          for (const w of data.learnedWords) {
+            applyLearnedWordToCategories(categoriesMap, w);
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
+  return record;
+}
+
+/**
  * Build the complete map of categories, combining static categories with
- * dynamic datasets from Geography (countries, capitals) and People (actors, musicians, athletes, all people).
+ * dynamic datasets from Geography (countries, capitals) and People (actors, musicians, athletes, all people),
+ * plus any persisted learned words from storage or server.
  */
 export function buildWordRushCategories({ countries = [], people = [] } = {}) {
   const categories = {};
@@ -519,7 +1509,7 @@ export function buildWordRushCategories({ countries = [], people = [] } = {}) {
       id,
       label: def.label,
       group: def.group,
-      items: def.items.map((label) => ({ label, alternatives: [] })),
+      items: def.items.map((label) => buildPersonEntry(label)),
     };
   }
 
@@ -544,35 +1534,57 @@ export function buildWordRushCategories({ countries = [], people = [] } = {}) {
     };
   }
 
-  if (people.length > 0) {
-    const actors = people.filter((p) => p.category === 'film');
-    const musicians = people.filter((p) => p.category === 'music');
-    const athletes = people.filter((p) => p.category === 'sport');
+  const actors = people.filter((p) => p.category === 'film');
+  const musicians = people.filter((p) => p.category === 'music');
+  const athletes = people.filter((p) => p.category === 'sport');
 
-    if (actors.length >= 20) {
-      categories.actors = {
-        id: 'actors',
-        label: 'Actors & Filmmakers',
-        group: 'Movies',
-        items: actors.map((p) => ({ label: p.name, alternatives: p.alternatives ?? [] })),
-      };
-    }
-    if (musicians.length >= 20) {
-      categories.musicians = {
-        id: 'musicians',
-        label: 'Musicians & Singers',
-        group: 'Music',
-        items: musicians.map((p) => ({ label: p.name, alternatives: p.alternatives ?? [] })),
-      };
-    }
-    if (athletes.length >= 20) {
-      categories.athletes = {
-        id: 'athletes',
-        label: 'Famous Athletes',
-        group: 'Sport',
-        items: athletes.map((p) => ({ label: p.name, alternatives: p.alternatives ?? [] })),
-      };
-    }
+  const mergedActors = mergePersonEntries(STATIC_ACTORS, actors);
+  const mergedMusicians = mergePersonEntries(STATIC_MUSICIANS, musicians);
+  const mergedAthletes = mergePersonEntries(STATIC_ATHLETES, athletes);
+
+  categories.actors = {
+    id: 'actors',
+    label: 'Actors & Filmmakers',
+    group: 'Movies',
+    items: mergedActors,
+  };
+
+  categories.musicians = {
+    id: 'musicians',
+    label: 'Musicians & Singers',
+    group: 'Music',
+    items: mergedMusicians,
+  };
+
+  categories.athletes = {
+    id: 'athletes',
+    label: 'Famous Athletes',
+    group: 'Sport',
+    items: mergedAthletes,
+  };
+
+  if (categories.music) {
+    categories.music.items = mergePersonEntries(STATIC_CATEGORIES.music.items, [
+      ...musicians,
+      ...STATIC_MUSICIANS.map((name) => ({ name })),
+    ]);
+  }
+  if (categories.sport) {
+    categories.sport.items = mergePersonEntries(STATIC_CATEGORIES.sport.items, [
+      ...athletes,
+      ...STATIC_ATHLETES.map((name) => ({ name })),
+    ]);
+  }
+  if (categories.movies) {
+    categories.movies.items = mergePersonEntries(STATIC_CATEGORIES.movies.items, [
+      ...actors,
+      ...STATIC_ACTORS.map((name) => ({ name })),
+    ]);
+  }
+
+  // Apply any locally stored or in-memory learned words so they are immediately in the fasit
+  for (const learned of [...readLocalLearnedWords(), ...globalLearnedWords]) {
+    applyLearnedWordToCategories(categories, learned);
   }
 
   return categories;
@@ -679,41 +1691,158 @@ const CATEGORY_VERIFY_KEYWORDS = Object.freeze({
     'dessert', 'ingredient', 'sauce', 'soup', 'snack', 'beverage', 'drink', 'spice', 'herb',
     'meal', 'seafood', 'fish', 'pasta', 'noodle', 'cake', 'pie', 'cookie', 'candy', 'sausage',
     'sandwich', 'salad', 'stew', 'curry', 'baked', 'fried', 'edible', 'culinary', 'cooking',
+    'condiment', 'grain', 'cereal', 'nut', 'legume', 'mushroom', 'delicacy', 'confectionery',
+    'cocktail', 'wine', 'beer', 'tea', 'coffee', 'dairy', 'yogurt', 'ice cream', 'pudding',
   ],
   sport: [
-    'sport', 'athletic', 'olympic', 'ball game', 'martial art', 'racing', 'competition',
+    'sport', 'athletic', 'athlete', 'olympic', 'ball game', 'martial art', 'racing', 'competition',
     'exercise', 'gymnastics', 'skating', 'skiing', 'swimming', 'wrestling', 'tournament',
+    'boxer', 'boxing', 'heavyweight', 'middleweight', 'welterweight', 'lightweight', 'featherweight',
+    'ufc', 'mixed martial artist', 'mma', 'kickboxer', 'judo', 'karate', 'taekwondo', 'fencer',
+    'footballer', 'soccer player', 'basketball player', 'nba', 'nfl', 'mlb', 'nhl', 'quarterback',
+    'wide receiver', 'running back', 'linebacker', 'baseball player', 'pitcher', 'outfielder',
+    'ice hockey', 'tennis player', 'grand slam', 'wimbledon', 'golfer', 'pga', 'cricketer',
+    'rugby', 'sprinter', 'marathon', 'decathlon', 'track and field', 'runner', 'hurdler',
+    'jumper', 'thrower', 'cyclist', 'tour de france', 'formula one', 'racing driver', 'nascar',
+    'motogp', 'rally driver', 'swimmer', 'diver', 'rower', 'sailor', 'weightlifter', 'powerlifter',
+    'bodybuilder', 'snooker', 'darts', 'chess grandmaster', 'skateboarder', 'surfer', 'snowboarder',
+    'biathlete', 'cross-country skier', 'alpine skier', 'figure skater', 'speed skater',
+    'handball player', 'volleyball player', 'badminton player', 'table tennis', 'water polo',
+    'equestrian', 'jockey', 'triathlete', 'world champion', 'gold medalist', 'olympian',
   ],
   gaming: [
     'video game', 'computer game', 'arcade game', 'playstation', 'xbox', 'nintendo', 'pc game',
     'multiplayer', 'role-playing game', 'first-person shooter', 'franchise', 'esports',
+    'action-adventure game', 'platform game', 'platformer', 'strategy game', 'simulation game',
+    'fighting game', 'racing game', 'puzzle game', 'survival horror', 'sandbox game', 'roguelike',
+    'metroidvania', 'visual novel', 'mobile game', 'indie game', 'mmorpg', 'battle royale',
+    'game developer', 'published by', 'gameplay', 'expansion pack', 'dlc', 'steam', 'game boy',
+    'sega', 'atari', 'capcom', 'konami', 'ubisoft', 'activision', 'electronic arts', 'square enix',
+    'bandai namco', 'bethesda', 'fromsoftware', 'valve', 'blizzard', 'riot games', 'epic games',
   ],
-  'fortnite-weapons': ['fortnite', 'battle royale', 'epic games', 'weapon', 'shotgun', 'rifle', 'smg'],
-  'rockstar-games': ['grand theft auto', 'red dead', 'rockstar games', 'bully', 'max payne', 'l.a. noire'],
+  'fortnite-weapons': [
+    'fortnite', 'battle royale', 'epic games', 'weapon', 'shotgun', 'rifle', 'smg', 'sniper',
+    'pistol', 'explosive', 'consumable', 'shield potion', 'chug', 'slurp', 'mythic', 'exotic',
+    'harvesting tool', 'pickaxe', 'back bling', 'glider', 'emote', 'tilted towers', 'jonesy',
+    'peely', 'loot llama', 'battle bus', 'v-bucks', 'save the world', 'chapter',
+  ],
+  'rockstar-games': [
+    'grand theft auto', 'gta', 'red dead', 'rockstar games', 'rockstar north', 'bully',
+    'max payne', 'l.a. noire', 'manhunt', 'midnight club', 'vice city', 'san andreas',
+    'liberty city', 'los santos', 'arthur morgan', 'john marston', 'trevor philips',
+    'michael de santa', 'franklin clinton', 'cj', 'carl johnson', 'tommy vercetti', 'niko bellic',
+    'dutch van der linde', 'dan houser', 'sam houser',
+  ],
   music: [
     'music', 'musician', 'singer', 'band', 'songwriter', 'rapper', 'composer', 'instrument',
-    'musical genre', 'album', 'orchestra', 'rock band', 'pop', 'hip hop', 'jazz',
+    'musical genre', 'album', 'orchestra', 'rock band', 'pop', 'hip hop', 'jazz', 'vocalist',
+    'guitarist', 'drummer', 'bassist', 'pianist', 'violinist', 'cellist', 'conductor', 'dj',
+    'record producer', 'discography', 'single by', 'song by', 'studio album', 'ep by',
+    'symphony', 'concerto', 'opera', 'sonata', 'grammy', 'billboard', 'punk rock', 'heavy metal',
+    'country music', 'r&b', 'soul music', 'electronic music', 'folk music', 'blues', 'reggae',
+    'classical music', 'boy band', 'girl group', 'supergroup', 'musical duo',
   ],
   movies: [
     'film', 'movie', 'cinema', 'animated film', 'motion picture', 'directed by', 'starring',
     'box office', 'screenplay', 'thriller', 'comedy film', 'drama film', 'action film',
+    'horror film', 'science fiction film', 'fantasy film', 'documentary film', 'romantic comedy',
+    'crime film', 'western film', 'biographical film', 'musical film', 'mystery film',
+    'adventure film', 'war film', 'noir', 'sequel', 'prequel', 'trilogy', 'academy award',
+    'oscar', 'cannes', 'sundance', 'pixar', 'disney', 'dreamworks', 'studio ghibli', 'marvel',
+    'dc comics', 'feature film', 'short film', 'miniseries', 'television series',
   ],
-  actors: ['actor', 'actress', 'filmmaker', 'director', 'screenwriter', 'starring', 'cinema'],
-  musicians: ['singer', 'musician', 'rapper', 'songwriter', 'composer', 'vocalist', 'guitarist'],
-  athletes: ['player', 'athlete', 'olympic', 'footballer', 'basketball', 'tennis', 'champion', 'sprinter'],
-  countries: ['country', 'sovereign state', 'nation', 'republic', 'kingdom'],
-  capitals: ['capital city', 'capital of', 'largest city', 'municipality'],
+  actors: [
+    'actor', 'actress', 'filmmaker', 'director', 'screenwriter', 'starring', 'cinema',
+    'film director', 'television actor', 'stage actor', 'voice actor', 'comedian', 'producer',
+    'academy award', 'golden globe', 'emmy', 'bafta', 'hollywood', 'broadway', 'filmography',
+  ],
+  musicians: [
+    'singer', 'musician', 'rapper', 'songwriter', 'composer', 'vocalist', 'guitarist',
+    'band', 'rock band', 'pop group', 'hip hop', 'record producer', 'dj', 'drummer', 'bassist',
+    'pianist', 'multi-instrumentalist', 'frontman', 'lead vocalist', 'solo artist', 'grammy',
+  ],
+  athletes: [
+    'player', 'athlete', 'olympic', 'footballer', 'basketball', 'tennis', 'champion', 'sprinter',
+    'boxer', 'boxing', 'heavyweight', 'middleweight', 'welterweight', 'lightweight', 'ufc',
+    'mixed martial artist', 'mma', 'wrestler', 'golfer', 'cricketer', 'rugby', 'swimmer',
+    'cyclist', 'racing driver', 'formula one', 'nascar', 'motogp', 'marathon', 'track and field',
+    'decathlete', 'gymnast', 'skier', 'skater', 'snowboarder', 'surfer', 'skateboarder',
+    'weightlifter', 'biathlete', 'rower', 'quarterback', 'wide receiver', 'running back',
+    'pitcher', 'ice hockey', 'nhl', 'nba', 'nfl', 'mlb', 'world cup', 'ballon d\'or',
+    'grand slam', 'gold medalist', 'olympian', 'world record', 'chess grandmaster', 'darts', 'snooker',
+  ],
+  countries: ['country', 'sovereign state', 'nation', 'republic', 'kingdom', 'principality', 'emirate', 'commonwealth'],
+  capitals: ['capital city', 'capital of', 'largest city', 'municipality', 'seat of government', 'national capital'],
 });
 
 const liveVerifiedCache = new Map();
 
+function matchesCandidateTitle(candidateTitle, cleanedInput, reqLetter, strictFirstLetter = false) {
+  if (!candidateTitle) return false;
+  const cleanTitle = String(candidateTitle).replace(/\s*\([^)]*\)\s*$/, '').trim();
+  const normTitle = normaliseText(cleanTitle);
+  const normInput = normaliseText(cleanedInput);
+  if (!normTitle || !normInput) return false;
+
+  const titleKey = compactKey(cleanTitle);
+  const inputKey = compactKey(cleanedInput);
+  if (!titleKey || !inputKey) return false;
+
+  // Check if the candidate starts with the required letter (either full title or surname when allowed)
+  const titleParts = normTitle.split(' ').filter(Boolean);
+  const lastPart = titleParts.length > 1 ? titleParts[titleParts.length - 1] : '';
+  const startsWithReq =
+    !reqLetter ||
+    normTitle.charAt(0) === reqLetter ||
+    (!strictFirstLetter && lastPart && lastPart.charAt(0) === reqLetter);
+  if (!startsWithReq) return false;
+
+  // Exact compact match
+  if (titleKey === inputKey) return true;
+
+  // Match without leading "The " / "A "
+  const strippedTitleKey = compactKey(cleanTitle.replace(/^(the|a|an)\s+/i, ''));
+  if (strippedTitleKey && strippedTitleKey === inputKey) return true;
+
+  // Match if user typed surname of a person whose surname starts with reqLetter
+  if (
+    !strictFirstLetter &&
+    lastPart &&
+    compactKey(lastPart) === inputKey &&
+    (!reqLetter || lastPart.charAt(0) === reqLetter)
+  ) {
+    return true;
+  }
+
+  // Or if title contains the exact input words as a prefix/suffix
+  if (normTitle.startsWith(normInput) || normInput.startsWith(normTitle)) {
+    const minLen = Math.min(titleKey.length, inputKey.length);
+    const maxLen = Math.max(titleKey.length, inputKey.length);
+    if (minLen >= 4 && minLen / maxLen >= 0.65) return true;
+  }
+
+  return false;
+}
+
+function inputMatchesLetterRule(norm, reqLetter, strictFirstLetter = false) {
+  if (!reqLetter) return true;
+  if (norm.charAt(0) === reqLetter) return true;
+  if (strictFirstLetter) return false;
+  const parts = norm.split(' ').filter(Boolean);
+  if (parts.length > 1) {
+    const lastPart = parts[parts.length - 1];
+    if (lastPart && lastPart.charAt(0) === reqLetter) return true;
+  }
+  return false;
+}
+
 /**
  * Live engine word verifier: if a player submits a word that starts with the
  * required letter and is not yet in our local static list, query public APIs
- * (TheMealDB for food, Wikipedia REST summary, and Datamuse semantic dictionary)
- * to verify whether it is a genuine entry in that category.
+ * (TheMealDB for food, iTunes Search API for music/musicians, Datamuse dictionary,
+ * Wikidata Entity Search, and Wikipedia REST + Search APIs) to verify whether it is a genuine entry.
  *
- * @param {{ word: string, letter: string, categoryId: string, categoryGroup?: string, fetchImpl?: typeof fetch }} opts
+ * @param {{ word: string, letter: string, categoryId: string, categoryGroup?: string, strictFirstLetter?: boolean, fetchImpl?: typeof fetch }} opts
  * @returns {Promise<{ approved: boolean, canonicalLabel?: string }>}
  */
 export async function verifyWordRushCandidateOnline({
@@ -721,20 +1850,21 @@ export async function verifyWordRushCandidateOnline({
   letter,
   categoryId,
   categoryGroup = '',
+  strictFirstLetter = false,
   fetchImpl = globalThis.fetch,
 }) {
   const cleaned = String(word ?? '').trim().replace(/\s+/g, ' ');
   const norm = normaliseText(cleaned);
   const reqLetter = normaliseText(letter).charAt(0);
 
-  if (!norm || norm.length < 2 || (reqLetter && norm.charAt(0) !== reqLetter)) {
+  if (!norm || norm.length < 2 || !inputMatchesLetterRule(norm, reqLetter, strictFirstLetter)) {
     return { approved: false };
   }
   if (typeof fetchImpl !== 'function') {
     return { approved: false };
   }
 
-  const cacheKey = `${categoryId}:${ reqLetter }:${compactKey(cleaned)}`;
+  const cacheKey = `${categoryId}:${reqLetter}:${strictFirstLetter ? 'strict' : 'flex'}:${compactKey(cleaned)}`;
   if (liveVerifiedCache.has(cacheKey)) {
     return liveVerifiedCache.get(cacheKey);
   }
@@ -747,7 +1877,26 @@ export async function verifyWordRushCandidateOnline({
   const keywords =
     CATEGORY_VERIFY_KEYWORDS[categoryId] ??
     CATEGORY_VERIFY_KEYWORDS[String(categoryGroup).toLowerCase()] ??
-    CATEGORY_VERIFY_KEYWORDS.food;
+    null;
+  if (!keywords || keywords.length === 0) {
+    return { approved: false };
+  }
+
+  const textMatchesCategory = (text) => {
+    if (!text) return false;
+    const lower = String(text).toLowerCase();
+    return keywords.some((kw) => lower.includes(kw));
+  };
+
+  const pickCanonicalLabel = (candidateLabel) => {
+    const cleanCandidate = String(candidateLabel || titleCase).replace(/\s*\([^)]*\)\s*$/, '').trim();
+    if (!cleanCandidate) return titleCase;
+    const candNorm = normaliseText(cleanCandidate);
+    if (inputMatchesLetterRule(candNorm, reqLetter, strictFirstLetter)) {
+      return cleanCandidate;
+    }
+    return titleCase;
+  };
 
   try {
     // 1. For Food category, check TheMealDB public API first (meals & ingredients)
@@ -760,32 +1909,60 @@ export async function verifyWordRushCandidateOnline({
           const mealData = await mealRes.json();
           if (Array.isArray(mealData?.meals) && mealData.meals.length > 0) {
             const matchMeal = mealData.meals.find((m) =>
-              normaliseText(m.strMeal).startsWith(reqLetter),
+              inputMatchesLetterRule(normaliseText(m.strMeal), reqLetter, strictFirstLetter),
             );
             if (matchMeal) {
-              const result = { approved: true, canonicalLabel: titleCase };
+              const result = { approved: true, canonicalLabel: matchMeal.strMeal || titleCase };
               liveVerifiedCache.set(cacheKey, result);
               return result;
             }
           }
         }
       } catch {
-        // Continue to Wikipedia / Datamuse fallback
+        // Continue to next source
+      }
+    }
+
+    // 1b. For Music / Musicians, check iTunes Search API for verified music artists
+    if (
+      categoryId === 'music' ||
+      categoryId === 'musicians' ||
+      String(categoryGroup).toLowerCase() === 'music'
+    ) {
+      try {
+        const itunesRes = await fetchImpl(
+          `https://itunes.apple.com/search?term=${encodeURIComponent(cleaned)}&entity=musicArtist&limit=5`,
+        );
+        if (itunesRes.ok) {
+          const itunesData = await itunesRes.json();
+          if (Array.isArray(itunesData?.results)) {
+            for (const artist of itunesData.results) {
+              const artistName = artist?.artistName ?? '';
+              if (matchesCandidateTitle(artistName, cleaned, reqLetter, strictFirstLetter)) {
+                const result = { approved: true, canonicalLabel: pickCanonicalLabel(artistName) };
+                liveVerifiedCache.set(cacheKey, result);
+                return result;
+              }
+            }
+          }
+        }
+      } catch {
+        // Continue to next source
       }
     }
 
     // 2. Check Datamuse dictionary & semantic tags (`md=d` returns definitions)
     try {
       const dmRes = await fetchImpl(
-        `https://api.datamuse.com/words?sp=${encodeURIComponent(cleaned)}&md=d&max=3`,
+        `https://api.datamuse.com/words?sp=${encodeURIComponent(cleaned)}&md=d&max=5`,
       );
       if (dmRes.ok) {
         const dmItems = await dmRes.json();
         if (Array.isArray(dmItems)) {
           for (const item of dmItems) {
-            if (compactKey(item.word) !== compactKey(cleaned)) continue;
-            const defs = Array.isArray(item.defs) ? item.defs.join(' ').toLowerCase() : '';
-            if (defs && keywords.some((kw) => defs.includes(kw))) {
+            if (!matchesCandidateTitle(item.word, cleaned, reqLetter, strictFirstLetter)) continue;
+            const defs = Array.isArray(item.defs) ? item.defs.join(' ') : '';
+            if (textMatchesCategory(defs)) {
               const result = { approved: true, canonicalLabel: titleCase };
               liveVerifiedCache.set(cacheKey, result);
               return result;
@@ -794,25 +1971,81 @@ export async function verifyWordRushCandidateOnline({
         }
       }
     } catch {
-      // Continue to Wikipedia fallback
+      // Continue to Wikipedia / Wikidata fallback
     }
 
-    // 3. Check Wikipedia REST Page Summary API for encyclopedic description + extract
-    const wikiRes = await fetchImpl(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(titleCase)}`,
-    );
-    if (wikiRes.ok) {
-      const wikiData = await wikiRes.json();
-      const combinedText = `${wikiData?.description ?? ''} ${wikiData?.extract ?? ''}`.toLowerCase();
-      if (combinedText && keywords.some((kw) => combinedText.includes(kw))) {
-        const canonical =
-          wikiData?.title && normaliseText(wikiData.title).charAt(0) === reqLetter
-            ? wikiData.title.replace(/\s*\([^)]*\)\s*$/, '')
+    // 3. Check Wikipedia REST Page Summary API for direct page hit (spaces converted to underscores)
+    try {
+      const wikiSlug = encodeURIComponent(titleCase.replace(/\s+/g, '_'));
+      const wikiRes = await fetchImpl(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${wikiSlug}`,
+      );
+      if (wikiRes.ok) {
+        const wikiData = await wikiRes.json();
+        const combinedText = `${wikiData?.description ?? ''} ${wikiData?.extract ?? ''}`;
+        if (textMatchesCategory(combinedText)) {
+          const cleanWikiTitle = wikiData?.title
+            ? wikiData.title.replace(/\s*\([^)]*\)\s*$/, '').trim()
             : titleCase;
-        const result = { approved: true, canonicalLabel: canonical };
-        liveVerifiedCache.set(cacheKey, result);
-        return result;
+          const result = { approved: true, canonicalLabel: pickCanonicalLabel(cleanWikiTitle) };
+          liveVerifiedCache.set(cacheKey, result);
+          return result;
+        }
       }
+    } catch {
+      // Continue to Wikipedia search & Wikidata
+    }
+
+    // 4. Check Wikidata Entity Search API (handles casing, aliases, nicknames, and descriptions cleanly)
+    try {
+      const wdUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(cleaned)}&language=en&limit=5&format=json&origin=*`;
+      const wdRes = await fetchImpl(wdUrl);
+      if (wdRes.ok) {
+        const wdData = await wdRes.json();
+        if (Array.isArray(wdData?.search)) {
+          for (const entity of wdData.search) {
+            const label = entity?.label ?? '';
+            const aliases = Array.isArray(entity?.aliases) ? entity.aliases : [];
+            const titleMatches =
+              matchesCandidateTitle(label, cleaned, reqLetter, strictFirstLetter) ||
+              aliases.some((a) => matchesCandidateTitle(a, cleaned, reqLetter, strictFirstLetter));
+            if (!titleMatches) continue;
+
+            const desc = `${entity?.description ?? ''} ${label} ${aliases.join(' ')}`;
+            if (textMatchesCategory(desc)) {
+              const result = { approved: true, canonicalLabel: pickCanonicalLabel(label) };
+              liveVerifiedCache.set(cacheKey, result);
+              return result;
+            }
+          }
+        }
+      }
+    } catch {
+      // Continue to Wikipedia query search
+    }
+
+    // 5. Check Wikipedia Search API (`action=query&list=search`) for partial names, stage names, or disambiguations
+    try {
+      const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleaned)}&srlimit=5&format=json&origin=*`;
+      const searchRes = await fetchImpl(searchUrl);
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const hits = searchData?.query?.search;
+        if (Array.isArray(hits)) {
+          for (const hit of hits) {
+            if (!matchesCandidateTitle(hit.title, cleaned, reqLetter, strictFirstLetter)) continue;
+            const snippet = String(hit.snippet ?? '').replace(/<[^>]+>/g, ' ');
+            const combined = `${hit.title ?? ''} ${snippet}`;
+            if (textMatchesCategory(combined)) {
+              const result = { approved: true, canonicalLabel: pickCanonicalLabel(hit.title) };
+              liveVerifiedCache.set(cacheKey, result);
+              return result;
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignore network errors
     }
   } catch {
     // Network error — decline gracefully
@@ -831,13 +2064,30 @@ export function createWordRushTrainer({ countries = [], people = [] } = {}) {
     ...Object.fromEntries(categoryKeys.map((k) => [k, categoriesMap[k].label])),
   };
 
+  // Sync any community-verified learned words from the server in the background
+  if (typeof globalThis.fetch === 'function' && typeof window !== 'undefined') {
+    globalThis
+      .fetch('/api/leaderboard', { method: 'GET', headers: { Accept: 'application/json' } })
+      .then((r) => (r?.ok ? r.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.learnedWords)) {
+          for (const w of data.learnedWords) {
+            applyLearnedWordToCategories(categoriesMap, w);
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
   return {
     id: 'word-rush',
     categoryId: 'word-rush',
     name: 'Word Rush',
     description:
-      '2 minutes to name as many words as possible in today’s category starting with today’s letter. Every possible answer is revealed when time runs out!',
-    roundMode: 'timed',
+      'Name as many words as possible in today’s category starting with today’s letter. You have 30 seconds per word (timer resets on each valid word). Every possible answer is revealed when time runs out!',
+    roundMode: 'lives',
+    noLives: true,
+    promptTimeLimitSeconds: 30,
     variantKind: 'pool',
     variants: ['daily'],
     variantLabels,
@@ -845,7 +2095,7 @@ export function createWordRushTrainer({ countries = [], people = [] } = {}) {
     headlineScore: 'correct',
     renderer: 'word-rush',
     scoreLabel: 'Words found',
-    modeParam: WORD_RUSH_DURATION_SECONDS,
+    modeParam: 1,
     topics: categoryKeys.map((id) => ({ id, label: categoriesMap[id].label })),
 
     practiceFilters: {
@@ -864,15 +2114,29 @@ export function createWordRushTrainer({ countries = [], people = [] } = {}) {
 
     /**
      * Live online verification hook for words not yet in the local dictionary.
+     * When approved, permanently adds the word to the category library / fasit and persists it.
      */
-    verifyCandidateOnline(word, prompt, fetchImpl) {
-      return verifyWordRushCandidateOnline({
+    async verifyCandidateOnline(word, prompt, fetchImpl) {
+      const res = await verifyWordRushCandidateOnline({
         word,
         letter: prompt?.letter ?? '',
         categoryId: prompt?.topicId ?? '',
         categoryGroup: prompt?.categoryGroup ?? '',
         fetchImpl,
       });
+      if (res?.approved) {
+        const canonical = res.canonicalLabel ?? String(word).trim();
+        const catId = prompt?.topicId ?? '';
+        const entry = buildPersonEntry(canonical, [String(word).trim()]);
+        registerLearnedWord(categoriesMap, {
+          categoryId: catId,
+          label: entry.label,
+          alternatives: entry.alternatives,
+          sync: fetchImpl === globalThis.fetch,
+          fetchImpl,
+        });
+      }
+      return res;
     },
 
     createGenerator({ puzzleDate, variantKey, practice = false, filters = null }) {

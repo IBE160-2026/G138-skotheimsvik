@@ -20,19 +20,25 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateRawSync, inflateRawSync } from 'node:zlib';
 
-const KV_KEY = 'learninghub:v2:leaderboard';
+const KV_KEY = 'learninghub:v3:leaderboard';
+const KV_WORDS_KEY = 'learninghub:v3:learned_words';
 const CLOUD_KV_APP_KEY = process.env.LEADERBOARD_KV_APP_KEY || 'xsmx36lv';
-const CLOUD_KV_PREFIX = 'lh_v2_real';
+const CLOUD_KV_PREFIX = 'lh_v3_clean';
+const CLOUD_WORDS_PREFIX = 'lh_v3_words';
 const CLOUD_CHUNK_SIZE = 180;
 const MAX_CLOUD_CHUNKS = 25;
 const MAX_ENTRIES = 500;
+const S3LDAN_RESET_CUTOFF_MS = 1795026000000;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const LOCAL_DATA_FILE = join(HERE, '..', '.data', 'leaderboard.json');
 const TMP_DATA_FILE = '/tmp/learninghub-leaderboard.json';
+const LOCAL_WORDS_FILE = join(HERE, '..', '.data', 'learned-words.json');
+const TMP_WORDS_FILE = '/tmp/learninghub-learned-words.json';
 
 /** In-memory cache shared across warm invocations. */
 let memoryEntries = null;
+let memoryLearnedWords = null;
 
 function isLowerBetterTrainer(trainerId) {
   return trainerId === 'figure-pairs';
@@ -40,19 +46,26 @@ function isLowerBetterTrainer(trainerId) {
 
 function sanitizeEntry(raw) {
   if (!raw || typeof raw !== 'object') return null;
+  if (raw.practice || raw.isPractice || raw.adminMode || raw.isAdminMode) return null;
+
   const login = String(raw.login ?? '').trim();
   const puzzleDate = String(raw.puzzleDate ?? '').trim();
   const trainerId = String(raw.trainerId ?? '').trim();
   const variantKey = String(raw.variantKey ?? 'daily').trim();
   const score = Number(raw.score);
+  const playedAt = Number.isFinite(Number(raw.playedAt)) ? Number(raw.playedAt) : Date.now();
 
   if (!login || !/^\d{4}-\d{2}-\d{2}$/.test(puzzleDate) || !trainerId || !Number.isFinite(score)) {
     return null;
   }
 
+  // Filter out the historical pre-reset S3lDan1PS entries so they cannot be re-imported
+  if (login.toLowerCase() === 's3ldan1ps' && playedAt <= S3LDAN_RESET_CUTOFF_MS) {
+    return null;
+  }
+
   return {
     login,
-    name: String(raw.name || login).trim().slice(0, 80),
     avatarUrl:
       typeof raw.avatarUrl === 'string' && raw.avatarUrl.startsWith('https://')
         ? raw.avatarUrl
@@ -66,7 +79,7 @@ function sanitizeEntry(raw) {
     elapsedMs: Number.isFinite(Number(raw.elapsedMs)) ? Number(raw.elapsedMs) : 0,
     categoryLabel: typeof raw.categoryLabel === 'string' ? raw.categoryLabel.slice(0, 80) : null,
     letter: typeof raw.letter === 'string' ? raw.letter.slice(0, 8) : null,
-    playedAt: Number.isFinite(Number(raw.playedAt)) ? Number(raw.playedAt) : Date.now(),
+    playedAt,
   };
 }
 
@@ -177,7 +190,6 @@ async function writeKvStore(entries) {
 function packCompactEntry(e) {
   return [
     e.login,
-    e.name && e.name !== e.login ? e.name : '',
     e.puzzleDate,
     e.trainerId,
     e.variantKey === 'daily' ? '' : e.variantKey,
@@ -193,9 +205,39 @@ function packCompactEntry(e) {
 
 function unpackCompactEntry(row) {
   if (!Array.isArray(row) || row.length < 6) return sanitizeEntry(row);
+  // Support both 11-element (no name) and legacy 12-element rows
+  if (row.length >= 12 && /^\d{4}-\d{2}-\d{2}$/.test(String(row[2] ?? ''))) {
+    const [
+      login,
+      _legacyName,
+      puzzleDate,
+      trainerId,
+      variantKey,
+      score,
+      mistakes,
+      totalAnswered,
+      elapsedMs,
+      categoryLabel,
+      letter,
+      playedAt,
+    ] = row;
+    return sanitizeEntry({
+      login,
+      avatarUrl: `https://github.com/${encodeURIComponent(login)}.png?size=120`,
+      puzzleDate,
+      trainerId,
+      variantKey: variantKey || 'daily',
+      score,
+      mistakes,
+      totalAnswered,
+      elapsedMs,
+      categoryLabel: categoryLabel || null,
+      letter: letter || null,
+      playedAt: playedAt || Date.now(),
+    });
+  }
   const [
     login,
-    name,
     puzzleDate,
     trainerId,
     variantKey,
@@ -209,7 +251,6 @@ function unpackCompactEntry(row) {
   ] = row;
   return sanitizeEntry({
     login,
-    name: name || login,
     avatarUrl: `https://github.com/${encodeURIComponent(login)}.png?size=120`,
     puzzleDate,
     trainerId,
@@ -304,6 +345,76 @@ async function writeBuiltInCloudKv(entries) {
   }
 }
 
+function sanitizeLearnedWord(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const categoryId = String(raw.categoryId ?? '').trim().toLowerCase();
+  const label = String(raw.label ?? '').trim().slice(0, 80);
+  if (!categoryId || !label) return null;
+  const alternatives = Array.isArray(raw.alternatives)
+    ? raw.alternatives.map((a) => String(a ?? '').trim().slice(0, 80)).filter(Boolean).slice(0, 8)
+    : undefined;
+  return alternatives?.length ? { categoryId, label, alternatives } : { categoryId, label };
+}
+
+export function mergeLearnedWords(existing = [], incoming = []) {
+  const map = new Map();
+  for (const raw of [...existing, ...incoming]) {
+    const item = sanitizeLearnedWord(raw);
+    if (!item) continue;
+    const key = `${item.categoryId}|${item.label.toLowerCase()}`;
+    if (!map.has(key)) {
+      map.set(key, item);
+    }
+  }
+  return [...map.values()].slice(0, 2000);
+}
+
+function readLearnedWordsFileStore() {
+  let combined = [];
+  for (const candidate of [LOCAL_WORDS_FILE, TMP_WORDS_FILE]) {
+    try {
+      if (existsSync(candidate)) {
+        const parsed = JSON.parse(readFileSync(candidate, 'utf8'));
+        if (Array.isArray(parsed?.learnedWords)) {
+          combined = mergeLearnedWords(combined, parsed.learnedWords);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return combined;
+}
+
+function writeLearnedWordsFileStore(learnedWords) {
+  const payload = JSON.stringify({ learnedWords, updatedAt: Date.now() }, null, 2);
+  let wroteAny = false;
+  for (const candidate of [LOCAL_WORDS_FILE, TMP_WORDS_FILE]) {
+    try {
+      mkdirSync(dirname(candidate), { recursive: true });
+      writeFileSync(candidate, payload, 'utf8');
+      wroteAny = true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return wroteAny;
+}
+
+export async function loadSharedLearnedWords() {
+  const fileWords = readLearnedWordsFileStore();
+  memoryLearnedWords = mergeLearnedWords(memoryLearnedWords ?? [], fileWords);
+  return memoryLearnedWords;
+}
+
+export async function saveSharedLearnedWords(incomingWords = []) {
+  const current = await loadSharedLearnedWords();
+  const merged = mergeLearnedWords(current, incomingWords);
+  memoryLearnedWords = merged;
+  writeLearnedWordsFileStore(merged);
+  return merged;
+}
+
 export async function loadSharedEntries() {
   const [kvEntries, cloudEntries] = await Promise.all([readKvStore(), readBuiltInCloudKv()]);
   const fileEntries = readFileStore();
@@ -333,8 +444,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const entries = await loadSharedEntries();
-    res.status(200).json({ entries });
+    const [entries, learnedWords] = await Promise.all([
+      loadSharedEntries(),
+      loadSharedLearnedWords(),
+    ]);
+    res.status(200).json({ entries, learnedWords });
     return;
   }
 
@@ -345,9 +459,17 @@ export default async function handler(req, res) {
       : body.entry
         ? [body.entry]
         : [];
+    const incomingWords = Array.isArray(body.learnedWords)
+      ? body.learnedWords
+      : body.learnedWord
+        ? [body.learnedWord]
+        : [];
 
-    const entries = await saveSharedEntries(incoming);
-    res.status(200).json({ entries });
+    const [entries, learnedWords] = await Promise.all([
+      incoming.length > 0 ? saveSharedEntries(incoming) : loadSharedEntries(),
+      incomingWords.length > 0 ? saveSharedLearnedWords(incomingWords) : loadSharedLearnedWords(),
+    ]);
+    res.status(200).json({ entries, learnedWords });
     return;
   }
 

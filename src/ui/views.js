@@ -496,10 +496,13 @@ export function categoryView({ today, category, trainers, progress, onTrainer, o
         const spent = progress.spentVariants(trainer.id, today);
         const isCompleted = spent.length >= variants.length;
         const hasPractice = !trainer.noPractice;
+        const modeLabel = trainer.noLives
+          ? `${trainer.promptTimeLimitSeconds ?? 30}s timer per word — resets on each valid word`
+          : ROUND_MODE_LABEL[trainer.roundMode];
         return el('article', { class: 'card' }, [
           el('h2', { text: trainer.name }),
           el('p', { class: 'muted', text: trainer.description }),
-          el('p', { class: 'mode-label', text: ROUND_MODE_LABEL[trainer.roundMode] }),
+          el('p', { class: 'mode-label', text: modeLabel }),
           el('p', {
             class: 'remaining',
             text: isCompleted
@@ -653,7 +656,7 @@ export function briefingView({ trainer, variantKey, puzzleDate, isArchive, onSta
             el('span', { class: 'badge', text: 'Hidden until start' }),
             el('p', { class: 'word-rush-category-line' }, [
               el('strong', {
-                text: 'Category and starting letter are revealed once the 2-minute timer starts.',
+                text: 'Category and starting letter are revealed once the 30s-per-word timer starts.',
               }),
             ]),
           ]),
@@ -665,7 +668,7 @@ export function briefingView({ trainer, variantKey, puzzleDate, isArchive, onSta
         VARIANT_AXIS_LABEL[trainer.variantKind] ?? 'Level',
         isWordRush && variantKey === 'daily' ? 'Daily Mystery' : labelFor(trainer, variantKey),
       ),
-      stat('Round ends', ROUND_MODE_LABEL[trainer.roundMode]),
+      stat('Round ends', trainer.noLives ? 'When the 30s word timer runs out' : ROUND_MODE_LABEL[trainer.roundMode]),
     ]),
     el('p', { class: 'brief-mode', text: describeRound(trainer, variantKey, puzzleDate) }),
     el('p', { class: 'warning' }, [
@@ -973,7 +976,7 @@ const LEADERBOARD_MODES = {
   'word-rush': {
     title: 'Word Rush',
     heading: 'Word Rush Leaderboards',
-    subtitle: 'Ranked by the most words guessed in the 2-Minute Daily Word Rush.',
+    subtitle: 'Ranked by the most words guessed in the Daily Word Rush (30s per word).',
     playButton: 'Play Today’s Word Rush',
     variantKey: 'daily',
     dailyTab: 'Daily Leaderboard',
@@ -1167,14 +1170,21 @@ function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = '
         {},
         rows.map((row) => {
           const isMe = currentLogin && row.login.toLowerCase() === currentLogin;
+          const isFirstPlace = row.rank === 1;
           const avgTries =
             row.roundsPlayed > 0 ? Math.round((row.totalWords / row.roundsPlayed) * 10) / 10 : row.bestScore;
-          return el('tr', { class: isMe ? 'leaderboard-row-me' : '' }, [
+          return el('tr', { class: `${isMe ? 'leaderboard-row-me' : ''}${isFirstPlace ? ' leaderboard-row-first' : ''}`.trim() }, [
             el('td', { class: 'rank-cell' }, [
-              el('span', {
-                class: `rank-pill rank-${row.rank}`,
-                text: `#${row.rank}`,
-              }),
+              el('span', { class: `rank-pill rank-${row.rank}` }, [
+                isFirstPlace
+                  ? el('span', {
+                      class: 'rank-crown-icon',
+                      'aria-hidden': 'true',
+                      html: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 18h18v2H3v-2Zm0-2L2 7l5.5 4L12 4l4.5 7L22 7l-1 9H3Z"/></svg>`,
+                    })
+                  : null,
+                el('span', { text: `#${row.rank}` }),
+              ]),
             ]),
             el('td', { class: 'player-cell' }, [
               el('img', {
@@ -1184,8 +1194,17 @@ function renderLeaderboardTable(rows, currentUser, mode = 'daily', trainerId = '
                 loading: 'lazy',
               }),
               el('div', { class: 'player-meta' }, [
-                el('strong', { class: 'player-name', text: row.name || row.login }),
-                el('span', { class: 'player-handle', text: `@${row.login}${isMe ? ' (You)' : ''}` }),
+                el('strong', { class: 'player-name' }, [
+                  el('span', { text: `@${row.login}${isMe ? ' (You)' : ''}` }),
+                  isFirstPlace
+                    ? el('span', {
+                        class: 'player-crown-icon',
+                        title: '1st Place',
+                        'aria-label': '1st Place',
+                        html: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 18h18v2H3v-2Zm0-2L2 7l5.5 4L12 4l4.5 7L22 7l-1 9H3Z"/></svg>`,
+                      })
+                    : null,
+                ]),
               ]),
             ]),
             el('td', {

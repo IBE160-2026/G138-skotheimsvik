@@ -112,6 +112,9 @@ export function describeRound(trainer, variantKey, puzzleDate) {
   const param = modeParamFor(trainer, variantKey, puzzleDate);
   if (trainer.roundMode === 'timed') return `${param} seconds`;
   if (trainer.roundMode === 'lives') {
+    if (trainer.noLives && typeof trainer.promptTimeLimitSeconds === 'number') {
+      return `${trainer.promptTimeLimitSeconds} seconds per word — timer resets on each valid word`;
+    }
     const perPromptUnit = trainer.id === 'famous-people' ? 'person' : 'question';
     const perPrompt =
       typeof trainer.promptTimeLimitSeconds === 'number' && trainer.promptTimeLimitSeconds > 0

@@ -79,13 +79,8 @@ export default async function handler(req, res) {
       user: {
         login: userData.login,
         id: userData.id,
-        name: userData.name || userData.login,
-        email: userData.email || null,
         avatarUrl: userData.avatar_url || `https://github.com/${userData.login}.png?size=160`,
         htmlUrl: userData.html_url || `https://github.com/${userData.login}`,
-        bio: userData.bio || 'GitHub Player',
-        publicRepos: userData.public_repos ?? 0,
-        followers: userData.followers ?? 0,
         verifiedAt: Date.now(),
       },
     });

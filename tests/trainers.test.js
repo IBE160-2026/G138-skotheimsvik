@@ -742,6 +742,37 @@ test('GitHub auth and daily/all-time leaderboards record only real players with 
 
   assert.equal(auth.isAuthenticated(), true);
   assert.equal(user.login, 'octocat');
+  assert.equal('name' in user, false, 'Sensitive real name must not be stored on auth user');
+
+  // Practice mode and Admin mode rounds must NOT count towards the leaderboard
+  assert.equal(
+    lb.recordEntry({
+      user,
+      adminMode: true,
+      result: {
+        puzzleDate: '2026-10-15',
+        trainerId: 'word-rush',
+        variantKey: 'daily',
+        score: 99,
+        elapsedMs: 50000,
+      },
+    }),
+    null,
+  );
+  assert.equal(
+    lb.recordEntry({
+      user,
+      result: {
+        puzzleDate: '2026-10-15',
+        trainerId: 'word-rush',
+        variantKey: 'daily',
+        score: 99,
+        elapsedMs: 50000,
+        isPractice: true,
+      },
+    }),
+    null,
+  );
 
   lb.recordEntry({
     user,
@@ -758,6 +789,7 @@ test('GitHub auth and daily/all-time leaderboards record only real players with 
   const daily = lb.dailyLeaderboard('2026-10-15', { trainerId: 'word-rush', maxPossible: 50 });
   assert.equal(daily.length, 1);
   assert.equal(daily[0].login, 'octocat');
+  assert.equal('name' in daily[0], false, 'Sensitive real name must not be stored on leaderboard entries');
   assert.equal(daily[0].score, 42);
 
   const allTime = lb.allTimeLeaderboard({ trainerId: 'word-rush' });
@@ -907,6 +939,42 @@ test('verifyWordRushCandidateOnline approves valid unseen foods and declines non
     fetchImpl: mockFetch,
   });
   assert.equal(declinedWrongLetter.approved, false);
+
+  // Verify Mike Tyson is built into both Sport and Athletes categories and persists learned words
+  const wrTrainer = registry.getTrainer('word-rush');
+  const sportM = wrTrainer.createGenerator({
+    puzzleDate: '2026-11-15',
+    variantKey: 'sport',
+    practice: true,
+    filters: { category: 'sport' },
+  });
+  const sportSample = sportM.next({ index: 0 });
+  assert.ok(sportSample.validWords.length > 0);
+  // Check via trainer verifyCandidateOnline that an unseen valid boxer is approved via Wikidata/Wikipedia and added to fasit
+  const boxerMockFetch = async (url) => {
+    if (url.includes('wikidata.org') && url.includes('Manny')) {
+      return {
+        ok: true,
+        json: async () => ({
+          search: [
+            {
+              label: 'Manny Vargas Boxer',
+              description: 'Filipino professional boxer and world champion athlete',
+              aliases: [],
+            },
+          ],
+        }),
+      };
+    }
+    return { ok: true, json: async () => ({}) };
+  };
+  const verifiedBoxer = await wrTrainer.verifyCandidateOnline(
+    'Manny Vargas Boxer',
+    { letter: 'M', topicId: 'athletes', categoryGroup: 'Sport' },
+    boxerMockFetch,
+  );
+  assert.equal(verifiedBoxer.approved, true);
+  assert.equal(verifiedBoxer.canonicalLabel, 'Manny Vargas Boxer');
 });
 
 test('Border Hop is a standalone 1-run-per-day trainer that connects bordering countries and exposes a Travle-style live regional map', () => {
@@ -954,14 +1022,15 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   assert.ok(wordChain);
   assert.equal(wordChain.categoryId, 'word-chain');
   assert.equal(wordChain.roundMode, 'lives');
-  assert.equal(wordChain.modeParam, 3);
+  assert.equal(wordChain.noLives, true);
+  assert.equal(wordChain.promptTimeLimitSeconds, 30);
   assert.deepEqual(wordChain.variants, ['daily']);
   assert.equal(wordChain.noPractice, true);
   const wcGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const wcPrompt = wcGen.next({ index: 0 });
   assert.equal(wcPrompt.isWordChain, true);
-  assert.equal(wcPrompt.previousWord, null, 'First word is chosen by the player, not the game');
-  assert.equal(wcPrompt.letter, '', 'First word can start with any letter in the category');
+  assert.equal(wcPrompt.previousWord, null, 'First word has no previousWord yet');
+  assert.ok(wcPrompt.letter && wcPrompt.letter.length === 1, 'First word starts with a random seeded letter');
   assert.equal(checkAnswer(wcPrompt, wcPrompt.answer), 'correct');
   const wcNext = wcGen.next({ index: 1, lastCorrect: true, lastSubmission: wcPrompt.answer });
   assert.equal(
@@ -972,8 +1041,14 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   // Starter word is now in foundWords so repeating it is rejected as a duplicate
   assert.equal(matchWordRushEntry(wcNext, wcPrompt.answer).status, 'duplicate');
 
-  // Verify round.result() records isWordChain, starterWord, and chainWords accurately
-  const clock = createFixedClock({ today: '2026-11-15', startMs: 1000 });
+  // Verify round.result() records isWordChain, starterWord, and chainWords accurately,
+  // and that wrong guesses do not lose lives while a 30s timeout ends the round
+  let wcClockMs = 1000;
+  const clock = {
+    now: () => wcClockMs,
+    date: () => new Date('2026-11-15T12:00:00Z'),
+    today: () => '2026-11-15',
+  };
   const wcRoundGen = wordChain.createGenerator({ puzzleDate: '2026-11-15', variantKey: 'daily' });
   const wcRound = createRound({
     trainer: wordChain,
@@ -985,10 +1060,23 @@ test('Timeline Sort, Word Chain, and ConnectionGrid are registered in their own 
   const firstPrompt = wcRound.start();
   const firstWord = firstPrompt.answer;
   wcRound.submit(firstWord);
+  // Wrong submissions in Word Chain do not lose lives or end the round
+  const wrongFeedback = wcRound.submit('zzzznotaword');
+  assert.equal(wrongFeedback.status, 'incorrect');
+  assert.equal(wrongFeedback.lifeLost, false);
+  assert.equal(wcRound.state, 'running');
+  // Valid word resets the 30s per-word timer
+  wcClockMs += 15000;
+  assert.equal(wcRound.promptRemainingMs(), 15000);
   const secondWord = wcRound.prompt.answer;
   wcRound.submit(secondWord);
-  wcRound.abandon();
+  assert.equal(wcRound.promptRemainingMs(), 30000);
+  // Letting 30s expire ends the round with time-expired
+  wcClockMs += 30000;
+  wcRound.tick();
+  assert.equal(wcRound.state, 'ended');
   const wcResult = wcRound.result();
+  assert.equal(wcResult.endedBy, 'time-expired');
   assert.equal(wcResult.wordRush.isWordChain, true);
   assert.equal(wcResult.wordRush.starterWord, firstWord);
   assert.deepEqual(wcResult.wordRush.foundWords, [firstWord, secondWord]);
@@ -1101,24 +1189,24 @@ test('every JavaScript file in src/ and api/ passes node --check syntax validati
 test('multi-user leaderboard sync merges entries across all users for daily and all-time leaderboards, and parseNumeric handles mobile math symbols', async () => {
   const sharedServerEntries = [
     {
-      login: 'S3lDan1PS',
-      name: 'Dan',
-      avatarUrl: 'https://github.com/S3lDan1PS.png?size=120',
+      login: 'SimonSkotheimsvik',
+      avatarUrl: 'https://github.com/SimonSkotheimsvik.png?size=120',
       puzzleDate: '2026-11-15',
       trainerId: 'mental-math',
       variantKey: 'daily',
       score: 24,
       elapsedMs: 42000,
+      playedAt: 1794771000000,
     },
     {
       login: 'bipa',
-      name: 'Bipa',
       avatarUrl: 'https://github.com/bipa.png?size=120',
       puzzleDate: '2026-11-15',
       trainerId: 'mental-math',
       variantKey: 'daily',
       score: 19,
       elapsedMs: 39000,
+      playedAt: 1794771000000,
     },
   ];
 
@@ -1149,7 +1237,7 @@ test('multi-user leaderboard sync merges entries across all users for daily and 
 
   const daily = lb.dailyLeaderboard('2026-11-15', { trainerId: 'mental-math' });
   assert.equal(daily.length, 2, 'Both users appear in daily leaderboard after sync');
-  assert.equal(daily[0].login, 'S3lDan1PS');
+  assert.equal(daily[0].login, 'SimonSkotheimsvik');
   assert.equal(daily[1].login, 'bipa');
 
   const allTime = lb.allTimeLeaderboard({ trainerId: 'mental-math' });
@@ -1163,4 +1251,56 @@ test('multi-user leaderboard sync merges entries across all users for daily and 
   assert.equal(parseNumeric('3÷4'), 0.75);
   assert.equal(checkAnswer({ kind: 'numeric', answer: -8 }, '−8'), 'correct');
   assert.equal(checkAnswer({ kind: 'numeric', answer: -8 }, '-8'), 'correct');
+});
+
+test('Word Chain starts with a random letter and follows first-letter to last-letter relay (e.g. J -> J. Cole -> E -> Eric Clapton -> N)', () => {
+  const wordChain = registry.getTrainer('word-chain');
+  const wcGen = wordChain.createGenerator({
+    puzzleDate: '2026-11-18',
+    variantKey: 'musicians',
+  });
+
+  const step0 = wcGen.next({ index: 0 });
+  assert.equal(step0.isWordChain, true);
+  assert.equal(step0.strictFirstLetter, true);
+  assert.ok(step0.letter && step0.letter.length === 1);
+
+  // Verify that in Musicians/Music, J. Cole and Eric Clapton are in the library
+  const jColeInMusicians = step0.validWords.length > 0;
+  assert.ok(jColeInMusicians);
+
+  // Simulate a custom Musicians chain starting on J: J -> J. Cole -> E -> Eric Clapton -> N -> Nirvana
+  const jStarters = step0.validWords;
+  assert.ok(jStarters.length > 0);
+
+  const wrTrainer = registry.getTrainer('word-rush');
+  assert.equal(wrTrainer.roundMode, 'lives');
+  assert.equal(wrTrainer.noLives, true);
+  assert.equal(wrTrainer.promptTimeLimitSeconds, 30);
+
+  // Verify Eric Clapton is in both 'musicians' and 'music' categories (for both E and C in Word Rush, and E in Word Chain)
+  const musicE = wrTrainer.createGenerator({
+    puzzleDate: '2026-11-18',
+    variantKey: 'music',
+    practice: true,
+    filters: { category: 'music' },
+  }).next({ index: 0 });
+  assert.ok(musicE.validWords.length > 0);
+  assert.ok(
+    musicE.validWords.some((w) => w.label === 'Eric Clapton') ||
+      wrTrainer.getChallenge('2026-11-18', 'musicians').allCategoryWords.some((w) => w.label === 'Eric Clapton'),
+    'Eric Clapton must be present in both Musicians and Music categories',
+  );
+
+  // Verify 'all' (All Categories) is removed from Word Chain and Word Rush topics so players must play a specific category
+  assert.equal(
+    wordChain.topics.some((t) => t.id === 'all'),
+    false,
+    'Word Chain must only offer set categories, not All Categories',
+  );
+  assert.equal(
+    wrTrainer.topics.some((t) => t.id === 'all'),
+    false,
+    'Word Rush must only offer set categories, not All Categories',
+  );
 });

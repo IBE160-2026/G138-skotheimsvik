@@ -109,7 +109,7 @@ function guardNavigation(action) {
     return;
   }
 
-  if (activeRound.isPractice) {
+  if (activeRound.isPractice || activeRound.isAdminMode || isAdminMode()) {
     activeRound.abandon();
     action();
     return;
@@ -292,18 +292,6 @@ const LEADERBOARD_TRAINER_IDS = new Set([
   'famous-people',
 ]);
 
-function backfillUserLeaderboardFromProgress() {
-  const user = auth.getUser();
-  if (!user || !registry) return;
-  for (const trainer of registry.listTrainers()) {
-    if (!LEADERBOARD_TRAINER_IDS.has(trainer.id)) continue;
-    const attempts = progress.fullHistory(trainer.id);
-    for (const result of attempts) {
-      leaderboard.recordEntry({ user, result, sync: false });
-    }
-  }
-}
-
 function goTrainer(trainerId) {
   requireAuth(() => {
     const trainer = registry.getTrainer(trainerId);
@@ -480,15 +468,24 @@ function startRound({ trainer, variantKey, puzzleDate, practice = false, filters
     }
   }
 
+  const roundAdminMode = isAdminMode();
   const generator = trainer.createGenerator({ puzzleDate, variantKey, practice, filters });
   activeTrainer = trainer;
-  activeRound = createRound({ trainer, variantKey, puzzleDate, generator, clock, practice });
+  activeRound = createRound({
+    trainer,
+    variantKey,
+    puzzleDate,
+    generator,
+    clock,
+    practice,
+    adminMode: roundAdminMode,
+  });
 
   roundView = createRoundView({
     container: main,
     announce,
     onFinish: finishRound,
-    onLeave: () => (practice ? goTrainer(trainer.id) : goHome()),
+    onLeave: () => (practice || roundAdminMode ? goTrainer(trainer.id) : goHome()),
   });
 
   roundView.start({
@@ -508,15 +505,18 @@ function finishRound(round) {
 
   const currentUser = auth.getUser();
   const hasModeLeaderboard = LEADERBOARD_TRAINER_IDS.has(activeTrainer.id);
+  const wasUnscored = Boolean(
+    round.isPractice || round.isAdminMode || result.isPractice || result.isAdminMode || isAdminMode(),
+  );
 
-  // Practice never reaches the progress store at all (FR-47, FR-48).
-  if (round.isPractice) {
+  // Practice and Admin Mode never count towards the leaderboard; Practice & Admin also never reach progress store (FR-47, FR-48).
+  if (wasUnscored) {
     show(
       resultsView({
         result,
         trainer: activeTrainer,
         comparison: null,
-        isPractice: true,
+        isPractice: round.isPractice || round.isAdminMode || isAdminMode(),
         leaderboard,
         currentUser,
         onBack: () => goTrainer(activeTrainer.id),
@@ -538,8 +538,8 @@ function finishRound(round) {
     showNotice('Your progress could not be saved — this browser is blocking storage.');
   }
 
-  if (currentUser && hasModeLeaderboard) {
-    leaderboard.recordEntry({ user: currentUser, result });
+  if (currentUser && hasModeLeaderboard && !round.isPractice && !isAdminMode()) {
+    leaderboard.recordEntry({ user: currentUser, result, adminMode: isAdminMode() });
   }
 
   const finishedTrainer = activeTrainer;
@@ -707,7 +707,6 @@ async function boot() {
       }
     }
 
-    backfillUserLeaderboardFromProgress();
     leaderboard.syncWithServer().then(() => {
       if (!activeRound && typeof currentViewRefresh === 'function') {
         currentViewRefresh();

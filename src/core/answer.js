@@ -106,9 +106,17 @@ export function matchWordRushEntry(prompt, submitted) {
     }
   }
 
-  // Pass 2: Forgiving 1-edit typo tolerance for words >= 6 chars (e.g. "hotsog" -> "hotdog")
+  // Pass 2: Forgiving 1-edit typo tolerance for words >= 6 chars (e.g. "hotsog" -> "hotdog", "Eric Claptn" -> "Eric Clapton")
   const requiredLetter = compactKey(prompt?.letter ?? '');
-  if (valCompact.length >= 6 && (!requiredLetter || valCompact.startsWith(requiredLetter))) {
+  const inputParts = value.split(' ').filter(Boolean);
+  const inputSurname = inputParts.length > 1 ? compactKey(inputParts[inputParts.length - 1]) : '';
+  const strictFirst = Boolean(prompt?.strictFirstLetter);
+  const matchesReqLetter =
+    !requiredLetter ||
+    valCompact.startsWith(requiredLetter) ||
+    (!strictFirst && inputSurname && inputSurname.startsWith(requiredLetter));
+
+  if (valCompact.length >= 6 && matchesReqLetter) {
     let bestEntry = null;
     let bestDist = Infinity;
     for (const entry of validPool) {

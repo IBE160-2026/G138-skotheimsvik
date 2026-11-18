@@ -27,13 +27,13 @@ export const CATEGORIES = [
   {
     id: 'word-rush',
     name: 'Word Rush',
-    tagline: '2 minutes. Daily category & starting letter. Name as many as you can.',
+    tagline: 'Daily category & starting letter. 30 seconds per word — name as many as you can.',
     icon: '⚡',
   },
   {
     id: 'word-chain',
     name: 'Word Chain',
-    tagline: '90-second last-letter word relay. Chain words together without repeating.',
+    tagline: 'Last-letter word relay. 30 seconds per word — chain words together without repeating.',
     icon: '⛓',
   },
   {

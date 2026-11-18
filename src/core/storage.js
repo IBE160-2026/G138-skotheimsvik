@@ -13,8 +13,9 @@ export const STORAGE_KEYS = Object.freeze({
   settings: 'learninghub.v2.settings',
   practice: 'learninghub.v2.practice',
   auth: 'learninghub.v2.auth',
-  leaderboard: 'learninghub.v2.leaderboard',
+  leaderboard: 'learninghub.v3.leaderboard',
   preferences: 'learninghub.v2.preferences',
+  learnedWords: 'learninghub.v2.learnedWords',
 });
 
 /** An in-memory stand-in used by tests and as the fallback when storage is blocked. */

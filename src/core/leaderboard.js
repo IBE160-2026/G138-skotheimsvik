@@ -16,23 +16,67 @@ const LEGACY_SIMULATED_LOGINS = new Set([
   'addyosmani',
 ]);
 
+const S3LDAN_RESET_CUTOFF_MS = 1795026000000;
+
 function isLowerBetter(trainerId) {
   return trainerId === 'figure-pairs';
+}
+
+function cleanEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  if (entry.practice || entry.isPractice || entry.adminMode || entry.isAdminMode) return null;
+  const login = String(entry.login ?? '').trim();
+  if (!login || LEGACY_SIMULATED_LOGINS.has(login.toLowerCase())) return null;
+  const playedAt = Number.isFinite(Number(entry.playedAt)) ? Number(entry.playedAt) : Date.now();
+  if (login.toLowerCase() === 's3ldan1ps' && playedAt <= S3LDAN_RESET_CUTOFF_MS) return null;
+  return {
+    login,
+    avatarUrl:
+      typeof entry.avatarUrl === 'string' && entry.avatarUrl.startsWith('https://')
+        ? entry.avatarUrl
+        : `https://github.com/${encodeURIComponent(login)}.png?size=120`,
+    puzzleDate: String(entry.puzzleDate ?? '').trim(),
+    trainerId: String(entry.trainerId ?? '').trim(),
+    variantKey: String(entry.variantKey ?? 'daily').trim() || 'daily',
+    score: Number(entry.score),
+    mistakes: Number.isFinite(Number(entry.mistakes)) ? Number(entry.mistakes) : 0,
+    totalAnswered: Number.isFinite(Number(entry.totalAnswered))
+      ? Number(entry.totalAnswered)
+      : Number(entry.score),
+    elapsedMs: Number.isFinite(Number(entry.elapsedMs)) ? Number(entry.elapsedMs) : 0,
+    categoryLabel: entry.categoryLabel ? String(entry.categoryLabel) : null,
+    letter: entry.letter ? String(entry.letter) : null,
+    playedAt,
+  };
 }
 
 /**
  * @param {{storage: object, fetchImpl?: typeof fetch}} options
  */
 export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }) {
-  // Stored shape: { entries: Array<{login, name, avatarUrl, puzzleDate, trainerId, variantKey, score, elapsedMs, categoryLabel, letter}> }
+  // Purge any legacy v2 leaderboard key in browser localStorage so old cached entries or sensitive fields are removed
+  try {
+    globalThis.localStorage?.removeItem?.('learninghub.v2.leaderboard');
+  } catch {
+    /* ignore */
+  }
+  // Stored shape: { entries: Array<{login, avatarUrl, puzzleDate, trainerId, variantKey, score, elapsedMs, categoryLabel, letter}> }
   let state = storage.read(STORAGE_KEYS.leaderboard, { entries: [] });
   if (!Array.isArray(state?.entries)) {
     state = { entries: [] };
   } else {
-    const filtered = state.entries.filter(
-      (e) => e?.login && !LEGACY_SIMULATED_LOGINS.has(String(e.login).toLowerCase()),
-    );
-    if (filtered.length !== state.entries.length) {
+    let hadLegacyOrSensitive = false;
+    const filtered = [];
+    for (const raw of state.entries) {
+      if (raw && 'name' in raw) hadLegacyOrSensitive = true;
+      const cleaned = cleanEntry(raw);
+      if (cleaned) {
+        filtered.push(cleaned);
+      } else {
+        hadLegacyOrSensitive = true;
+      }
+    }
+    if (hadLegacyOrSensitive || filtered.length !== state.entries.length) {
       state = { entries: filtered };
       storage.write(STORAGE_KEYS.leaderboard, state);
     }
@@ -52,7 +96,8 @@ export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }
     }
 
     let changed = false;
-    for (const entry of incomingEntries) {
+    for (const rawEntry of incomingEntries) {
+      const entry = cleanEntry(rawEntry);
       if (!entry?.login || !entry?.puzzleDate || !entry?.trainerId || typeof entry.score !== 'number') {
         continue;
       }
@@ -117,8 +162,11 @@ export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }
   /**
    * Record a user's round score onto the leaderboard and push it to the shared server.
    */
-  function recordEntry({ user, result, sync = true }) {
+  function recordEntry({ user, result, adminMode = false, sync = true }) {
     if (!user?.login || !result) return null;
+    if (adminMode || result.adminMode || result.isAdminMode || result.isPractice || result.practice) {
+      return null;
+    }
 
     const isFigurePairs = isLowerBetter(result.trainerId);
     // For Figure Pairs, the user's leaderboard score is total tries (totalAnswered),
@@ -129,7 +177,6 @@ export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }
 
     const record = {
       login: user.login,
-      name: user.name || user.login,
       avatarUrl: user.avatarUrl || `https://github.com/${user.login}.png?size=120`,
       puzzleDate: result.puzzleDate,
       trainerId: result.trainerId,
@@ -225,7 +272,6 @@ export function createLeaderboardStore({ storage, fetchImpl = globalThis.fetch }
       const key = entry.login.toLowerCase();
       const current = aggregatedUsers.get(key) ?? {
         login: entry.login,
-        name: entry.name,
         avatarUrl: entry.avatarUrl,
         totalWords: 0,
         bestScore: lowerBetter ? Infinity : 0,

@@ -65,6 +65,19 @@ export async function exchangeGitHubCode(code, fetchImpl = globalThis.fetch) {
   return payload.user;
 }
 
+function sanitizeUser(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const login = String(raw.login ?? '').trim();
+  if (!login) return null;
+  return {
+    login,
+    id: raw.id ?? null,
+    avatarUrl: raw.avatarUrl || raw.avatar_url || `https://github.com/${login}.png?size=160`,
+    htmlUrl: raw.htmlUrl || raw.html_url || `https://github.com/${login}`,
+    verifiedAt: raw.verifiedAt || Date.now(),
+  };
+}
+
 /**
  * Fetch a GitHub user profile from the public GitHub API (used by unit tests or profile lookup).
  *
@@ -90,17 +103,7 @@ export async function fetchGitHubUser(username, fetchImpl = globalThis.fetch) {
   }
 
   const data = await response.json();
-  return {
-    login: data.login,
-    id: data.id,
-    name: data.name || data.login,
-    avatarUrl: data.avatar_url || `https://github.com/${data.login}.png?size=160`,
-    htmlUrl: data.html_url || `https://github.com/${data.login}`,
-    bio: data.bio || 'GitHub Player',
-    publicRepos: data.public_repos ?? 0,
-    followers: data.followers ?? 0,
-    verifiedAt: Date.now(),
-  };
+  return sanitizeUser(data);
 }
 
 /**
@@ -108,7 +111,11 @@ export async function fetchGitHubUser(username, fetchImpl = globalThis.fetch) {
  * @param {{storage: object}} options
  */
 export function createAuthStore({ storage }) {
-  let currentUser = storage.read(STORAGE_KEYS.auth, null);
+  const rawStored = storage.read(STORAGE_KEYS.auth, null);
+  let currentUser = sanitizeUser(rawStored);
+  if (rawStored && currentUser && ('name' in rawStored || 'email' in rawStored || 'bio' in rawStored)) {
+    storage.write(STORAGE_KEYS.auth, currentUser);
+  }
 
   function persist() {
     if (currentUser) {
@@ -124,21 +131,21 @@ export function createAuthStore({ storage }) {
     isAdmin: () => isAdminUser(currentUser),
 
     async completeOAuthCallback(code, fetchImpl) {
-      const profile = await exchangeGitHubCode(code, fetchImpl);
+      const profile = sanitizeUser(await exchangeGitHubCode(code, fetchImpl));
       currentUser = profile;
       persist();
       return profile;
     },
 
     async loginWithGitHub(username, fetchImpl) {
-      const profile = await fetchGitHubUser(username, fetchImpl);
+      const profile = sanitizeUser(await fetchGitHubUser(username, fetchImpl));
       currentUser = profile;
       persist();
       return profile;
     },
 
     setUser(profile) {
-      currentUser = profile;
+      currentUser = sanitizeUser(profile);
       persist();
       return currentUser;
     },

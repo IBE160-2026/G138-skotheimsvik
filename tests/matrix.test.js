@@ -78,8 +78,9 @@ function playRound(trainer, variantKey) {
 
     if (beCorrect) correct += 1;
     round.submit(answer);
-    if (trainer.roundMode === 'timed' && guard > 12) {
-      now += modeParamFor(trainer, variantKey) * 1000;
+    if ((trainer.roundMode === 'timed' || trainer.noLives) && guard > 12) {
+      const stepSec = trainer.promptTimeLimitSeconds ?? modeParamFor(trainer, variantKey);
+      now += stepSec * 1000;
     }
     round.tick();
   }
@@ -118,7 +119,7 @@ test('every mode reaches the end condition it is supposed to (S5)', () => {
     byMode[trainer.roundMode].add(result.endedBy);
   }
 
-  assert.ok(byMode.timed.has('time-expired'), 'a timed round must be able to run out of time');
+  assert.ok(byMode.lives.has('time-expired'), 'per-word timed rounds must be able to run out of time');
   assert.ok(byMode.lives.has('lives-exhausted'), 'a lives round must be able to run out of lives');
   assert.ok(byMode.completion.has('board-complete'), 'a completion round must be able to clear');
 });

@@ -34,8 +34,17 @@ function createId() {
  * @param {object} options.generator must expose next(context)
  * @param {object} options.clock injectable clock (NFR-16)
  * @param {boolean} [options.practice] practice rounds are never persisted (FR-47)
+ * @param {boolean} [options.adminMode] admin mode rounds are never persisted to leaderboard
  */
-export function createRound({ trainer, variantKey, puzzleDate, generator, clock, practice = false }) {
+export function createRound({
+  trainer,
+  variantKey,
+  puzzleDate,
+  generator,
+  clock,
+  practice = false,
+  adminMode = false,
+}) {
   const roundMode = trainer.roundMode;
   const modeParam = modeParamFor(trainer, variantKey, puzzleDate);
   const scoreboard = createScoreboard();
@@ -84,7 +93,11 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
   }
 
   function isExpired() {
-    return roundMode === 'timed' && elapsedMs() >= durationMs;
+    if (roundMode === 'timed' && elapsedMs() >= durationMs) return true;
+    if (trainer.noLives && promptLimitMs && Math.max(0, clock.now() - promptShownAtMs) >= promptLimitMs) {
+      return true;
+    }
+    return false;
   }
 
   function captureReveal(prompt, wasCorrect) {
@@ -246,6 +259,9 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
     get isPractice() {
       return practice;
     },
+    get isAdminMode() {
+      return Boolean(adminMode);
+    },
 
     remainingMs,
     promptRemainingMs,
@@ -314,10 +330,15 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
         if (roundMeta.isWordChain && !roundMeta.chainWords.includes(canonical)) {
           roundMeta.chainWords.push(canonical);
         }
+        if (Array.isArray(roundMeta.validWords) && !roundMeta.validWords.includes(canonical)) {
+          roundMeta.validWords.push(canonical);
+          roundMeta.validWords.sort((a, b) => String(a).localeCompare(String(b)));
+          roundMeta.totalPossible = roundMeta.validWords.length;
+        }
       }
 
       let lifeLost = false;
-      if (roundMode === 'lives' && !isCorrect) {
+      if (roundMode === 'lives' && !isCorrect && !trainer.noLives) {
         livesRemaining -= 1;
         lifeLost = true;
       }
@@ -336,8 +357,22 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
         stats: scoreboard.snapshot(),
       };
 
+      // In no-lives per-word timer mode (Word Chain), the 30s timer reaching 0 ends the round immediately.
+      if (trainer.noLives && options.timedOut) {
+        finish('time-expired');
+        feedback.ended = true;
+        return feedback;
+      }
+
+      // In no-lives mode (Word Chain), a wrong word does not lose lives or advance; keep the current prompt and timer running.
+      if (trainer.noLives && !isCorrect) {
+        feedback.ended = false;
+        feedback.next = currentPrompt;
+        return feedback;
+      }
+
       // The last life ends the round at once, with no further prompt (FR-16).
-      if (roundMode === 'lives' && livesRemaining <= 0) {
+      if (roundMode === 'lives' && !trainer.noLives && livesRemaining <= 0) {
         finish('lives-exhausted');
         feedback.ended = true;
         return feedback;
@@ -416,6 +451,8 @@ export function createRound({ trainer, variantKey, puzzleDate, generator, clock,
         livesRemaining: roundMode === 'lives' ? Math.max(0, livesRemaining) : null,
         maxLevel: trainer.headlineScore === 'maxLevel' ? summary.correctCount : null,
         mistakes: roundMode === 'completion' ? summary.mistakes : null,
+        isPractice: Boolean(practice),
+        isAdminMode: Boolean(adminMode),
         wordRush: roundMeta,
         answerReveal,
         ...summary,
