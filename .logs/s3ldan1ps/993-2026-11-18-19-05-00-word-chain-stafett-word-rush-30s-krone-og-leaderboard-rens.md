@@ -21,7 +21,7 @@ Brukeren rapporterte fem oppfølgingspunkter som måtte fikses raskt:
 - **Admin Mode & profil-rens**: Runder startet i Admin Mode flagges ved opprettelse (`round.isAdminMode`) og blokkeres 100 % fra leaderboardet. `learninghub.v2.leaderboard` slettes automatisk i nettleseren og cutoff for gamle `S3lDan1PS`-oppføringer dekker 18. november 2026 (`1795026000000`). Ingen `name`-felter kan overleve `cleanEntry` eller `sanitizeEntry`.
 - **Kroneikon (SVG) på 1.-plass**: Alle leaderboards viser nå et gullfarget inline SVG-kroneikon ved `#1` og spillerens brukernavn.
 - **Word Rush 30s-timer & musiker-søk**: Word Rush bruker nå 30 sekunder per ord (timeren nullstilles for hvert riktig ord). `Eric Clapton` ligger inne i både `musicians` og `music`, og ukjente artister/navn verifiseres live mot iTunes Search API, Wikidata og Wikipedia (med `_`-formatering).
-- **Word Chain (bokstav-stafett)**: Starter nå med en tilfeldig bokstav (f.eks. `J`), der spilleren skriver f.eks. `J. Cole`, og neste svar må starte på siste bokstav (`E` → `Eric Clapton` → `N` osv.).
+- **Word Chain (bokstav-stafett)**: Starter nå med en tilfeldig bokstav (f.eks. `J`), der spilleren skriver f.eks. `J. Cole`, og neste svar må starte på siste bokstav (`E` → `Eric Clapton` → `N` osv.), med 30 sekunders timer per ord i stedet for liv (timeren nullstilles på hvert gyldig ord, og runden slutter når tiden går ut). Fjernet «All Categories»-alternativet slik at man alltid spiller i en fast kategori.
 - **Tester**: Alle 81 tester i `npm test` passerer.
 
 ### Åpne punkter
